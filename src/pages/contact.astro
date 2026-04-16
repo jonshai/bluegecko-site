@@ -1,0 +1,70 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Contact | Blue Gecko"
+  description="Get in touch with Blue Gecko for Space Coast real estate guidance."
+>
+  <main>
+    <section class="section hero">
+      <div class="container">
+        <p class="eyebrow">Contact</p>
+        <h1>Let’s talk.</h1>
+        <p class="lead">
+          Whether you’re planning a move, browsing options, or trying to make sense of
+          the local market, Blue Gecko is here to help.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container intro-grid">
+        <div class="card">
+          <h2>Start the conversation</h2>
+          <p>
+            Tell us what you’re looking for and we’ll point you in the right direction
+            without the usual real estate theater.
+          </p>
+
+          <form class="contact-form" name="contact" method="post">
+            <label>
+              <span>Name</span>
+              <input type="text" name="name" required />
+            </label>
+
+            <label>
+              <span>Email</span>
+              <input type="email" name="email" required />
+            </label>
+
+            <label>
+              <span>Phone</span>
+              <input type="tel" name="phone" />
+            </label>
+
+            <label>
+              <span>How can we help?</span>
+              <textarea name="message" rows="6" required></textarea>
+            </label>
+
+            <button class="button button-primary" type="submit">Send Message</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>What this site is for</h2>
+          <p>
+            We’re building Blue Gecko into a smarter lead and content platform over
+            time, but the short version is simple: real help, direct contact, and no
+            nonsense.
+          </p>
+          <p>
+            Use this page if you want to talk about buying, selling, open houses, local
+            neighborhoods, or where to start.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

@@ -1,0 +1,97 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export function getStaticPaths() {
+  return [
+    { params: { slug: 'test-open-house' } },
+  ];
+}
+
+const { slug } = Astro.params;
+
+const openHouse = {
+  title: '5017 Barr St Open House',
+  date: 'Saturday, 11:00 AM to 2:00 PM',
+  location: '5017 Barr St, Space Coast, FL',
+  summary:
+    'Tour this featured property and get access to similar homes, price drops, and buyer opportunities in the area.',
+};
+---
+
+<BaseLayout
+  title={`${openHouse.title} | Blue Gecko`}
+  description={openHouse.summary}
+>
+  <main>
+    <section class="hero section">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Open House</p>
+          <h1>{openHouse.title}</h1>
+          <p class="lead">{openHouse.summary}</p>
+          <div class="event-meta">
+            <p><strong>When:</strong> {openHouse.date}</p>
+            <p><strong>Where:</strong> {openHouse.location}</p>
+          </div>
+        </div>
+
+        <div class="hero-media">
+          <img src="/assets/team.jpg" alt="Open house preview" />
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container intro-grid">
+        <div class="card">
+          <h2>Get the details</h2>
+          <p>
+            RSVP for the open house and we’ll also send similar homes, price drops, and
+            deal opportunities in this area.
+          </p>
+
+          <form class="contact-form" name="open-house-lead" method="post">
+            <label>
+              <span>Name</span>
+              <input type="text" name="name" required />
+            </label>
+
+            <label>
+              <span>Email</span>
+              <input type="email" name="email" required />
+            </label>
+
+            <label>
+              <span>Phone</span>
+              <input type="tel" name="phone" />
+            </label>
+
+            <label>
+              <span>What are you looking for?</span>
+              <textarea name="message" rows="5"></textarea>
+            </label>
+
+            <button class="button button-primary" type="submit">
+              Get Open House Details
+            </button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Why sign up?</h2>
+          <p>
+            This is not just a one-house RSVP page. It is the front door to a better
+            home search. If this one is not the fit, we’ll help you find the ones that
+            are.
+          </p>
+          <ul class="feature-list">
+            <li>Open house details and updates</li>
+            <li>Similar homes in the same price range</li>
+            <li>Price-drop and deal alerts</li>
+            <li>Direct contact with William and Lucky</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
