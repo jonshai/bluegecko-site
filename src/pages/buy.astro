@@ -1,0 +1,103 @@
+
+
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LeadForm from '../components/LeadForm.astro';
+---
+
+<BaseLayout title="Buy | Blue Gecko Homes" description="Browse homes and get local guidance from Blue Gecko Homes.">
+  <main>
+    <section class="hero section buy-hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Buyer • Space Coast Search</p>
+          <h1>Browse Homes on the Space Coast</h1>
+          <p class="lead">
+            Start your search with real local guidance, not just a giant pile of listings and vague optimism.
+            If you want help narrowing the field, we can do that too.
+          </p>
+
+          <div class="hero-actions">
+            <a class="button button-primary" href="/contact">Get Buyer Help</a>
+            <a class="button button-secondary" href="/open-house/test-open-house">See Open Houses</a>
+          </div>
+        </div>
+
+        <div class="hero-media card buy-hero-card">
+          <h2>What this page will become</h2>
+          <p>
+            Full home search is coming here next. For now, this page gives buyers a clear starting point,
+            a way to raise a hand, and a shortcut to the homes and communities most worth watching.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container grid-2">
+        <div class="card">
+          <h2>Tell us what you’re looking for</h2>
+          <p>
+            Share your price range, location, or must-haves and we’ll help you zero in on the right options
+            without making you swim through every listing in Brevard County first.
+          </p>
+
+          <LeadForm
+            buttonText="Help Me Find a Home"
+            source="BG Web"
+            formType="buyer"
+            redirectTo="/thank-you"
+            messageLabel="What are you looking for?"
+            showName={true}
+            showEmail={true}
+            showPhone={true}
+            showMessage={true}
+            requireAnyContact={true}
+          />
+        </div>
+
+        <div class="card">
+          <h2>Good next steps</h2>
+          <p>
+            Until the full search experience is wired in, these are the quickest ways to keep moving without losing momentum.
+          </p>
+
+          <ul class="feature-list">
+            <li><a href="/open-house/test-open-house">See the current open house page</a></li>
+            <li><a href="/list-my-house">Thinking of selling before you buy?</a></li>
+            <li><a href="/contact">Reach out directly for buyer guidance</a></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .buy-hero {
+    padding: 1.75rem 0 2.5rem;
+  }
+
+  .buy-hero-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 320px;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem;
+  }
+
+  @media (max-width: 900px) {
+    .buy-hero {
+      padding: 1.25rem 0 2rem;
+    }
+
+    .grid-2 {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

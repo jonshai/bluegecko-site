@@ -49,11 +49,86 @@ const {
     <slot />
 
     <footer class="site-footer">
-      <div class="container footer-inner">
-        <p><strong>Blue Gecko Homes</strong></p>
-        <p>William Whipple · Coldwell Banker Realty · Equal Housing Opportunity</p>
+      <div class="container footer-main">
+        <p class="agent-line"><strong>Blue Gecko</strong> · Coldwell Banker Realty</p>
+        <p class="agent-line">William & Jennifer Whipple · FL Lic. #3535381 / #3535380</p>
+        <p class="agent-line">Palm Bay · Melbourne · Sebastian · Space Coast, FL</p>
+        <p class="agent-line">321.341.6650</p>
+      </div>
+
+      <div class="legal-bar">
+        <div class="container legal-inner">
+          <div class="legal-left">
+            <span class="team-brand">© {new Date().getFullYear()} Blue Gecko, a Coldwell Banker Realty Team</span>
+
+            <div class="legal-links">
+              <button class="legal-toggle" data-target="terms">TERMS OF USE</button>
+              <button class="legal-toggle" data-target="privacy">PRIVACY POLICY</button>
+              <button class="legal-toggle" data-target="accessibility">ACCESSIBILITY STATEMENT</button>
+              <button class="legal-toggle" data-target="fair">FAIR HOUSING NOTICE</button>
+              <button class="legal-toggle" data-target="consent">CONTACT CONSENT</button>
+              <button class="legal-toggle" data-target="ai">AI USE DISCLOSURE</button>
+            </div>
+
+            <div class="legal-content" id="legal-content"></div>
+
+            <p class="cb-disclaimer">
+              © Coldwell Banker Real Estate LLC. All Rights Reserved. Coldwell Banker and the Coldwell Banker logo are trademarks of Coldwell Banker Real Estate LLC.
+              The Coldwell Banker® System is comprised of company owned offices which are owned by a subsidiary of Anywhere Advisors LLC and franchised offices which are independently owned and operated.
+              The Coldwell Banker System fully supports the principles of the Fair Housing Act and the Equal Opportunity Act.
+            </p>
+
+            <p class="mls-disclaimer">
+              All information is deemed reliable but not guaranteed and should be independently verified.
+              Listing information is provided by the Space Coast MLS and is subject to change.
+            </p>
+          </div>
+
+          <div class="legal-right">
+            <img src="/eho-white.png" alt="Equal Housing Opportunity" class="eho-logo" />
+          </div>
+        </div>
       </div>
     </footer>
+
+    <script>
+      const legalText = {
+        terms: `All information provided on this website is for informational purposes only and is deemed reliable but not guaranteed. Users are encouraged to independently verify all information. Blue Gecko, Coldwell Banker Realty, and its associates are not liable for errors, omissions, or changes in property information.`,
+
+        privacy: `We respect your privacy. Information submitted through forms on this website may be used to contact you regarding real estate services and may be stored in our CRM systems (including Follow Up Boss).
+
+We do not sell your personal information. Data may be shared with trusted service providers solely for business operations such as communication and marketing.`,
+
+        accessibility: `We are committed to ensuring digital accessibility for all users and strive to improve the user experience in accordance with applicable accessibility standards.
+
+If you experience difficulty accessing any part of this website, please contact us and we will make reasonable efforts to assist you.`,
+
+        fair: `We are committed to providing equal housing opportunities and fully support the principles of the Fair Housing Act and the REALTOR® Code of Ethics.
+
+We do not discriminate on the basis of race, color, religion, sex, disability, familial status, national origin, sexual orientation, gender identity, or any other protected class under applicable law.
+
+All real estate advertising on this site is subject to federal fair housing laws.`,
+
+        consent: `By sharing your contact information, you agree that William and Jennifer Whipple / Blue Gecko / Coldwell Banker Realty may contact you by phone, text, or email — including AI-assisted and automated messages — regarding real estate services.
+
+Message and data rates may apply. You can reply STOP to opt out of text messages at any time. Consent is not a condition of purchase.
+
+We do not sell your personal information.`,
+
+        ai: `We use AI tools to help us work smarter and respond faster — including automated follow-up messages.
+
+While we aim for accuracy, details like pricing, availability, and timelines can change. For anything important, we’ll always confirm the details with you directly.
+
+When you interact with Blue Gecko, AI may be involved — but a real person, William or Lucky, is always just a message away.`
+      };
+
+      document.querySelectorAll('.legal-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.dataset.target;
+          document.getElementById('legal-content').innerText = legalText[target];
+        });
+      });
+    </script>
   </body>
 </html>
 
@@ -159,17 +234,99 @@ const {
   }
 
   .site-footer {
-    border-top: 1px solid var(--line);
-    padding: 2rem 0 3rem;
+    margin-top: 3rem;
+    background: #f5f5f5;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.6;
   }
 
-  .footer-inner {
-    color: var(--text-soft);
-    font-size: 0.95rem;
+  .footer-main {
+    padding: 1.25rem 0 1rem;
   }
 
-  .footer-inner p {
-    margin: 0.25rem 0;
+  .agent-line {
+    margin: 0.15rem 0;
+  }
+
+  .team-brand {
+    margin-top: 0.75rem;
+    font-weight: 600;
+  }
+
+  .footer-links {
+    margin-top: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  .footer-links a {
+    color: #0c2a4a;
+    text-decoration: none;
+    border-bottom: none;
+  }
+
+  .footer-links a:hover {
+    text-decoration: underline;
+  }
+
+  .cb-disclaimer,
+  .mls-disclaimer {
+    margin-top: 1rem;
+    font-size: 12px;
+    color: #666;
+  }
+
+  .legal-bar {
+    background: #0c2a4a;
+    color: white;
+    padding: 1.5rem 0;
+  }
+
+  .legal-inner {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .legal-left {
+    max-width: 900px;
+  }
+
+  .legal-links {
+    margin-top: 0.75rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .legal-toggle {
+    background: none;
+    border: none;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .legal-toggle:hover {
+    text-decoration: underline;
+  }
+
+  .legal-content {
+    margin-top: 0.75rem;
+    font-size: 12px;
+    opacity: 0.9;
+  }
+
+  .legal-right {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .eho-logo {
+    height: 26px;
+    width: auto;
+    display: inline-block;
   }
 
   @media (max-width: 900px) {
