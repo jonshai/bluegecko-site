@@ -1,0 +1,97 @@
+---
+interface Props {
+  buttonText?: string;
+  slug?: string;
+  source?: string;
+  formType?: string;
+  redirectTo?: string;
+  messageLabel?: string;
+  showName?: boolean;
+  showEmail?: boolean;
+  showPhone?: boolean;
+  showMessage?: boolean;
+  requireName?: boolean;
+  requireEmail?: boolean;
+  requirePhone?: boolean;
+  requireAnyContact?: boolean;
+}
+
+const {
+  buttonText = 'Submit',
+  slug,
+  source,
+  formType = 'general-inquiry',
+  redirectTo = '/thank-you',
+  messageLabel = 'How can we help?',
+  showName = true,
+  showEmail = true,
+  showPhone = true,
+  showMessage = true,
+  requireName = false,
+  requireEmail = false,
+  requirePhone = false,
+  requireAnyContact = false,
+} = Astro.props;
+---
+
+<form class="contact-form js-lead-form" method="POST" action="/api/lead" data-require-any-contact={requireAnyContact ? 'true' : 'false'}>
+  {slug && <input type="hidden" name="slug" value={slug} />}
+  {source && <input type="hidden" name="sourceOverride" value={source} />}
+  {formType && <input type="hidden" name="formType" value={formType} />}
+  {redirectTo && <input type="hidden" name="redirectTo" value={redirectTo} />}
+
+  {showName && (
+    <label>
+      <span>Name</span>
+      <input type="text" name="name" required={requireName} />
+    </label>
+  )}
+
+  {showEmail && (
+    <label>
+      <span>Email</span>
+      <input type="email" name="email" required={requireEmail} />
+    </label>
+  )}
+
+  {showPhone && (
+    <label>
+      <span>Phone</span>
+      <input type="tel" name="phone" required={requirePhone} />
+    </label>
+  )}
+
+  {showMessage && (
+    <label>
+      <span>{messageLabel}</span>
+      <textarea name="message" rows="5"></textarea>
+    </label>
+  )}
+
+  {requireAnyContact && (
+    <p class="form-helper">Please provide at least an email address or a phone number.</p>
+  )}
+
+  <button class="button button-primary" type="submit">{buttonText}</button>
+</form>
+
+<script is:inline>
+  document.addEventListener('submit', (event) => {
+    const form = event.target;
+
+    if (!(form instanceof HTMLFormElement)) return;
+    if (!form.classList.contains('js-lead-form')) return;
+    if (form.dataset.requireAnyContact !== 'true') return;
+
+    const emailInput = form.querySelector('input[name="email"]');
+    const phoneInput = form.querySelector('input[name="phone"]');
+
+    const email = emailInput instanceof HTMLInputElement ? emailInput.value.trim() : '';
+    const phone = phoneInput instanceof HTMLInputElement ? phoneInput.value.trim() : '';
+
+    if (!email && !phone) {
+      event.preventDefault();
+      window.alert('Please provide an email address or phone number.');
+    }
+  });
+</script>

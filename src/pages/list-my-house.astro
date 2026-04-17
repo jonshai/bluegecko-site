@@ -1,0 +1,80 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LeadForm from '../components/LeadForm.astro';
+---
+
+<BaseLayout title="List My House | Blue Gecko">
+  <main>
+    <section class="hero section">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Seller • Early Insight</p>
+          <h1>Find Out What Your Home Could Sell For</h1>
+          <p class="lead">
+            Get a realistic price range based on what is actually selling right now,
+            not automated guesses that ignore your home’s condition, upgrades, or timing.
+          </p>
+
+          <div class="event-meta">
+            <p><strong>What you get:</strong> Price range + strategy</p>
+            <p><strong>Turnaround:</strong> Usually same day</p>
+            <p><strong>No pressure:</strong> Just information you can use</p>
+          </div>
+        </div>
+
+        <div class="hero-image card seller-hero-card">
+          <div class="seller-hero-copy">
+            <p class="eyebrow">Why this works better</p>
+            <h2>Online estimates are fast. Accurate is better.</h2>
+            <p>
+              Automated values miss context. This gives you a sharper range based on
+              real comps, buyer behavior, and what is happening in your specific pocket
+              of the market.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container grid-2">
+        <div class="card">
+          <h2>Get your home value</h2>
+          <p>
+            Tell us a little about your property and we’ll send a realistic price range,
+            plus what is actually driving value in your specific neighborhood right now.
+          </p>
+
+          <LeadForm
+            buttonText="Get My Home Value"
+            source="BG Web"
+            formType="seller"
+            redirectTo="/thank-you"
+            messageLabel="Tell us about your home (optional)"
+            showName={true}
+            showEmail={true}
+            showPhone={true}
+            showMessage={true}
+            requireAnyContact={true}
+          />
+        </div>
+
+        <div class="card">
+          <h2>What you’ll get</h2>
+          <p>
+            This is built for homeowners who want real guidance before they decide
+            whether to sell, wait, improve, or change strategy.
+          </p>
+
+          <ul class="feature-list">
+            <li>Real comps, not broad estimates</li>
+            <li>Adjustments for upgrades and condition</li>
+            <li>Insight into what buyers are prioritizing</li>
+            <li>Timing strategy for listing</li>
+            <li>No obligation to list</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

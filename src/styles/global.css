@@ -37,6 +37,15 @@ a {
   text-decoration: none;
 }
 
+a:not(.button):not(.brand):not(.nav a):not(.cta) {
+  border-bottom: 1px solid rgba(31, 42, 38, 0.18);
+  transition: border-color 180ms ease, color 180ms ease;
+}
+
+a:not(.button):not(.brand):not(.nav a):not(.cta):hover {
+  border-bottom-color: rgba(31, 42, 38, 0.55);
+}
+
 main {
   min-height: 100vh;
 }
@@ -153,6 +162,10 @@ main {
   font-weight: 700;
 }
 
+.text-link {
+  display: inline-block;
+}
+
 .hero-media img,
 .bio-card img {
   border-radius: var(--radius);
@@ -245,4 +258,12 @@ main {
 .contact-form textarea:focus {
   outline: 2px solid rgba(31, 92, 77, 0.18);
   border-color: var(--brand);
+}
+
+.prose-card {
+  line-height: 1.75;
+}
+
+.prose-card p:last-child {
+  margin-bottom: 0;
 }

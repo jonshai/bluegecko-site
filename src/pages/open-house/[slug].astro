@@ -1,42 +1,45 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import LeadForm from '../../components/LeadForm.astro';
+import { getCollection, render } from 'astro:content';
 
-export function getStaticPaths() {
-  return [
-    { params: { slug: 'test-open-house' } },
-  ];
+export async function getStaticPaths() {
+  const entries = await getCollection('open-houses', ({ data }) => data.published !== false);
+
+  return entries.map((entry) => ({
+    params: { slug: entry.data.slug ?? entry.id },
+    props: { entry },
+  }));
 }
 
-const { slug } = Astro.params;
-
-const openHouse = {
-  title: '5017 Barr St Open House',
-  date: 'Saturday, 11:00 AM to 2:00 PM',
-  location: '5017 Barr St, Space Coast, FL',
-  summary:
-    'Tour this featured property and get access to similar homes, price drops, and buyer opportunities in the area.',
-};
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const { title, date, location, summary, heroImage } = entry.data;
 ---
 
 <BaseLayout
-  title={`${openHouse.title} | Blue Gecko`}
-  description={openHouse.summary}
+  title={`${title} | Blue Gecko`}
+  description={summary}
 >
   <main>
     <section class="hero section">
       <div class="container hero-grid">
         <div class="hero-copy">
-          <p class="eyebrow">Open House</p>
-          <h1>{openHouse.title}</h1>
-          <p class="lead">{openHouse.summary}</p>
+          <p class="eyebrow">Open House • Early Access</p>
+          <h1>{title}</h1>
+          <p class="lead">
+            Tour this home and unlock similar listings, price drops, and buyer opportunities
+            in the same range before they disappear into the usual real estate fog.
+          </p>
           <div class="event-meta">
-            <p><strong>When:</strong> {openHouse.date}</p>
-            <p><strong>Where:</strong> {openHouse.location}</p>
+            <p><strong>When:</strong> {date}</p>
+            <p><strong>Where:</strong> {location}</p>
+            <p><strong>Why RSVP:</strong> Get the full listing details and similar homes in this price range.</p>
           </div>
         </div>
 
         <div class="hero-media">
-          <img src="/assets/team.jpg" alt="Open house preview" />
+          <img src={heroImage || '/assets/team.jpg'} alt={title} />
         </div>
       </div>
     </section>
@@ -46,50 +49,51 @@ const openHouse = {
         <div class="card">
           <h2>Get the details</h2>
           <p>
-            RSVP for the open house and we’ll also send similar homes, price drops, and
-            deal opportunities in this area.
+            RSVP to get the full open house details plus similar homes, price drops, and
+            nearby opportunities that fit the same search. If this home is close but not
+            quite right, we’ll help you find the better fit.
           </p>
 
-          <form class="contact-form" name="open-house-lead" method="post">
-            <label>
-              <span>Name</span>
-              <input type="text" name="name" required />
-            </label>
-
-            <label>
-              <span>Email</span>
-              <input type="email" name="email" required />
-            </label>
-
-            <label>
-              <span>Phone</span>
-              <input type="tel" name="phone" />
-            </label>
-
-            <label>
-              <span>What are you looking for?</span>
-              <textarea name="message" rows="5"></textarea>
-            </label>
-
-            <button class="button button-primary" type="submit">
-              Get Open House Details
-            </button>
-          </form>
+          <LeadForm
+            buttonText="Get Full Details + Similar Homes"
+            slug={entry.id}
+            source="Open House"
+            formType="open-house"
+            redirectTo="/thank-you"
+            messageLabel="What are you looking for?"
+            showName={true}
+            showEmail={true}
+            showPhone={true}
+            showMessage={true}
+            requireName={true}
+            requireEmail={false}
+            requirePhone={false}
+            requireAnyContact={true}
+          />
         </div>
 
         <div class="card">
           <h2>Why sign up?</h2>
           <p>
-            This is not just a one-house RSVP page. It is the front door to a better
-            home search. If this one is not the fit, we’ll help you find the ones that
-            are.
+            This is not just an RSVP page. It is your shortcut to the homes competing in
+            the same lane, without having to start from scratch every time a listing goes
+            live.
           </p>
           <ul class="feature-list">
             <li>Open house details and updates</li>
             <li>Similar homes in the same price range</li>
             <li>Price-drop and deal alerts</li>
-            <li>Direct contact with William and Lucky</li>
+            <li>Direct follow-up from William and Lucky</li>
+            <li>A faster path if this house is not the one</li>
           </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-muted">
+      <div class="container">
+        <div class="card prose-card">
+          <Content />
         </div>
       </div>
     </section>

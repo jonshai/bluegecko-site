@@ -7,17 +7,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   description="Find your place on the Space Coast with Blue Gecko. Real estate guidance, open houses, and local expertise from William and Lucky."
 >
   <main>
-    <section class="hero section">
+    <section class="hero section hero-home">
       <div class="container hero-grid">
         <div class="hero-copy">
-          <p class="eyebrow">Blue Gecko Real Estate</p>
+          <p class="eyebrow">Blue Gecko Homes</p>
           <h1>Find your place on the Space Coast.</h1>
           <p class="lead">
-            Real estate guidance from real people. Search homes, explore open houses,
-            and get local insight without the usual pressure.
+            Real estate guidance from real people. Browse homes, explore communities,
+            and get local insight without the usual pressure or the usual sales script.
           </p>
           <div class="hero-actions">
-            <a class="button button-primary" href="/open-house/test-open-house">See Open Houses</a>
+            <a class="button button-primary" href="/buy">Browse Homes</a>
             <a class="button button-secondary" href="/contact">Say Hello</a>
           </div>
         </div>
@@ -52,20 +52,20 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <div class="container">
         <div class="section-heading">
           <p class="eyebrow">Featured Open House</p>
-          <h2>Open house funnel goes here next.</h2>
+          <h2>Tour 5017 Barr St</h2>
           <p>
-            This section is temporary. We’ll replace it with a reusable Astro-driven
-            landing page system instead of a one-off static page circus.
+            Start with one standout home, then use it as a shortcut to similar listings,
+            price drops, and nearby opportunities in the same range.
           </p>
         </div>
 
         <div class="card">
-          <h3>Starter placeholder</h3>
+          <h3>See the full open house page</h3>
           <p>
-            The old site had a standalone open house page. We’re migrating the structure
-            first, then rebuilding that page as a reusable template.
+            Get the details, preview the property, and unlock similar homes without
+            starting from scratch every time a listing catches your eye.
           </p>
-          <a class="text-link" href="/open-house/test-open-house">View placeholder route</a>
+          <a class="text-link" href="/open-house/test-open-house">See open house details</a>
         </div>
       </div>
     </section>
@@ -112,3 +112,28 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </section>
   </main>
 </BaseLayout>
+<style>
+  .hero-home {
+    padding: 1.75rem 0 2.5rem;
+  }
+
+  .hero-home .hero-grid {
+    align-items: center;
+  }
+
+  .hero-home .hero-media img {
+    min-height: 500px;
+    object-fit: cover;
+    object-position: center top;
+  }
+
+  @media (max-width: 900px) {
+    .hero-home {
+      padding: 1.25rem 0 2rem;
+    }
+
+    .hero-home .hero-media img {
+      min-height: auto;
+    }
+  }
+</style>

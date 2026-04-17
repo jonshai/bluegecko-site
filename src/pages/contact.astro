@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import LeadForm from '../components/LeadForm.astro';
 ---
 
 <BaseLayout
@@ -27,29 +28,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             without the usual real estate theater.
           </p>
 
-          <form class="contact-form" name="contact" method="post">
-            <label>
-              <span>Name</span>
-              <input type="text" name="name" required />
-            </label>
-
-            <label>
-              <span>Email</span>
-              <input type="email" name="email" required />
-            </label>
-
-            <label>
-              <span>Phone</span>
-              <input type="tel" name="phone" />
-            </label>
-
-            <label>
-              <span>How can we help?</span>
-              <textarea name="message" rows="6" required></textarea>
-            </label>
-
-            <button class="button button-primary" type="submit">Send Message</button>
-          </form>
+          <LeadForm
+            buttonText="Send Message"
+            source="BG Web"
+            formType="general-inquiry"
+            redirectTo="/thank-you"
+            messageLabel="How can we help?"
+            showName={true}
+            showEmail={true}
+            showPhone={true}
+            showMessage={true}
+            requireName={true}
+            requireEmail={true}
+            requirePhone={false}
+            requireAnyContact={false}
+          />
         </div>
 
         <div class="card">

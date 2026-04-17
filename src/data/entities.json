@@ -1,0 +1,42 @@
+
+
+{
+  "entities": [
+    {
+      "name": "Palm Bay",
+      "type": "municipality",
+      "slug": "/communities/palm-bay/",
+      "aliases": ["Palm Bay, FL", "Palm Bay Florida"]
+    },
+    {
+      "name": "Bayside Lakes",
+      "type": "community",
+      "slug": "/communities/palm-bay/bayside-lakes/",
+      "aliases": ["Bayside Lakes at Palm Bay"]
+    },
+    {
+      "name": "Lockmar",
+      "type": "community",
+      "slug": "/communities/palm-bay/lockmar/",
+      "aliases": ["Lockmar Estates"]
+    },
+    {
+      "name": "DR Horton",
+      "type": "builder",
+      "slug": "/builders/dr-horton/",
+      "aliases": ["D.R. Horton", "DRH"]
+    },
+    {
+      "name": "Maronda Homes",
+      "type": "builder",
+      "slug": "/builders/maronda-homes/",
+      "aliases": ["Maronda"]
+    },
+    {
+      "name": "Holiday Builders",
+      "type": "builder",
+      "slug": "/builders/holiday-builders/",
+      "aliases": ["Holiday"]
+    }
+  ]
+}

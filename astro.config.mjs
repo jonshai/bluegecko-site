@@ -1,5 +1,19 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import { visit } from 'unist-util-visit';
+import { autoLink } from './src/utils/autoLink';
 
-// https://astro.build/config
-export default defineConfig({});
+function remarkAutoLink() {
+  return (tree) => {
+    visit(tree, 'html', (node) => {
+      if (!node.value) return;
+      node.value = autoLink(node.value);
+    });
+  };
+}
+
+export default defineConfig({
+  markdown: {
+    remarkPlugins: [remarkAutoLink],
+  },
+});

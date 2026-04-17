@@ -7,7 +7,7 @@ interface Props {
 }
 
 const {
-  title = 'Blue Gecko',
+  title = 'Blue Gecko Homes',
   description = 'Blue Gecko Real Estate',
 } = Astro.props;
 ---
@@ -17,12 +17,181 @@ const {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <meta name="description" content={description} />
   </head>
   <body>
+    <div class="cb-strip">
+      <div class="container cb-inner">
+        <img src="/cb-logo-white.png" alt="Coldwell Banker Realty" class="cb-logo" />
+      </div>
+    </div>
+    <header class="site-header">
+      <div class="container header-inner">
+        <div class="header-left">
+          <a class="brand" href="/">
+            <img src="/bg_logo_stroke.png" alt="Blue Gecko Homes" class="brand-logo" />
+          </a>
+          <nav class="nav" aria-label="Primary">
+            <a href="/buy">Buy</a>
+            <a href="/list-my-house">Sell</a>
+            <a href="/open-house/test-open-house">Open Houses</a>
+            <a href="/contact">Contact</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
     <slot />
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p><strong>Blue Gecko Homes</strong></p>
+        <p>William Whipple · Coldwell Banker Realty · Equal Housing Opportunity</p>
+      </div>
+    </footer>
   </body>
 </html>
+
+<style>
+  .cb-strip {
+    background: #0c2a4a;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .cb-inner {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    min-height: 48px;
+    padding: 0.25rem 0;
+  }
+
+  .cb-logo {
+    height: 27px;
+    width: auto;
+    opacity: 0.96;
+    display: block;
+  }
+
+  .site-header {
+    position: sticky;
+    top: 48px;
+    z-index: 35;
+    background: rgba(247, 246, 242, 0.94);
+    backdrop-filter: blur(8px);
+    overflow: visible;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-height: 0;
+    padding: 0 0 0.2rem;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    min-width: 0;
+    position: relative;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 40;
+  }
+
+  .brand-logo {
+    display: block;
+    height: 144px;
+    width: auto;
+    margin-top: -72px;
+    position: relative;
+    z-index: 40;
+  }
+
+  .nav {
+    display: flex;
+    gap: 1.1rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 0.9rem;
+  }
+
+  .nav a {
+    color: var(--text-soft);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .nav a:hover {
+    color: var(--text);
+  }
+
+  .cta {
+    background: var(--accent, #1f5c4d);
+    color: white;
+    padding: 0.65rem 1rem;
+    border-radius: 999px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+
+  .cta:hover {
+    opacity: 0.9;
+    color: white;
+  }
+
+  .site-footer {
+    border-top: 1px solid var(--line);
+    padding: 2rem 0 3rem;
+  }
+
+  .footer-inner {
+    color: var(--text-soft);
+    font-size: 0.95rem;
+  }
+
+  .footer-inner p {
+    margin: 0.25rem 0;
+  }
+
+  @media (max-width: 900px) {
+    .header-inner {
+      align-items: flex-start;
+      flex-direction: column;
+      padding: 1rem 0;
+    }
+
+    .header-left {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .brand-logo {
+      height: 72px;
+      margin-top: -38px;
+    }
+
+    .nav {
+      gap: 0.85rem;
+    }
+  }
+</style>
