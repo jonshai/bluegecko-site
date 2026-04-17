@@ -3,6 +3,8 @@ import { defineConfig } from 'astro/config';
 import { visit } from 'unist-util-visit';
 import { autoLink } from './src/utils/autoLink';
 
+import cloudflare from '@astrojs/cloudflare';
+
 function remarkAutoLink() {
   return (tree) => {
     visit(tree, 'html', (node) => {
@@ -16,4 +18,6 @@ export default defineConfig({
   markdown: {
     remarkPlugins: [remarkAutoLink],
   },
+
+  adapter: cloudflare()
 });
