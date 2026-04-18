@@ -1,5 +1,3 @@
-
-
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LeadForm from '../components/LeadForm.astro';
@@ -18,8 +16,8 @@ import LeadForm from '../components/LeadForm.astro';
           </p>
 
           <div class="hero-actions">
-            <a class="button button-primary" href="/contact">Get Buyer Help</a>
-            <a class="button button-secondary" href="/open-house/test-open-house">See Open Houses</a>
+            <a class="button button-primary" href="/buy/search">Browse Available Homes</a>
+            <a class="button button-secondary" href="/contact">Get Buyer Help</a>
           </div>
         </div>
 
@@ -100,4 +98,378 @@ import LeadForm from '../components/LeadForm.astro';
       grid-template-columns: 1fr;
     }
   }
+
+  .search-card {
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .search-form {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .search-form input {
+    flex: 1;
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .search-form {
+      flex-direction: column;
+    }
+  }
 </style>
+
+<script>
+  const form = document.getElementById('moxi-search-form');
+
+  const KNOWN_LOCATIONS = {
+    'palm bay': {
+      location_search_field: 'Palm Bay, FL',
+      ss_description: 'Palm Bay, FL',
+      center_lat: '28.0344621',
+      center_lon: '-80.5886646',
+      center_lat_pan: '27.944001539141436',
+      center_lon_pan: '-80.6434267',
+      user_lat: '28.0344621',
+      user_lon: '-80.5886646',
+      geotype: 'PopulatedPlace',
+      geospatial: 'true',
+      zoom: '11',
+      sort_by: '1',
+      bounds_north: '28.13036568025304',
+      bounds_east: '-80.37288836992188',
+      bounds_south: '27.757315290135512',
+      bounds_west: '-80.91396503007813',
+    },
+    'melbourne': {
+      location_search_field: 'Melbourne, FL',
+      ss_description: 'Melbourne, FL',
+      center_lat: '28.0794398',
+      center_lon: '-80.6078048',
+      center_lat_pan: '28.11936075275775',
+      center_lon_pan: '-80.66404834999999',
+      user_lat: '28.0794398',
+      user_lon: '-80.6078048',
+      geotype: 'PopulatedPlace',
+      geospatial: 'true',
+      zoom: '11',
+      sort_by: '1',
+      bounds_north: '28.30542053212026',
+      bounds_east: '-80.39351001992186',
+      bounds_south: '27.932977536005584',
+      bounds_west: '-80.93458668007811',
+    },
+    'sebastian': {
+      location_search_field: 'Sebastian, FL',
+      ss_description: 'Sebastian, FL',
+      center_lat: '27.816415',
+      center_lon: '-80.4706078',
+      center_lat_pan: '27.77776796753624',
+      center_lon_pan: '-80.4804623',
+      user_lat: '27.816415',
+      user_lon: '-80.4706078',
+      geotype: 'PopulatedPlace',
+      geospatial: 'true',
+      zoom: '12',
+      sort_by: '1',
+      bounds_north: '27.87113368983819',
+      bounds_east: '-80.34519313496094',
+      bounds_south: '27.684322035872228',
+      bounds_west: '-80.61573146503906',
+    },
+    'grant': {
+      location_search_field: 'Grant, FL',
+      ss_description: 'Grant-Valkaria, FL',
+      center_lat: '27.939804',
+      center_lon: '-80.571043',
+      center_lat_pan: '27.930524508569402',
+      center_lon_pan: '-80.56057349999999',
+      user_lat: '27.939804',
+      user_lon: '-80.571043',
+      geotype: 'PopulatedPlace',
+      geospatial: 'true',
+      zoom: '12',
+      sort_by: '1',
+      bounds_north: '28.023758578189383',
+      bounds_east: '-80.42530433496093',
+      bounds_south: '27.837209937393357',
+      bounds_west: '-80.69584266503905',
+    },
+    'grant-valkaria': {
+      location_search_field: 'Grant, FL',
+      ss_description: 'Grant-Valkaria, FL',
+      center_lat: '27.939804',
+      center_lon: '-80.571043',
+      center_lat_pan: '27.930524508569402',
+      center_lon_pan: '-80.56057349999999',
+      user_lat: '27.939804',
+      user_lon: '-80.571043',
+      geotype: 'PopulatedPlace',
+      geospatial: 'true',
+      zoom: '12',
+      sort_by: '1',
+      bounds_north: '28.023758578189383',
+      bounds_east: '-80.42530433496093',
+      bounds_south: '27.837209937393357',
+      bounds_west: '-80.69584266503905',
+    },
+    '32949': {
+      location_search_field: '32949',
+      ss_description: 'GRANT VLKRIA, FL 32949',
+      center_lat: '27.9161992',
+      center_lon: '-80.5549561',
+      center_lat_pan: '27.926135026129586',
+      center_lon_pan: '-80.55612400000003',
+      user_lat: '27.9161992',
+      user_lon: '-80.5549561',
+      geotype: 'Postcode1',
+      geospatial: 'true',
+      zoom: '13',
+      sort_by: '1',
+      bounds_north: '27.972764029841215',
+      bounds_east: '-80.4884894174805',
+      bounds_south: '27.87948589910428',
+      bounds_west: '-80.62375858251956',
+    },
+    '32907': {
+      location_search_field: '32907',
+      ss_description: 'Melbourne, FL 32907',
+      center_lat: '28.0181548',
+      center_lon: '-80.68817179999999',
+      center_lat_pan: '28.027949921160435',
+      center_lon_pan: '-80.6774455',
+      user_lat: '28.0181548',
+      user_lon: '-80.68817179999999',
+      geotype: 'Postcode1',
+      geospatial: 'true',
+      zoom: '12',
+      sort_by: '1',
+      bounds_north: '28.121099679303278',
+      bounds_east: '-80.54217633496094',
+      bounds_south: '27.934719476300277',
+      bounds_west: '-80.81271466503907',
+    },
+    '32908': {
+      location_search_field: '32908',
+      ss_description: 'Melbourne, FL 32908',
+      center_lat: '27.94852',
+      center_lon: '-80.68817179999999',
+      center_lat_pan: '27.952793876430434',
+      center_lon_pan: '-80.70450149999999',
+      user_lat: '27.94852',
+      user_lon: '-80.68817179999999',
+      geotype: 'Postcode1',
+      geospatial: 'true',
+      zoom: '12',
+      sort_by: '1',
+      bounds_north: '28.046008697975243',
+      bounds_east: '-80.56923233496093',
+      bounds_south: '27.859498510923515',
+      bounds_west: '-80.83977066503905',
+    },
+    '32909': {
+      location_search_field: '32909',
+      ss_description: 'Grant-Valkaria, FL 32909',
+      center_lat: '27.8990653',
+      center_lon: '-80.6437906',
+      center_lat_pan: '27.93334705710874',
+      center_lon_pan: '-80.65738450000002',
+      user_lat: '27.8990653',
+      user_lon: '-80.6437906',
+      geotype: 'Postcode1',
+      geospatial: 'true',
+      zoom: '12',
+      sort_by: '1',
+      bounds_north: '28.026578687894684',
+      bounds_east: '-80.52211533496096',
+      bounds_south: '27.840034919389257',
+      bounds_west: '-80.79265366503908',
+    },
+    'viera': {
+      location_search_field: 'Viera',
+      ss_description: 'Viera, FL',
+      center_lat: '28.2666258',
+      center_lon: '-80.72905589999999',
+      center_lat_pan: '28.2300683795942',
+      center_lon_pan: '-80.73033065',
+      user_lat: '28.2666258',
+      user_lon: '-80.72905589999999',
+      geotype: 'Neighborhood',
+      geospatial: 'true',
+      zoom: '12',
+      sort_by: '1',
+      bounds_north: '28.323042367845282',
+      bounds_east: '-80.59506148496094',
+      bounds_south: '28.137013323469407',
+      bounds_west: '-80.86559981503906',
+    }
+  };
+
+  const MAPBOX_TOKEN = import.meta.env.PUBLIC_MAPBOX_TOKEN || '';
+
+  const encode = (value) => encodeURIComponent(String(value));
+
+  const findKnownLocation = (value) => {
+    const key = value.toLowerCase().trim();
+    const normalizedKey = key.replace(/,\s*fl$/i, '').trim();
+    return KNOWN_LOCATIONS[key] || KNOWN_LOCATIONS[normalizedKey] || null;
+  };
+
+  const resolveWithMapbox = async (value) => {
+    if (!MAPBOX_TOKEN) return null;
+
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?access_token=${MAPBOX_TOKEN}&country=us&proximity=-80.5886646,28.0344621&types=place,postcode,neighborhood,locality`;
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) return null;
+
+      const data = await response.json();
+      const feature = data?.features?.[0];
+      if (!feature) return null;
+
+      const [lon, lat] = feature.center || [];
+      if (typeof lat !== 'number' || typeof lon !== 'number') return null;
+
+      const placeType = feature.place_type?.[0] || 'place';
+      const geotypeMap = {
+        postcode: 'Postcode1',
+        neighborhood: 'Neighborhood',
+        locality: 'PopulatedPlace',
+        place: 'PopulatedPlace'
+      };
+
+      return {
+        location_search_field: feature.text || value,
+        ss_description: feature.place_name || value,
+        center_lat: String(lat),
+        center_lon: String(lon),
+        center_lat_pan: String(lat),
+        center_lon_pan: String(lon),
+        user_lat: String(lat),
+        user_lon: String(lon),
+        bounds_north: String(lat + 0.08),
+        bounds_east: String(lon + 0.12),
+        bounds_south: String(lat - 0.08),
+        bounds_west: String(lon - 0.12),
+        geotype: geotypeMap[placeType] || 'PopulatedPlace',
+        geospatial: 'true',
+        zoom: placeType === 'postcode' ? '13' : '12',
+        sort_by: '1'
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const location = document.getElementById('location').value.trim();
+
+    if (!location) return;
+
+    const toTitleCase = (value) =>
+      value.replace(/\b\w+/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+
+    // --- Parse beds first so ranges like "3-4 beds" don't get mistaken for price ---
+    let beds = '';
+    const bedRangeMatch = location.match(/(\d+)\s*(?:-|to)\s*(\d+)\s*(beds?|br|bedroom|bedrooms)/i);
+    const bedSingleMatch = location.match(/(\d+)\s*\+?\s*(beds?|br|bedroom|bedrooms)/i);
+
+    if (bedRangeMatch) {
+      beds = bedRangeMatch[1];
+    } else if (bedSingleMatch) {
+      beds = bedSingleMatch[1];
+    }
+
+    // --- Extract & sanitize location (remove price/bed language first) ---
+    let working = location;
+
+    working = working
+      .replace(/\bunder\s*\$?\d[\d,.]*[kKmM]?\b/gi, '')
+      .replace(/\bover\s*\$?\d[\d,.]*[kKmM]?\b/gi, '')
+      .replace(/\b\$?\d[\d,.]*[kKmM]?\s*(?:-|to)\s*\$?\d[\d,.]*[kKmM]?\b/gi, '')
+      .replace(/\b\d+\s*(?:-|to)\s*\d+\s*(beds?|br|bedroom|bedrooms)\b/gi, '')
+      .replace(/\b\d+\s*\+?\s*(beds?|br|bedroom|bedrooms)\b/gi, '')
+      .replace(/\$/g, '')
+      .trim();
+
+    working = working.replace(/\s+/g, ' ').trim();
+
+    // --- Location normalization ---
+    let normalizedLocation = working;
+    const isZip = /^\d{5}$/.test(working);
+    const hasState = /,\s*[A-Za-z]{2}$/i.test(working);
+
+    if (!isZip) {
+      normalizedLocation = toTitleCase(normalizedLocation);
+    }
+
+    if (!isZip && !hasState) {
+      normalizedLocation = `${normalizedLocation}, FL`;
+    }
+
+    // --- Price parsing ---
+    let minPrice = '';
+    let maxPrice = '';
+
+    const normalizePrice = (val) => {
+      const raw = val.toLowerCase().replace(/[$,]/g, '');
+      if (raw.includes('m')) return Math.round(parseFloat(raw) * 1000000);
+      if (raw.includes('k')) return Math.round(parseFloat(raw) * 1000);
+      return parseInt(raw, 10);
+    };
+
+    const priceRangeMatch = location.match(/(\$?\d[\d,.]*[kKmM]?)\s*(?:-|to)\s*(\$?\d[\d,.]*[kKmM]?)/i);
+    const underMatch = location.match(/under\s*\$?(\d[\d,.]*[kKmM]?)/i);
+    const overMatch = location.match(/over\s*\$?(\d[\d,.]*[kKmM]?)/i);
+
+    if (priceRangeMatch) {
+      minPrice = normalizePrice(priceRangeMatch[1]);
+      maxPrice = normalizePrice(priceRangeMatch[2]);
+    } else if (underMatch) {
+      maxPrice = normalizePrice(underMatch[1]);
+    } else if (overMatch) {
+      minPrice = normalizePrice(overMatch[1]);
+    }
+
+    const resolvedLocation = findKnownLocation(normalizedLocation.toLowerCase()) || await resolveWithMapbox(normalizedLocation) || {
+      location_search_field: normalizedLocation,
+      ss_description: normalizedLocation,
+      sort_by: '1'
+    };
+
+    // --- Build URL ---
+    const baseUrl = "https://space-coast.homes/search/";
+
+    let params = `#ls_conversion=acres&status=active&sold_days=180&location_search_field=${encode(resolvedLocation.location_search_field)}&drive_time=09%3A00&drive_duration=15&drive_avoid_ferry=1&drive_departure=1&ss_locale=en-US&ss_description=${encode(resolvedLocation.ss_description)}&ss_email_freq=40&ss_send_zero_result=1&pgsize=20&startidx=0&sort_by=${encode(resolvedLocation.sort_by || '1')}&company_uuid=4228033&agent_uuid=364e222e-0ca9-400c-a1d1-12724bc51a54&commute=0&buffer_miles=0&ptype=1%2C2%2C9%2C8&searchType=criteria&pstatus=1%2C2%2C11&omit_hidden=true&currency=USD`;
+
+    if (resolvedLocation.center_lat) params += `&center_lat=${encode(resolvedLocation.center_lat)}`;
+    if (resolvedLocation.center_lon) params += `&center_lon=${encode(resolvedLocation.center_lon)}`;
+    if (resolvedLocation.bounds_north) params += `&bounds_north=${encode(resolvedLocation.bounds_north)}`;
+    if (resolvedLocation.bounds_east) params += `&bounds_east=${encode(resolvedLocation.bounds_east)}`;
+    if (resolvedLocation.bounds_south) params += `&bounds_south=${encode(resolvedLocation.bounds_south)}`;
+    if (resolvedLocation.bounds_west) params += `&bounds_west=${encode(resolvedLocation.bounds_west)}`;
+    if (resolvedLocation.center_lat_pan) params += `&center_lat_pan=${encode(resolvedLocation.center_lat_pan)}`;
+    if (resolvedLocation.center_lon_pan) params += `&center_lon_pan=${encode(resolvedLocation.center_lon_pan)}`;
+    if (resolvedLocation.user_lat) params += `&user_lat=${encode(resolvedLocation.user_lat)}`;
+    if (resolvedLocation.user_lon) params += `&user_lon=${encode(resolvedLocation.user_lon)}`;
+    if (resolvedLocation.geotype) params += `&geotype=${encode(resolvedLocation.geotype)}`;
+    if (resolvedLocation.geospatial) params += `&geospatial=${encode(resolvedLocation.geospatial)}`;
+    if (resolvedLocation.zoom) params += `&zoom=${encode(resolvedLocation.zoom)}`;
+
+    if (minPrice) params += `&pricemin=${minPrice}&pricemin_formatted=${encode(Number(minPrice).toLocaleString())}`;
+    if (maxPrice) params += `&pricemax=${maxPrice}&pricemax_formatted=${encode(Number(maxPrice).toLocaleString())}`;
+    if (beds) params += `&bed_min=${beds}`;
+
+    window.location.href = baseUrl + params;
+  });
+</script>
