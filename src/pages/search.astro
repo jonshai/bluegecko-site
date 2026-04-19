@@ -1,0 +1,127 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const moxiUrl = Astro.url.searchParams.get('moxi') || 'https://space-coast.homes/search/';
+---
+
+<BaseLayout title="Search Homes | Blue Gecko" description="Search homes on the Space Coast with Blue Gecko Homes.">
+  <section class="section search-hero">
+    <div class="container">
+      <div class="card search-hero-card">
+        <h1>Search Space Coast Homes</h1>
+        <p>
+          Browse live listings, explore the map, and narrow the field without bouncing all over the internet.
+          When you spot something interesting, reach out and we’ll help you sort the contenders from the chaos.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section search-results-section">
+    <div class="container">
+      <div class="card idx-embed-card">
+        <div class="idx-frame-shell cropped" id="idx-frame-shell">
+          <iframe
+            id="idx-frame"
+            src={moxiUrl}
+            title="Blue Gecko Embedded Home Search"
+            loading="lazy"
+            referrerpolicy="strict-origin-when-cross-origin"
+          ></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .search-hero {
+    padding: 2rem 0 2.5rem;
+  }
+
+  .search-results-section {
+    padding-top: 0.5rem;
+  }
+
+  .search-hero-card p {
+    margin-top: 0.5rem;
+  }
+
+  .idx-embed-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .idx-frame-shell {
+    --shell-height: 900px;
+    --crop-top: 64px;
+    --bottom-mask: 0px;
+    border: 1px solid #d7d3ca;
+    border-radius: 18px;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    background: #fff;
+    position: relative;
+    height: var(--shell-height);
+    min-height: var(--shell-height);
+  }
+
+  .idx-frame-shell iframe {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: calc(var(--shell-height) + var(--crop-top));
+    border: 0;
+    background: #fff;
+  }
+
+  .idx-frame-shell.cropped iframe {
+    transform: translateY(calc(-1 * var(--crop-top)));
+  }
+
+  .idx-frame-shell::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--bottom-mask);
+    background: #fff;
+    pointer-events: none;
+  }
+
+  @media (max-width: 1100px) {
+    .idx-frame-shell {
+      --crop-top: 28px;
+      --bottom-mask: 12px;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .idx-frame-shell {
+      --shell-height: 700px;
+      --crop-top: 14px;
+      --bottom-mask: 0px;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .idx-frame-shell {
+      --shell-height: 650px;
+      --crop-top: 0px;
+      --bottom-mask: 0px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .idx-frame-shell iframe {
+      width: 920px;
+      min-width: 920px;
+    }
+
+    .idx-frame-shell.cropped iframe {
+      transform: translateY(0);
+    }
+  }
+</style>

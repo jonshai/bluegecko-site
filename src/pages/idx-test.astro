@@ -1,0 +1,248 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="IDX Test | Blue Gecko Homes" description="Sandbox page for testing Moxi IDX behavior inside Blue Gecko Homes.">
+  <main>
+    <section class="section idx-test-hero">
+      <div class="container">
+        <p class="eyebrow">Sandbox • Not for Production</p>
+        <h1>IDX / Moxi Test Bench</h1>
+        <p class="lead">
+          This page exists to test Moxi behavior without turning the real buyer page into a landfill.
+          We’ll use it to see whether iframe embedding or staged handoff gives us a stable search experience.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="card iframe-test-card">
+          <div class="iframe-test-header">
+            <div>
+              <h2>Iframe Embed Test</h2>
+              <p>
+                This test focuses on the one version that actually behaves: the embedded Moxi search route.
+                The goal is to keep the working search and map while trimming off as much of the Moxi header as we can without losing the search field, filters, or top of the map.
+              </p>
+            </div>
+            <div class="test-actions">
+              <button id="load-moxi-home" class="button button-secondary" type="button">
+                Load Moxi Home
+              </button>
+              <button id="load-moxi-search" class="button button-primary" type="button">
+                Load Search Embed
+              </button>
+              <button id="toggle-crop" class="button button-secondary" type="button">
+                Toggle Header Crop
+              </button>
+            </div>
+          </div>
+          <p class="iframe-state" id="iframe-state">
+            Current iframe target: Moxi search route (crop on)
+          </p>
+
+          <div class="iframe-shell cropped" id="iframe-shell">
+            <iframe
+              id="moxi-frame"
+              src="https://space-coast.homes/search/"
+              title="Moxi Property Search Test"
+              loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"
+            ></iframe>
+          </div>
+
+          <p class="iframe-note">
+            The embedded search route is the current winner. This crop test is just fine-tuning now: hide the unnecessary Moxi chrome, keep the useful controls, and avoid turning the frame into a trap.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="card test-card">
+          <h2>Known-Good Palm Bay URL</h2>
+          <p>
+            This is the exact full payload version used for comparison when testing initialization behavior.
+          </p>
+          <textarea class="url-box" readonly>
+https://space-coast.homes/search/#ls_conversion=acres&status=active&sold_days=180&location_search_field=Palm%20Bay%2C%20FL&drive_time=09%3A00&drive_duration=15&drive_avoid_ferry=1&drive_departure=1&ss_locale=en-US&ss_description=Palm%20Bay%2C%20FL&ss_email_freq=40&ss_send_zero_result=1&bounds_north=28.13036568025304&bounds_east=-80.37288836992188&bounds_south=27.757315290135512&bounds_west=-80.91396503007813&center_lat=28.0344621&center_lon=-80.5886646&center_lat_pan=27.944001539141436&center_lon_pan=-80.6434267&geotype=PopulatedPlace&user_lat=28.0344621&user_lon=-80.5886646&pgsize=20&startidx=0&zoom=11&sort_by=1&company_uuid=4228033&commute=0&buffer_miles=0&geospatial=true&agent_uuid=364e222e-0ca9-400c-a1d1-12724bc51a54&ptype=1%2C2%2C9%2C8&searchType=criteria&pstatus=1%2C2%2C11&omit_hidden=true&currency=USD
+          </textarea>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const frame = document.getElementById('moxi-frame');
+    const frameShell = document.getElementById('iframe-shell');
+    const frameState = document.getElementById('iframe-state');
+    const loadMoxiHome = document.getElementById('load-moxi-home');
+    const loadMoxiSearch = document.getElementById('load-moxi-search');
+    const toggleCrop = document.getElementById('toggle-crop');
+
+    const setFrame = (url, label) => {
+      if (!frame) return;
+      frame.src = url;
+      if (frameState) {
+        const cropState = frameShell?.classList.contains('cropped') ? 'crop on' : 'crop off';
+        frameState.textContent = `Current iframe target: ${label} (${cropState})`;
+      }
+    };
+
+    if (loadMoxiHome) {
+      loadMoxiHome.addEventListener('click', () => {
+        setFrame('https://space-coast.homes/', 'Moxi homepage');
+        frameShell?.classList.remove('cropped');
+      });
+    }
+
+    if (loadMoxiSearch) {
+      loadMoxiSearch.addEventListener('click', () => {
+        setFrame('https://space-coast.homes/search/', 'Moxi search route');
+        frameShell?.classList.add('cropped');
+      });
+    }
+
+    if (toggleCrop && frameShell) {
+      toggleCrop.addEventListener('click', () => {
+        frameShell.classList.toggle('cropped');
+        const label = frameState?.textContent?.replace(/\s*\(crop.*\)$/, '') || 'Current iframe target: unknown';
+        const cropState = frameShell.classList.contains('cropped') ? 'crop on' : 'crop off';
+        if (frameState) {
+          frameState.textContent = `${label} (${cropState})`;
+        }
+      });
+    }
+  </script>
+</BaseLayout>
+
+<style>
+  .idx-test-hero {
+    padding: 1.5rem 0 1rem;
+  }
+
+  .test-card,
+  .iframe-test-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .test-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .test-note,
+  .iframe-note {
+    color: var(--text-soft);
+    font-size: 0.95rem;
+  }
+
+  .iframe-test-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+  }
+
+  .iframe-shell {
+    --shell-height: 900px;
+    --crop-top: 64px;
+    --bottom-mask: 0px;
+    border: 1px solid #d7d3ca;
+    border-radius: 18px;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    background: #fff;
+    position: relative;
+    height: var(--shell-height);
+    min-height: var(--shell-height);
+  }
+
+  .iframe-shell.cropped {
+    height: var(--shell-height);
+    min-height: var(--shell-height);
+  }
+
+  .iframe-shell iframe {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: calc(var(--shell-height) + var(--crop-top));
+    border: 0;
+    background: #fff;
+  }
+
+  .iframe-shell.cropped iframe {
+    transform: translateY(calc(-1 * var(--crop-top)));
+  }
+
+  .iframe-shell::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--bottom-mask);
+    background: #fff;
+    pointer-events: none;
+  }
+
+  .url-box {
+    width: 100%;
+    min-height: 180px;
+    padding: 0.85rem;
+    border: 1px solid #d7d3ca;
+    border-radius: 12px;
+    font: inherit;
+    line-height: 1.45;
+    resize: vertical;
+    background: #faf9f6;
+  }
+
+  .iframe-state {
+    margin: 0 0 0.25rem;
+    font-size: 0.95rem;
+    color: var(--text-soft);
+    font-weight: 600;
+  }
+
+  @media (max-width: 1100px) {
+    .iframe-shell {
+      --crop-top: 28px;
+      --bottom-mask: 12px;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .iframe-shell {
+      --shell-height: 700px;
+      --crop-top: 14px;
+      --bottom-mask: 0px;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .iframe-shell {
+      --shell-height: 650px;
+      --crop-top: 0px;
+      --bottom-mask: 0px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .iframe-shell iframe {
+      width: 920px;
+      min-width: 920px;
+    }
+
+    .iframe-shell.cropped iframe {
+      transform: translateY(0);
+    }
+  }
+</style>

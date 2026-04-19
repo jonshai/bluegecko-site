@@ -13,8 +13,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <p class="eyebrow">Blue Gecko Homes</p>
           <h1>Find your place on the Space Coast.</h1>
           <p class="lead">
-            Real estate guidance from real people. Browse homes, explore communities,
-            and get local insight without the usual pressure or the usual sales script.
+            Real estate guidance from real people. Search homes, explore neighborhoods,
+            and get local insight without the usual pressure, noise, or canned sales routine.
           </p>
           <div class="hero-actions">
             <a class="button button-primary" href="/buy">Browse Homes</a>
@@ -33,16 +33,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <div class="card">
           <h2>More guide, less salesperson.</h2>
           <p>
-            Buying or selling a home on the Space Coast can get noisy fast. Blue Gecko
-            is built to make the process clearer, calmer, and more useful.
+            Buying or selling on the Space Coast gets noisy fast. Blue Gecko is built to make the process clearer,
+            calmer, and easier to navigate from first look to closing table.
           </p>
         </div>
 
         <div class="card">
           <h2>Local help, direct contact.</h2>
           <p>
-            Work directly with William and Lucky, not a faceless call center or a lead
-            desk that forgets your name five minutes later.
+            Work directly with William and Lucky, not a rotating call center, outsourced ISA,
+            or mystery inbox that treats you like a spreadsheet row.
           </p>
         </div>
       </div>
@@ -51,21 +51,30 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <section class="section section-muted">
       <div class="container">
         <div class="section-heading">
-          <p class="eyebrow">Featured Open House</p>
-          <h2>Tour 5017 Barr St</h2>
+          <p class="eyebrow">Start Here</p>
+          <h2>Search on your terms</h2>
           <p>
-            Start with one standout home, then use it as a shortcut to similar listings,
-            price drops, and nearby opportunities in the same range.
+            Browse live listings directly, or let Stella help you narrow the field before you dive into the full search.
           </p>
         </div>
 
-        <div class="card">
-          <h3>See the full open house page</h3>
-          <p>
-            Get the details, preview the property, and unlock similar homes without
-            starting from scratch every time a listing catches your eye.
-          </p>
-          <a class="text-link" href="/open-house/test-open-house">See open house details</a>
+        <div class="intro-grid home-action-grid">
+          <div class="card home-action-card">
+            <h3>Search Homes</h3>
+            <p>
+              Jump straight into the live search experience with map, filters, and current listings across the Space Coast.
+            </p>
+            <a class="button button-primary" href="/search">Open Home Search</a>
+          </div>
+
+          <div class="card home-action-card">
+            <h3>Need a smarter starting point?</h3>
+            <p>
+              Stella is the website concierge. Tell her what you want, what you want to spend, and where you want to be,
+              and she can point you toward the right homes faster.
+            </p>
+            <a class="button button-secondary" href="/contact">Start with Stella</a>
+          </div>
         </div>
       </div>
     </section>
@@ -77,8 +86,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <div>
             <h3>William</h3>
             <p>
-              Local market guide, strategist, and the part of the operation most likely
-              to go deep on pricing, positioning, and the details that actually matter.
+              Local market guide, strategist, and the one most likely to go deep on pricing,
+              positioning, and the details that can save you money or keep you out of trouble.
             </p>
           </div>
         </article>
@@ -102,8 +111,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <p class="eyebrow">Start here</p>
           <h2>Ready to talk about your next move?</h2>
           <p>
-            Whether you’re browsing, planning, or actively hunting, Blue Gecko is built
-            to help you move intelligently.
+            Whether you’re browsing, planning, or actively house hunting, Blue Gecko is built
+            to help you move with more clarity and less chaos.
           </p>
         </div>
 
@@ -125,6 +134,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     min-height: 500px;
     object-fit: cover;
     object-position: center top;
+  }
+
+  .home-action-grid {
+    align-items: stretch;
+  }
+
+  .home-action-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .home-action-card .button {
+    align-self: flex-start;
+    margin-top: auto;
   }
 
   @media (max-width: 900px) {

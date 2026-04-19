@@ -28,13 +28,13 @@ const { title, date, location, summary, heroImage } = entry.data;
           <p class="eyebrow">Open House • Early Access</p>
           <h1>{title}</h1>
           <p class="lead">
-            Tour this home and unlock similar listings, price drops, and buyer opportunities
-            in the same range before they disappear into the usual real estate fog.
+            Tour this home, compare it against the real competition, and use it as a smarter
+            starting point for what else is worth seeing in the same range.
           </p>
           <div class="event-meta">
             <p><strong>When:</strong> {date}</p>
             <p><strong>Where:</strong> {location}</p>
-            <p><strong>Why RSVP:</strong> Get the full listing details and similar homes in this price range.</p>
+            <p><strong>Why RSVP:</strong> Get the full details, similar homes, and a faster path if this one is close but not quite right.</p>
           </div>
         </div>
 
@@ -49,9 +49,9 @@ const { title, date, location, summary, heroImage } = entry.data;
         <div class="card">
           <h2>Get the details</h2>
           <p>
-            RSVP to get the full open house details plus similar homes, price drops, and
-            nearby opportunities that fit the same search. If this home is close but not
-            quite right, we’ll help you find the better fit.
+            RSVP to get the full open house details, similar homes in the same lane, and a
+            clearer sense of whether this one is actually worth your time in person. If it is
+            close but not quite right, we’ll help you find the better fit faster.
           </p>
 
           <LeadForm
@@ -73,19 +73,24 @@ const { title, date, location, summary, heroImage } = entry.data;
         </div>
 
         <div class="card">
-          <h2>Why sign up?</h2>
+          <h2>Or start with Stella</h2>
           <p>
-            This is not just an RSVP page. It is your shortcut to the homes competing in
-            the same lane, without having to start from scratch every time a listing goes
-            live.
+            Stella is the site concierge. If you want help deciding whether this open house is
+            worth the stop, she can help you compare the basics, narrow the field, and point you
+            toward other homes that make sense if this one misses the mark.
+          </p>
+          <p>
+            Think of this as the guided route: tour on your own if you want, or start with Stella
+            if you’d rather skip the wandering and focus on the homes most likely to fit.
           </p>
           <ul class="feature-list">
-            <li>Open house details and updates</li>
-            <li>Similar homes in the same price range</li>
-            <li>Price-drop and deal alerts</li>
-            <li>Direct follow-up from William and Lucky</li>
-            <li>A faster path if this house is not the one</li>
+            <li>Quick guidance before you drive across town</li>
+            <li>Better-fit homes if this one is not the one</li>
+            <li>A clearer next step instead of more random tabs</li>
           </ul>
+          <div style="margin-top: 1rem;">
+            <a class="button button-secondary" href="/contact">Start with Stella</a>
+          </div>
         </div>
       </div>
     </section>
@@ -93,6 +98,7 @@ const { title, date, location, summary, heroImage } = entry.data;
     <section class="section section-muted">
       <div class="container">
         <div class="card prose-card">
+          <h2>What to know before you go</h2>
           <Content />
         </div>
       </div>

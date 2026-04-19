@@ -16,16 +16,16 @@ import LeadForm from '../components/LeadForm.astro';
           </p>
 
           <div class="hero-actions">
-            <a class="button button-primary" href="/buy/search">Browse Available Homes</a>
+            <a class="button button-primary" href="/search">Browse Available Homes</a>
             <a class="button button-secondary" href="/contact">Get Buyer Help</a>
           </div>
         </div>
 
         <div class="hero-media card buy-hero-card">
-          <h2>What this page will become</h2>
+          <h2>Start smart, not scattered</h2>
           <p>
-            Full home search is coming here next. For now, this page gives buyers a clear starting point,
-            a way to raise a hand, and a shortcut to the homes and communities most worth watching.
+            You can dive straight into search, or take a more guided approach. If you want help narrowing things down quickly,
+            Stella can point you toward the right homes before you ever touch a filter.
           </p>
         </div>
       </div>
@@ -44,6 +44,7 @@ import LeadForm from '../components/LeadForm.astro';
         </div>
       </div>
     </section>
+
 
     <section class="section">
       <div class="container grid-2">
@@ -69,16 +70,26 @@ import LeadForm from '../components/LeadForm.astro';
         </div>
 
         <div class="card">
-          <h2>Good next steps</h2>
+          <h2>Not sure where to start?</h2>
           <p>
-            Until the full search experience is wired in, these are the quickest ways to keep moving without losing momentum.
+            You don’t need to figure everything out before you begin. If you’ve got a rough idea of budget, location, or
+            what you want in a home, we can help you turn that into a focused search instead of a scrolling marathon.
           </p>
 
-          <ul class="feature-list">
-            <li><a href="/open-house/test-open-house">See the current open house page</a></li>
-            <li><a href="/list-my-house">Thinking of selling before you buy?</a></li>
-            <li><a href="/contact">Reach out directly for buyer guidance</a></li>
-          </ul>
+          <div class="feature-list">
+            <p><strong>Start with Stella</strong><br />
+            Tell her what you’re looking for and she’ll point you toward homes that actually fit.</p>
+
+            <p><strong>Jump into search</strong><br />
+            Already know what you want? Head straight to live listings and filters.</p>
+
+            <p><strong>Talk to a human</strong><br />
+            Prefer to skip the guesswork entirely? Reach out and we’ll guide you directly.</p>
+          </div>
+
+          <div style="margin-top: 1rem;">
+            <a class="button button-secondary" href="/contact">Start with Stella</a>
+          </div>
         </div>
       </div>
     </section>
@@ -102,6 +113,7 @@ import LeadForm from '../components/LeadForm.astro';
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 2rem;
   }
+
 
   @media (max-width: 900px) {
     .buy-hero {
@@ -138,6 +150,7 @@ import LeadForm from '../components/LeadForm.astro';
       flex-direction: column;
     }
   }
+
 </style>
 
 <script>
@@ -462,7 +475,7 @@ import LeadForm from '../components/LeadForm.astro';
     };
 
     // --- Build URL ---
-    const baseUrl = "https://space-coast.homes/search/";
+    const moxiBaseUrl = "https://space-coast.homes/search/";
 
     let params = `#ls_conversion=acres&status=active&sold_days=180&location_search_field=${encode(resolvedLocation.location_search_field)}&drive_time=09%3A00&drive_duration=15&drive_avoid_ferry=1&drive_departure=1&ss_locale=en-US&ss_description=${encode(resolvedLocation.ss_description)}&ss_email_freq=40&ss_send_zero_result=1&pgsize=20&startidx=0&sort_by=${encode(resolvedLocation.sort_by || '1')}&company_uuid=4228033&agent_uuid=364e222e-0ca9-400c-a1d1-12724bc51a54&commute=0&buffer_miles=0&ptype=1%2C2%2C9%2C8&searchType=criteria&pstatus=1%2C2%2C11&omit_hidden=true&currency=USD`;
 
@@ -484,6 +497,7 @@ import LeadForm from '../components/LeadForm.astro';
     if (maxPrice) params += `&pricemax=${maxPrice}&pricemax_formatted=${encode(Number(maxPrice).toLocaleString())}`;
     if (beds) params += `&bed_min=${beds}`;
 
-    window.location.href = baseUrl + params;
+    const moxiUrl = `${moxiBaseUrl}${params}`;
+    window.location.href = `/search?moxi=${encodeURIComponent(moxiUrl)}`;
   });
 </script>
