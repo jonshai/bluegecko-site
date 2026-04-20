@@ -23,6 +23,7 @@ const {
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <script src="/stella-loader.js" defer></script>
   </head>
   <body>
     <div class="cb-strip">
@@ -128,18 +129,6 @@ When you interact with Blue Gecko, AI may be involved — but a real person, Wil
           document.getElementById('legal-content').innerText = legalText[target];
         });
       });
-    </script>
-    <script>
-      (function() {
-        var s = document.createElement('script');
-        s.src = 'https://stella.bluegecko.homes/widget.js';
-        s.defer = true;
-        document.head.appendChild(s);
-        var l = document.createElement('link');
-        l.rel = 'stylesheet';
-        l.href = 'https://stella.bluegecko.homes/widget.css';
-        document.head.appendChild(l);
-      })();
     </script>
   </body>
 </html>
