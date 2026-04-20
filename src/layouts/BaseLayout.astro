@@ -23,7 +23,6 @@ const {
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <script src="/stella-loader.js" defer></script>
   </head>
   <body>
     <div class="cb-strip">
@@ -130,6 +129,7 @@ When you interact with Blue Gecko, AI may be involved — but a real person, Wil
         });
       });
     </script>
+    <Fragment set:html={`<script src="/stella-loader.js" defer><\/script>`} />
   </body>
 </html>
 
