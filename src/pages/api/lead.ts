@@ -164,10 +164,8 @@ Raw Body: ${raw || 'none'}
     console.error('FUB ERROR', await fubRes.text());
   }
 
-  return new Response(null, {
-    status: 302,
-    headers: {
-      Location: redirectTo,
-    },
+  return new Response(JSON.stringify({ success: true, redirect: redirectTo }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
   });
 };
