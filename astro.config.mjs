@@ -32,5 +32,5 @@ export default defineConfig({
   vite: {
     plugins: [stellaWidgetPlugin()],
   },
-  adapter: cloudflare()
+  adapter: cloudflare(),
 });
