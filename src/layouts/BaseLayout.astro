@@ -329,26 +329,52 @@ When you interact with Blue Gecko, AI may be involved — but a real person, Wil
     display: inline-block;
   }
 
+  /* ── Mobile header: keep logo + nav in the same row ───────────────────────
+     On desktop the logo (144px, margin-top: -72px) overhangs the CB strip.
+     On mobile we shrink the logo and reduce the overhang, but the flex-direction
+     stays row so logo is always left / nav always right — no layout shift.      */
+
   @media (max-width: 900px) {
-    .header-inner {
-      align-items: flex-start;
-      flex-direction: column;
-      padding: 1rem 0;
-    }
-
-    .header-left {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 1rem;
-    }
-
     .brand-logo {
-      height: 72px;
-      margin-top: -38px;
+      height: 88px;
+      margin-top: -42px;
     }
 
     .nav {
-      gap: 0.85rem;
+      gap: 0.8rem;
+      margin-top: 0.7rem;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .brand-logo {
+      height: 72px;
+      margin-top: -34px;
+    }
+
+    .nav {
+      gap: 0.6rem;
+      margin-top: 0.55rem;
+    }
+
+    .nav a {
+      font-size: 0.9rem;
+    }
+  }
+
+  @media (max-width: 390px) {
+    .brand-logo {
+      height: 60px;
+      margin-top: -28px;
+    }
+
+    .nav {
+      gap: 0.5rem;
+      margin-top: 0.45rem;
+    }
+
+    .nav a {
+      font-size: 0.85rem;
     }
   }
 </style>
