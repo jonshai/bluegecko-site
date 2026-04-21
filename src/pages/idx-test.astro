@@ -36,6 +36,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
               <button id="toggle-crop" class="button button-secondary" type="button">
                 Toggle Header Crop
               </button>
+              <button id="crop-48" class="button button-secondary" type="button">
+                Crop 48px
+              </button>
+              <button id="crop-64" class="button button-secondary" type="button">
+                Crop 64px
+              </button>
+              <button id="crop-80" class="button button-secondary" type="button">
+                Crop 80px
+              </button>
             </div>
           </div>
           <p class="iframe-state" id="iframe-state">
@@ -154,6 +163,17 @@ https://space-coast.homes/search/#ls_conversion=acres&status=active&sold_days=18
         }
       });
     }
+
+    const cropButtons: [string, string][] = [
+      ['crop-48', '48px'],
+      ['crop-64', '64px'],
+      ['crop-80', '80px'],
+    ];
+    for (const [id, value] of cropButtons) {
+      document.getElementById(id)?.addEventListener('click', () => {
+        (frameShell as HTMLElement)?.style.setProperty('--crop-top', value);
+      });
+    }
   </script>
 </BaseLayout>
 
@@ -266,37 +286,23 @@ https://space-coast.homes/search/#ls_conversion=acres&status=active&sold_days=18
     font-weight: 600;
   }
 
-  @media (max-width: 1100px) {
-    .iframe-shell {
-      --crop-top: 28px;
-      --bottom-mask: 12px;
-    }
-  }
-
   @media (max-width: 900px) {
     .iframe-shell {
       --shell-height: 700px;
-      --crop-top: 14px;
-      --bottom-mask: 0px;
     }
   }
 
   @media (max-width: 700px) {
     .iframe-shell {
       --shell-height: 650px;
-      --crop-top: 0px;
-      --bottom-mask: 0px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+      width: 100vw;
+      margin-left: calc(-1 * (100vw - 100%) / 2);
+      border-radius: 0;
     }
 
     .iframe-shell iframe {
-      width: 920px;
-      min-width: 920px;
-    }
-
-    .iframe-shell.cropped iframe {
-      transform: translateY(0);
+      width: 100%;
+      min-width: unset;
     }
   }
 </style>
