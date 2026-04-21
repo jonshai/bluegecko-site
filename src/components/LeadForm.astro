@@ -14,6 +14,8 @@ interface Props {
   requireEmail?: boolean;
   requirePhone?: boolean;
   requireAnyContact?: boolean;
+  formId?: string;
+  errorId?: string;
 }
 
 const {
@@ -31,10 +33,12 @@ const {
   requireEmail = false,
   requirePhone = false,
   requireAnyContact = false,
+  formId,
+  errorId,
 } = Astro.props;
 ---
 
-<form class="contact-form js-lead-form" method="POST" action="/api/lead" data-require-any-contact={requireAnyContact ? 'true' : 'false'}>
+<form class="contact-form js-lead-form" method="POST" action="/api/lead" data-require-any-contact={requireAnyContact ? 'true' : 'false'} id={formId}>
   {slug && <input type="hidden" name="slug" value={slug} />}
   {source && <input type="hidden" name="sourceOverride" value={source} />}
   {formType && <input type="hidden" name="formType" value={formType} />}
@@ -73,63 +77,5 @@ const {
   )}
 
   <button class="button button-primary" type="submit">{buttonText}</button>
+  {errorId && <p id={errorId} style="color:#b91c1c;margin-top:0.5rem;font-size:0.9rem;"></p>}
 </form>
-
-<script is:inline>
-  document.addEventListener('submit', async (event) => {
-    const form = event.target;
-
-    if (!(form instanceof HTMLFormElement)) return;
-    if (!form.classList.contains('js-lead-form')) return;
-
-    event.preventDefault();
-
-    // requireAnyContact validation
-    if (form.dataset.requireAnyContact === 'true') {
-      const emailInput = form.querySelector('input[name="email"]');
-      const phoneInput = form.querySelector('input[name="phone"]');
-      const email = emailInput instanceof HTMLInputElement ? emailInput.value.trim() : '';
-      const phone = phoneInput instanceof HTMLInputElement ? phoneInput.value.trim() : '';
-      if (!email && !phone) {
-        window.alert('Please provide an email address or phone number.');
-        return;
-      }
-    }
-
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn instanceof HTMLButtonElement ? submitBtn.textContent : 'Submit';
-    if (submitBtn instanceof HTMLButtonElement) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Sending…';
-    }
-
-    // Remove any previous error
-    const prev = form.querySelector('.form-submit-error');
-    if (prev) prev.remove();
-
-    try {
-      const res = await fetch('/api/lead', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(new FormData(form) as any).toString(),
-      });
-
-      if (!res.ok) throw new Error('Server error');
-
-      const data = await res.json();
-      if (data.redirect) {
-        window.location.href = data.redirect;
-      }
-    } catch {
-      if (submitBtn instanceof HTMLButtonElement) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
-      }
-      const err = document.createElement('p');
-      err.className = 'form-submit-error';
-      err.textContent = 'Something went wrong — please try again or call us at 321.341.6650.';
-      err.style.cssText = 'color:#b91c1c;margin-top:0.5rem;font-size:0.9rem;';
-      form.appendChild(err);
-    }
-  });
-</script>

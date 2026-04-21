@@ -19,7 +19,7 @@ function stellaWidgetPlugin() {
     transformIndexHtml(html) {
       return html.replace(
         '</body>',
-        '<script src="/stella-loader.js" defer></script></body>'
+        '<script src="/stella-loader.js" defer></script><script src="/lead-form.js" defer></script></body>'
       );
     },
   };
