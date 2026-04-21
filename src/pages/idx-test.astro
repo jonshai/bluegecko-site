@@ -61,6 +61,36 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     <section class="section">
       <div class="container">
+        <div class="card iframe-test-card">
+          <div class="iframe-test-header">
+            <div>
+              <h2>Native Width Test</h2>
+              <p>
+                Native width — no crop, no fixed width. Testing Moxi's own responsive behavior.
+              </p>
+            </div>
+            <div class="test-actions">
+              <button id="load-native" class="button button-primary" type="button">
+                Load Native Width Test
+              </button>
+            </div>
+          </div>
+
+          <div class="native-shell" id="native-shell">
+            <iframe
+              id="native-frame"
+              src="https://space-coast.homes/search/"
+              title="Moxi Native Width Test"
+              loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
         <div class="card test-card">
           <h2>Known-Good Palm Bay URL</h2>
           <p>
@@ -102,6 +132,15 @@ https://space-coast.homes/search/#ls_conversion=acres&status=active&sold_days=18
       loadMoxiSearch.addEventListener('click', () => {
         setFrame('https://space-coast.homes/search/', 'Moxi search route');
         frameShell?.classList.add('cropped');
+      });
+    }
+
+    const loadNative = document.getElementById('load-native');
+    const nativeFrame = document.getElementById('native-frame');
+
+    if (loadNative && nativeFrame) {
+      loadNative.addEventListener('click', () => {
+        (nativeFrame as HTMLIFrameElement).src = 'https://space-coast.homes/search/';
       });
     }
 
@@ -191,6 +230,21 @@ https://space-coast.homes/search/#ls_conversion=acres&status=active&sold_days=18
     height: var(--bottom-mask);
     background: #fff;
     pointer-events: none;
+  }
+
+  .native-shell {
+    width: 100%;
+    height: 900px;
+    border: 1px solid #d7d3ca;
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  .native-shell iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
   }
 
   .url-box {
