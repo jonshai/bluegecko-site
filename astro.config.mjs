@@ -13,35 +13,9 @@ function remarkAutoLink() {
   };
 }
 
-function stellaWidgetPlugin() {
-  return {
-    name: 'stella-widget-inject',
-    transformIndexHtml(html) {
-      // Inject stella widget loader
-      html = html.replace(
-        '</body>',
-        '<script src="/stella-loader.js" defer></script></body>'
-      );
-      // Inject lead form handler
-      html = html.replace(
-        '</body>',
-        '<script src="/lead-form.js" defer></script></body>'
-      );
-      console.log('[stella-plugin] injecting scripts into:',
-        html.includes('stella-loader') ? 'ok' : 'MISSING stella',
-        html.includes('lead-form') ? 'ok' : 'MISSING lead-form'
-      );
-      return html;
-    },
-  };
-}
-
 export default defineConfig({
   markdown: {
     remarkPlugins: [remarkAutoLink],
-  },
-  vite: {
-    plugins: [stellaWidgetPlugin()],
   },
   adapter: cloudflare(),
 });
