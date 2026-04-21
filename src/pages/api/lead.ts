@@ -65,19 +65,21 @@ function buildTags(url: URL, referrer: string | null, slug?: string, formType?: 
 }
 
 async function parseRequestData(request: Request) {
+  const contentType = request.headers.get('content-type') || '';
+
+  if (contentType.includes('multipart/form-data')) {
+    const form = await request.formData();
+    return { form, raw: '' };
+  }
+
   const raw = await request.text();
   const form = new FormData();
-
   if (raw) {
     const params = new URLSearchParams(raw);
-
     for (const [key, value] of params.entries()) {
       form.append(key, value);
     }
-
-    return { form, raw };
   }
-
   return { form, raw };
 }
 
@@ -139,7 +141,7 @@ Raw Body: ${raw || 'none'}
   const fubRes = await fetch('https://api.followupboss.com/v1/events', {
     method: 'POST',
     headers: {
-      Authorization: 'Basic ' + Buffer.from(`${import.meta.env.FUB_API_KEY}:`).toString('base64'),
+      Authorization: 'Basic ' + btoa(`${import.meta.env.FUB_API_KEY}:`),
       'Content-Type': 'application/json',
       'X-System': import.meta.env.FUB_SYSTEM || 'BlueGeckoSite',
       'X-System-Key': 'bluegecko-web',
