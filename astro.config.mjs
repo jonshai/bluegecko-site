@@ -14,6 +14,9 @@ function remarkAutoLink() {
 }
 
 export default defineConfig({
+  security: {
+    checkOrigin: false,
+  },
   markdown: {
     remarkPlugins: [remarkAutoLink],
   },
