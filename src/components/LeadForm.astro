@@ -78,4 +78,27 @@ const {
 
   <button class="button button-primary" type="submit">{buttonText}</button>
   {errorId && <p id={errorId} style="color:#b91c1c;margin-top:0.5rem;font-size:0.9rem;"></p>}
+  <p class="form-consent-text">
+    By submitting this form, I agree to be contacted by Jennifer Lee Whipple, LLC via call, email, and text for real estate services. To opt out, you can reply 'stop' at any time or reply 'help' for assistance. You can also click the unsubscribe link in emails. Message and data rates may apply. Message frequency may vary. See our <button class="legal-toggle" data-target="privacy" type="button">Privacy Policy</button>. Data will not be shared with third parties for marketing or promotional purposes.
+  </p>
 </form>
+
+<style>
+  .form-consent-text {
+    font-size: 0.78rem;
+    color: var(--text-soft);
+    line-height: 1.5;
+    margin-top: 0.75rem;
+  }
+
+  .form-consent-text .legal-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: inherit;
+    color: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+</style>
