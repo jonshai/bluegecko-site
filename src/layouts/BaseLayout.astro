@@ -62,15 +62,15 @@ const {
             <span class="team-brand">© {new Date().getFullYear()} Blue Gecko, a Coldwell Banker Realty Team</span>
 
             <div class="legal-links">
-              <button class="legal-toggle" data-target="terms">TERMS OF USE</button>
-              <button class="legal-toggle" data-target="privacy">PRIVACY POLICY</button>
-              <button class="legal-toggle" data-target="accessibility">ACCESSIBILITY STATEMENT</button>
-              <button class="legal-toggle" data-target="fair">FAIR HOUSING NOTICE</button>
-              <button class="legal-toggle" data-target="consent">CONTACT CONSENT</button>
-              <button class="legal-toggle" data-target="ai">AI USE DISCLOSURE</button>
+              <a href="/privacy" class="privacy-link">PRIVACY POLICY &amp; TERMS</a>
             </div>
 
-            <div class="legal-content" id="legal-content"></div>
+            <p class="plain-disclaimer">
+              We're real people, not a big corporation — William and Lucky, licensed agents in Florida
+              who actually live here. When you reach out, you're talking to us (sometimes assisted by
+              our AI, Stella, who is very helpful and always introduces herself). We don't sell your
+              info, we don't do spam, and we'll never pressure you. Promise.
+            </p>
 
             <p class="cb-disclaimer">
               © Coldwell Banker Real Estate LLC. All Rights Reserved. Coldwell Banker and the Coldwell Banker logo are trademarks of Coldwell Banker Real Estate LLC.
@@ -91,44 +91,6 @@ const {
       </div>
     </footer>
 
-    <script>
-      const legalText = {
-        terms: `All information provided on this website is for informational purposes only and is deemed reliable but not guaranteed. Users are encouraged to independently verify all information. Blue Gecko, Coldwell Banker Realty, and its associates are not liable for errors, omissions, or changes in property information.`,
-
-        privacy: `We respect your privacy. Information submitted through forms on this website may be used to contact you regarding real estate services and may be stored in our CRM systems (including Follow Up Boss).
-
-We do not sell your personal information. Data may be shared with trusted service providers solely for business operations such as communication and marketing. Data will not be shared with third parties for marketing or promotional purposes.`,
-
-        accessibility: `We are committed to ensuring digital accessibility for all users and strive to improve the user experience in accordance with applicable accessibility standards.
-
-If you experience difficulty accessing any part of this website, please contact us and we will make reasonable efforts to assist you.`,
-
-        fair: `We are committed to providing equal housing opportunities and fully support the principles of the Fair Housing Act and the REALTOR® Code of Ethics.
-
-We do not discriminate on the basis of race, color, religion, sex, disability, familial status, national origin, sexual orientation, gender identity, or any other protected class under applicable law.
-
-All real estate advertising on this site is subject to federal fair housing laws.`,
-
-        consent: `By sharing your contact information, you agree that William and Jennifer Whipple / Blue Gecko / Coldwell Banker Realty may contact you by phone, text, or email — including AI-assisted and automated messages — regarding real estate services.
-
-Message and data rates may apply. You can reply STOP to opt out of text messages at any time. Consent is not a condition of purchase.
-
-We do not sell your personal information.`,
-
-        ai: `We use AI tools to help us work smarter and respond faster — including automated follow-up messages.
-
-While we aim for accuracy, details like pricing, availability, and timelines can change. For anything important, we’ll always confirm the details with you directly.
-
-When you interact with Blue Gecko, AI may be involved — but a real person, William or Lucky, is always just a message away.`
-      };
-
-      document.querySelectorAll('.legal-toggle').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const target = btn.dataset.target;
-          document.getElementById('legal-content').innerText = legalText[target];
-        });
-      });
-    </script>
   </body>
 </html>
 
@@ -300,22 +262,24 @@ When you interact with Blue Gecko, AI may be involved — but a real person, Wil
     flex-wrap: wrap;
   }
 
-  .legal-toggle {
-    background: none;
-    border: none;
+  .privacy-link {
     color: white;
     font-weight: 700;
-    cursor: pointer;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    border-bottom: none !important;
   }
 
-  .legal-toggle:hover {
+  .privacy-link:hover {
     text-decoration: underline;
   }
 
-  .legal-content {
+  .plain-disclaimer {
     margin-top: 0.75rem;
     font-size: 12px;
-    opacity: 0.9;
+    opacity: 0.82;
+    max-width: 680px;
+    line-height: 1.6;
   }
 
   .legal-right {
