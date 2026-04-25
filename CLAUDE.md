@@ -178,3 +178,31 @@ Delete these in a future cleanup commit.
 - SMS compliance text in place
 - Privacy page live at /privacy
 - Footer legal bar simplified
+
+## Branching & Deploy Workflow (IMPORTANT)
+
+### Default workflow for all changes
+1. Pull latest main before starting: git pull origin main
+2. Create a feature branch: git checkout -b [descriptive-name]
+3. Make all changes on the branch — never commit directly to main
+4. Push the branch: git push origin [branch-name]
+5. Tell the user the branch name and Cloudflare preview URL:
+   https://[branch-name].bluegecko-site.pages.dev
+6. Wait for explicit approval before merging to main
+7. Merge only when user confirms: git checkout main && git merge [branch-name] && git push origin main && git branch -d [branch-name]
+
+### Cloudflare preview URLs
+Every branch push auto-deploys to a preview URL — use this for testing.
+Format: https://[branch-name].bluegecko-site.pages.dev
+Production is ONLY updated when changes land on main.
+
+### Exceptions
+Simple safe changes (fixing a typo, updating a phone number, adding
+a new content file that can't break existing pages) may go directly
+to main at user's discretion — but ask first rather than assume.
+
+### Branch naming convention
+- fix/description     — bug fixes
+- feature/description — new pages or functionality
+- content/description — new blog, community, builder, FAQ pages
+- style/description   — CSS or visual changes
