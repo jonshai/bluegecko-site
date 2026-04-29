@@ -58,7 +58,17 @@ function githubRequest(method, endpoint, body) {
 async function getFileSha(repoPath) {
   if (!GITHUB_TOKEN) return null;
   const res = await githubRequest('GET', `/repos/${REPO}/contents/${repoPath}?ref=${BRANCH}`);
-  return res.status === 200 ? res.data.sha : null;
+  if (res.status !== 200) {
+    console.log(`[getFileSha] ${repoPath} → status ${res.status} (not on branch ${BRANCH})`);
+    return null;
+  }
+  const sha = typeof res.data === 'object' && !Array.isArray(res.data) ? res.data.sha : null;
+  if (!sha || typeof sha !== 'string' || !/^[0-9a-f]{40}$/i.test(sha.trim())) {
+    console.warn(`[getFileSha] unexpected sha value for ${repoPath}:`, JSON.stringify(sha));
+    return null;
+  }
+  console.log(`[getFileSha] ${repoPath} → sha ${sha}`);
+  return sha.trim();
 }
 
 async function commitFile(repoPath, content, message) {
@@ -85,17 +95,23 @@ async function deleteFileFromGitHub(repoPath, message) {
     return { ok: true, github: false };
   }
 
+  console.log(`[deleteFileFromGitHub] path: ${repoPath}`);
+  console.log(`[deleteFileFromGitHub] message: ${message}`);
+
   const sha = await getFileSha(repoPath);
   if (!sha) {
-    // File doesn't exist on GitHub (maybe never committed) — nothing to delete
+    console.log(`[deleteFileFromGitHub] no SHA found — file not on ${BRANCH}, skipping GitHub delete`);
     return { ok: true, github: false };
   }
 
-  const res = await githubRequest('DELETE', `/repos/${REPO}/contents/${repoPath}`, {
-    message,
-    sha,
-    branch: BRANCH,
-  });
+  console.log(`[deleteFileFromGitHub] sending DELETE with sha: ${sha}`);
+  const requestBody = { message, sha, branch: BRANCH };
+  console.log(`[deleteFileFromGitHub] request body: ${JSON.stringify(requestBody)}`);
+
+  const res = await githubRequest('DELETE', `/repos/${REPO}/contents/${repoPath}`, requestBody);
+
+  console.log(`[deleteFileFromGitHub] GitHub response status: ${res.status}`);
+  console.log(`[deleteFileFromGitHub] GitHub response body: ${JSON.stringify(res.data)}`);
 
   if (res.status !== 200) {
     throw new Error(`GitHub DELETE error ${res.status}: ${JSON.stringify(res.data)}`);
@@ -333,8 +349,12 @@ const server = http.createServer(async (req, res) => {
 
     if (method === 'DELETE') {
       try {
+        console.log(`[DELETE event] id from URL: "${id}"`);
         const repoPath = `src/content/events/${id}.md`;
         const localPath = path.join(REPO_ROOT, repoPath);
+        console.log(`[DELETE event] repoPath: "${repoPath}"`);
+        console.log(`[DELETE event] localPath: "${localPath}"`);
+        console.log(`[DELETE event] file exists locally: ${fs.existsSync(localPath)}`);
 
         if (!fs.existsSync(localPath)) return jsonResponse(res, 404, { error: 'Not found' });
 
