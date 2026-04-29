@@ -69,13 +69,36 @@ async function commitFile(repoPath, content, message) {
 
   const sha = await getFileSha(repoPath);
   const encoded = Buffer.from(content).toString('base64');
-
   const body = { message, content: encoded, branch: BRANCH };
   if (sha) body.sha = sha;
 
   const res = await githubRequest('PUT', `/repos/${REPO}/contents/${repoPath}`, body);
   if (res.status !== 200 && res.status !== 201) {
     throw new Error(`GitHub API error ${res.status}: ${JSON.stringify(res.data)}`);
+  }
+  return { ok: true, github: true };
+}
+
+async function deleteFileFromGitHub(repoPath, message) {
+  if (!GITHUB_TOKEN) {
+    console.warn('No GITHUB_TOKEN — skipping GitHub delete for', repoPath);
+    return { ok: true, github: false };
+  }
+
+  const sha = await getFileSha(repoPath);
+  if (!sha) {
+    // File doesn't exist on GitHub (maybe never committed) — nothing to delete
+    return { ok: true, github: false };
+  }
+
+  const res = await githubRequest('DELETE', `/repos/${REPO}/contents/${repoPath}`, {
+    message,
+    sha,
+    branch: BRANCH,
+  });
+
+  if (res.status !== 200) {
+    throw new Error(`GitHub DELETE error ${res.status}: ${JSON.stringify(res.data)}`);
   }
   return { ok: true, github: true };
 }
@@ -100,7 +123,6 @@ function buildPropertyFrontmatter(d) {
     for (const g of d.gallery) lines.push(`  - ${JSON.stringify(g)}`);
   }
 
-  // Multiline description using YAML literal block
   lines.push('description: |');
   for (const line of d.description.split('\n')) {
     lines.push('  ' + line);
@@ -140,7 +162,6 @@ function parseFrontmatter(content) {
     const rest = line.slice(colonIdx + 1).trim();
 
     if (rest === '|' || rest === '>') {
-      // Block scalar
       const blockLines = [];
       i++;
       while (i < lines.length && (lines[i].startsWith('  ') || lines[i] === '')) {
@@ -152,7 +173,6 @@ function parseFrontmatter(content) {
     }
 
     if (rest === '') {
-      // Could be an array
       const arr = [];
       let j = i + 1;
       while (j < lines.length && lines[j].trim().startsWith('- ')) {
@@ -231,7 +251,11 @@ const server = http.createServer(async (req, res) => {
 
   // CORS preflight
   if (method === 'OPTIONS') {
-    res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' });
+    res.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    });
     res.end();
     return;
   }
@@ -252,28 +276,76 @@ const server = http.createServer(async (req, res) => {
 
   // ── GET /api/events ────────────────────────────────────────────────────────
   if (method === 'GET' && pathname === '/api/events') {
-    const events = readLocalEvents();
-    return jsonResponse(res, 200, events);
+    return jsonResponse(res, 200, readLocalEvents());
   }
 
-  // ── GET /api/property/:slug ────────────────────────────────────────────────
+  // ── GET /api/property/:slug  ───────────────────────────────────────────────
+  // ── DELETE /api/property/:slug ─────────────────────────────────────────────
   const propMatch = pathname.match(/^\/api\/property\/(.+)$/);
-  if (method === 'GET' && propMatch) {
+  if (propMatch) {
     const slug = propMatch[1];
-    const filePath = path.join(REPO_ROOT, `src/content/properties/${slug}.md`);
-    if (!fs.existsSync(filePath)) return jsonResponse(res, 404, { error: 'Not found' });
-    const fm = parseFrontmatter(fs.readFileSync(filePath, 'utf8'));
-    return jsonResponse(res, 200, fm);
+
+    if (method === 'GET') {
+      const filePath = path.join(REPO_ROOT, `src/content/properties/${slug}.md`);
+      if (!fs.existsSync(filePath)) return jsonResponse(res, 404, { error: 'Not found' });
+      const fm = parseFrontmatter(fs.readFileSync(filePath, 'utf8'));
+      return jsonResponse(res, 200, fm);
+    }
+
+    if (method === 'DELETE') {
+      try {
+        // Safety check: does any event reference this property?
+        const events = readLocalEvents().filter(e => e.property === slug);
+        if (events.length > 0) {
+          return jsonResponse(res, 409, {
+            error: `This property has ${events.length} event${events.length > 1 ? 's' : ''} referencing it. Delete those first.`,
+            eventCount: events.length,
+          });
+        }
+
+        const repoPath = `src/content/properties/${slug}.md`;
+        const localPath = path.join(REPO_ROOT, repoPath);
+
+        if (!fs.existsSync(localPath)) return jsonResponse(res, 404, { error: 'Not found' });
+
+        fs.unlinkSync(localPath);
+        const result = await deleteFileFromGitHub(repoPath, `content: delete property ${slug}`);
+        return jsonResponse(res, 200, { ok: true, ...result });
+      } catch (err) {
+        console.error(err);
+        return jsonResponse(res, 500, { error: err.message });
+      }
+    }
   }
 
-  // ── GET /api/event/:id ─────────────────────────────────────────────────────
+  // ── GET /api/event/:id  ────────────────────────────────────────────────────
+  // ── DELETE /api/event/:id ──────────────────────────────────────────────────
   const eventMatch = pathname.match(/^\/api\/event\/(.+)$/);
-  if (method === 'GET' && eventMatch) {
+  if (eventMatch) {
     const id = eventMatch[1];
-    const filePath = path.join(REPO_ROOT, `src/content/events/${id}.md`);
-    if (!fs.existsSync(filePath)) return jsonResponse(res, 404, { error: 'Not found' });
-    const fm = parseFrontmatter(fs.readFileSync(filePath, 'utf8'));
-    return jsonResponse(res, 200, { id, ...fm });
+
+    if (method === 'GET') {
+      const filePath = path.join(REPO_ROOT, `src/content/events/${id}.md`);
+      if (!fs.existsSync(filePath)) return jsonResponse(res, 404, { error: 'Not found' });
+      const fm = parseFrontmatter(fs.readFileSync(filePath, 'utf8'));
+      return jsonResponse(res, 200, { id, ...fm });
+    }
+
+    if (method === 'DELETE') {
+      try {
+        const repoPath = `src/content/events/${id}.md`;
+        const localPath = path.join(REPO_ROOT, repoPath);
+
+        if (!fs.existsSync(localPath)) return jsonResponse(res, 404, { error: 'Not found' });
+
+        fs.unlinkSync(localPath);
+        const result = await deleteFileFromGitHub(repoPath, `content: delete open house event ${id}`);
+        return jsonResponse(res, 200, { ok: true, ...result });
+      } catch (err) {
+        console.error(err);
+        return jsonResponse(res, 500, { error: err.message });
+      }
+    }
   }
 
   // ── POST /api/property ─────────────────────────────────────────────────────
@@ -283,17 +355,19 @@ const server = http.createServer(async (req, res) => {
       const d = JSON.parse(raw);
       if (!d.slug || !d.address) return jsonResponse(res, 400, { error: 'slug and address are required' });
 
-      // Normalize slug
       d.slug = d.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const repoPath = `src/content/properties/${d.slug}.md`;
+      const localPath = path.join(REPO_ROOT, repoPath);
+      const isNew = !fs.existsSync(localPath);
+
       const content = buildPropertyFrontmatter(d);
-      const localPath = path.join(REPO_ROOT, `src/content/properties/${d.slug}.md`);
       fs.mkdirSync(path.dirname(localPath), { recursive: true });
       fs.writeFileSync(localPath, content);
 
       const result = await commitFile(
-        `src/content/properties/${d.slug}.md`,
+        repoPath,
         content,
-        `content: ${fs.existsSync(localPath) ? 'update' : 'add'} property ${d.slug}`
+        `content: ${isNew ? 'add' : 'update'} property ${d.slug}`
       );
       return jsonResponse(res, 200, { ok: true, slug: d.slug, ...result });
     } catch (err) {
@@ -310,18 +384,30 @@ const server = http.createServer(async (req, res) => {
       if (!d.property || !d.date || !d.start || !d.end)
         return jsonResponse(res, 400, { error: 'property, date, start, end are required' });
 
-      const id = `${d.property}-${d.date}`;
+      const newId = `${d.property}-${d.date}`;
+      const originalId = d.originalId || null;
+      const repoPath = `src/content/events/${newId}.md`;
+      const localPath = path.join(REPO_ROOT, repoPath);
+      const isNew = !fs.existsSync(localPath);
+
       const content = buildEventFrontmatter(d);
-      const localPath = path.join(REPO_ROOT, `src/content/events/${id}.md`);
       fs.mkdirSync(path.dirname(localPath), { recursive: true });
       fs.writeFileSync(localPath, content);
 
+      // If the ID changed (date or property was edited), delete the old file
+      if (originalId && originalId !== newId) {
+        const oldRepoPath = `src/content/events/${originalId}.md`;
+        const oldLocalPath = path.join(REPO_ROOT, oldRepoPath);
+        if (fs.existsSync(oldLocalPath)) fs.unlinkSync(oldLocalPath);
+        await deleteFileFromGitHub(oldRepoPath, `content: rename event ${originalId} → ${newId}`);
+      }
+
       const result = await commitFile(
-        `src/content/events/${id}.md`,
+        repoPath,
         content,
-        `content: add open house event ${id}`
+        `content: ${isNew && !originalId ? 'add' : 'update'} open house event ${newId}`
       );
-      return jsonResponse(res, 200, { ok: true, id, ...result });
+      return jsonResponse(res, 200, { ok: true, id: newId, ...result });
     } catch (err) {
       console.error(err);
       return jsonResponse(res, 500, { error: err.message });
@@ -333,7 +419,7 @@ const server = http.createServer(async (req, res) => {
   if (method === 'POST' && pathname === '/api/upload') {
     try {
       const raw = await readBody(req);
-      const { slug, filename, data, contentType } = JSON.parse(raw);
+      const { slug, filename, data } = JSON.parse(raw);
       if (!slug || !filename || !data) return jsonResponse(res, 400, { error: 'slug, filename, data required' });
 
       const safeFilename = path.basename(filename).replace(/[^a-z0-9._-]/gi, '-');
@@ -342,21 +428,17 @@ const server = http.createServer(async (req, res) => {
       fs.mkdirSync(path.dirname(localPath), { recursive: true });
       fs.writeFileSync(localPath, Buffer.from(data, 'base64'));
 
-      const result = await commitFile(
-        repoPath,
-        Buffer.from(data, 'base64').toString('binary'),
-        `content: upload photo for ${slug}`
-      );
-
-      // GitHub Contents API wants base64 directly; override with raw base64
       if (GITHUB_TOKEN) {
         const sha = await getFileSha(repoPath);
         const body = { message: `content: upload photo for ${slug}`, content: data, branch: BRANCH };
         if (sha) body.sha = sha;
-        await githubRequest('PUT', `/repos/${REPO}/contents/${repoPath}`, body);
+        const res2 = await githubRequest('PUT', `/repos/${REPO}/contents/${repoPath}`, body);
+        if (res2.status !== 200 && res2.status !== 201) {
+          throw new Error(`GitHub upload error ${res2.status}: ${JSON.stringify(res2.data)}`);
+        }
       }
 
-      return jsonResponse(res, 200, { ok: true, path: `/${repoPath.replace('public/', '')}` });
+      return jsonResponse(res, 200, { ok: true, path: `/uploads/${slug}/${safeFilename}` });
     } catch (err) {
       console.error(err);
       return jsonResponse(res, 500, { error: err.message });

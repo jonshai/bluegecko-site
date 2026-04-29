@@ -112,6 +112,8 @@
     .btn-primary { background: var(--brand); color: white; }
     .btn-accent { background: var(--accent); color: white; }
     .btn-ghost { background: transparent; color: var(--brand); border: 1.5px solid var(--brand); }
+    .btn-danger { background: transparent; color: #b91c1c; border: 1.5px solid #b91c1c; }
+    .btn-danger:hover { background: #fee2e2; opacity: 1; }
     .btn-sm { padding: 0.3rem 0.75rem; font-size: 0.78rem; }
 
     /* ── Forms ── */
@@ -233,7 +235,7 @@
       <tr>
         <th>Address</th>
         <th>Slug</th>
-        <th style="width:80px;"></th>
+        <th style="width:140px;"></th>
       </tr>
     </thead>
     <tbody id="prop-tbody">
@@ -305,7 +307,7 @@
         <th>Property</th>
         <th>Date</th>
         <th>Time</th>
-        <th style="width:80px;"></th>
+        <th style="width:140px;"></th>
       </tr>
     </thead>
     <tbody id="event-tbody">
@@ -429,10 +431,14 @@
     }
     for (const p of allProperties) {
       const tr = document.createElement('tr');
+      tr.dataset.propSlug = p.slug;
       tr.innerHTML = `
         <td>${p.address}</td>
         <td style="font-size:0.8rem;color:var(--text-soft);">${p.slug}</td>
-        <td><button class="btn btn-ghost btn-sm" data-edit-prop="${p.slug}">Edit</button></td>
+        <td style="display:flex;gap:0.4rem;padding:0.5rem 1rem;">
+          <button class="btn btn-ghost btn-sm" data-edit-prop="${p.slug}">Edit</button>
+          <button class="btn btn-danger btn-sm" data-delete-prop="${p.slug}" data-address="${p.address}">Delete</button>
+        </td>
       `;
       tbody.appendChild(tr);
     }
@@ -545,6 +551,7 @@
   async function loadEvents() {
     const res = await fetch('/api/events');
     const events = await res.json();
+    allEvents = events;
 
     const tbody = document.getElementById('event-tbody');
     tbody.innerHTML = '';
@@ -557,11 +564,15 @@
       const address = prop ? prop.address : ev.property;
       const time = ev.start && ev.end ? `${ev.start} – ${ev.end}` : '';
       const tr = document.createElement('tr');
+      tr.dataset.eventId = ev.id;
       tr.innerHTML = `
         <td>${address}</td>
         <td>${ev.date || ''}</td>
         <td style="font-size:0.85rem;">${time}</td>
-        <td><button class="btn btn-ghost btn-sm" data-edit-event="${ev.id}">Edit</button></td>
+        <td style="display:flex;gap:0.4rem;padding:0.5rem 1rem;">
+          <button class="btn btn-ghost btn-sm" data-edit-event="${ev.id}">Edit</button>
+          <button class="btn btn-danger btn-sm" data-delete-event="${ev.id}" data-address="${address}" data-date="${ev.date || ''}">Delete</button>
+        </td>
       `;
       tbody.appendChild(tr);
     }
@@ -602,12 +613,14 @@
     showStatus(statusEl, 'Saving…', 'loading');
 
     try {
+      const originalId = document.getElementById('event-id-original').value;
       const payload = {
         property: document.getElementById('f-property').value,
         date: document.getElementById('f-date').value,
         start: document.getElementById('f-start').value,
         end: document.getElementById('f-end').value,
         notes: document.getElementById('f-notes').value.trim(),
+        ...(originalId ? { originalId } : {}),
       };
 
       const res = await fetch('/api/event', {
@@ -623,6 +636,79 @@
       await loadEvents();
     } catch (err) {
       showStatus(statusEl, '✗ ' + err.message, 'err');
+    }
+  });
+
+  // ── Delete handlers ───────────────────────────────────────────────────────
+  let allEvents = [];
+
+  document.addEventListener('click', async e => {
+    // Delete event
+    const eventId = e.target.dataset.deleteEvent;
+    if (eventId) {
+      const address = e.target.dataset.address;
+      const date = e.target.dataset.date;
+      const confirmed = confirm(`Delete open house at ${address} on ${date}?\n\nThis cannot be undone.`);
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch('/api/event/' + eventId, { method: 'DELETE' });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || 'Delete failed');
+        // Remove the row immediately
+        const tr = document.querySelector(`tr[data-event-id="${eventId}"]`);
+        if (tr) tr.remove();
+        // Refresh allEvents
+        allEvents = allEvents.filter(ev => ev.id !== eventId);
+        const tbody = document.getElementById('event-tbody');
+        if (tbody.querySelectorAll('tr').length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-soft);font-style:italic;">No events yet.</td></tr>';
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+      return;
+    }
+
+    // Delete property
+    const propSlug = e.target.dataset.deleteProp;
+    if (propSlug) {
+      const address = e.target.dataset.address;
+
+      // Safety check: count events referencing this property in our loaded data
+      const linkedEvents = allEvents.filter(ev => ev.property === propSlug);
+      if (linkedEvents.length > 0) {
+        alert(`This property has ${linkedEvents.length} open house event${linkedEvents.length > 1 ? 's' : ''} referencing it. Delete those first.`);
+        return;
+      }
+
+      const confirmed = confirm(`Delete property "${address}"?\n\nThis cannot be undone.`);
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch('/api/property/' + propSlug, { method: 'DELETE' });
+        const json = await res.json();
+        if (res.status === 409) {
+          // Server-side safety check (in case local data was stale)
+          alert(json.error);
+          return;
+        }
+        if (!json.ok) throw new Error(json.error || 'Delete failed');
+        // Remove the row immediately
+        const tr = document.querySelector(`tr[data-prop-slug="${propSlug}"]`);
+        if (tr) tr.remove();
+        allProperties = allProperties.filter(p => p.slug !== propSlug);
+        const tbody = document.getElementById('prop-tbody');
+        if (tbody.querySelectorAll('tr').length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-soft);font-style:italic;">No properties yet.</td></tr>';
+        }
+        // Remove from event form dropdown too
+        const opt = document.querySelector(`#f-property option[value="${propSlug}"]`);
+        if (opt) opt.remove();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+      return;
     }
   });
 
