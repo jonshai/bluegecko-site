@@ -5,8 +5,7 @@
 	],
 	"name": "bluegecko",
 	"assets": {
-		"directory": "./dist/client",
-		"binding": "ASSETS"
+		"directory": "./dist/client"
 	},
 	"observability": {
 		"enabled": true
