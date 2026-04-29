@@ -24,6 +24,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Clear stale wrangler deploy config
+        run: rm -f .wrangler/deploy/config.json
+
       - name: Deploy
         run: cd dist/server && npx wrangler deploy
         env:
