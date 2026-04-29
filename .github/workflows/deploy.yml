@@ -24,6 +24,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Remove wrangler deploy redirect
+        run: rm -f .wrangler/deploy/config.json
+
       - name: Deploy
         run: npx wrangler deploy
         env:
