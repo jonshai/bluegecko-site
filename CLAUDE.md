@@ -26,14 +26,35 @@ Cloudflare Pages SSR deployment despite working locally.
 DO NOT inline scripts in Astro components — SSR strips them.
 Static files in public/ are served correctly at runtime.
 
-### Cloudflare Pages Setup
+### Cloudflare Deployment — NON-STANDARD SETUP ⚠️
+This site runs as a Cloudflare Worker with Assets, NOT a standard
+Cloudflare Pages project. This atypical configuration was required
+to make the Stella chatbot work correctly.
+
+DO NOT attempt to change the deployment mechanism without understanding
+this fully. It took ~3 hours of troubleshooting to establish the
+working pattern below. Do not break it.
+
+Key facts:
 - Output directory: dist/client (NOT dist/)
 - Worker entry: dist/client/_worker.js (copied by inject-scripts.mjs)
 - Server chunks: dist/client/chunks/ (copied by inject-scripts.mjs)
-- Environment variables: set as Secrets in Cloudflare Pages dashboard
+- Environment variables: set as Secrets in Cloudflare dashboard
   FUB_API_KEY — set as Secret, not in .env (gitignored)
-- wrangler.jsonc: do NOT add "main" field — breaks deployment
 - checkOrigin: false in astro.config.mjs (required for form POST)
+
+wrangler.jsonc MUST have:
+  "name": "bluegecko"  ← the live worker name, NOT bluegecko-site
+  "assets": { "directory": "./dist/client" }  ← no binding field
+
+wrangler.jsonc MUST NOT have:
+  "main" field — breaks deployment
+  "assets.binding" field — causes "assets-only Worker" error
+
+There are 3 workers on the Cloudflare account — do not confuse them:
+  bluegecko      ← THE LIVE SITE (bluegecko.homes)
+  stella-chat    ← Stella chatbot backend
+  bluegecko-site ← old/stale worker from failed setup, ignore
 
 ### Stella Widget
 - Widget assets served by PANTHEON Stella service (port 8012)
@@ -80,6 +101,8 @@ public/
   lead-form.js               — handles contact form fetch submission
 scripts/
   inject-scripts.mjs         — post-build script injection
+.github/workflows/
+  deploy.yml                 — GitHub Actions auto-deploy (only deploy mechanism)
 
 ## Design System
 
@@ -117,12 +140,41 @@ promotional purposes."
 - The legalText object and legal-toggle event listeners are GONE
 - Do NOT re-add toggle buttons or inline disclaimer script
 
-## Git / Deploy Workflow
-- CC pushes directly to remote — GitHub Desktop requires Pull after
-  CC commits or local changes will conflict
-- GitHub → Cloudflare auto-deploy confirmed working on push to main
-- Deploy: git add -A && git commit -m "description" && git push origin main
-- Verify: curl -s 'https://bluegecko.homes' | grep "stella-loader"
+## Git / Deploy Workflow ⚠️
+
+### The ONLY working deploy mechanism
+GitHub push to main → GitHub Actions → cloudflare/wrangler-action@v3
+
+The working .github/workflows/deploy.yml steps:
+1. Checkout
+2. Setup Node 22 (NOT 20 — Astro v6 requires >=22.12.0)
+3. npm ci
+4. npm run build
+5. rm -f .wrangler/deploy/config.json  ← CRITICAL: the build generates
+   this redirect file which points wrangler at dist/server/wrangler.json
+   instead of wrangler.jsonc. Must be deleted before deploy or deploy fails.
+6. cloudflare/wrangler-action@v3 with apiToken + accountId
+
+GitHub Secrets required (Settings → Secrets → Actions):
+  CLOUDFLARE_API_TOKEN  — Edit Cloudflare Workers token, all zones
+  CLOUDFLARE_ACCOUNT_ID — c4b87e3db7bbe4739053d3fa3923f602
+
+### Commands that DO NOT work (do not attempt)
+- npx wrangler deploy — hits /workers/services/ API, gets 7003 error
+- cd dist/server && npx wrangler deploy — wrong path
+- wrangler pages deploy — wrong product
+- Any manual wrangler terminal command for production
+
+Why npx wrangler deploy fails: the bluegecko worker was originally
+created via wrangler pages deploy and lives under a different Cloudflare
+API path. Only cloudflare/wrangler-action@v3 handles this correctly.
+
+### Verification
+After deploy completes:
+curl -s 'https://bluegecko.homes' | grep "stella-loader"
+
+### CC pushes directly to remote
+GitHub Desktop requires Pull after CC commits or local changes conflict.
 
 ## Common Debugging
 
@@ -150,6 +202,10 @@ Delete these in a future cleanup commit.
 - Never set min-width: 920px on the search iframe mobile breakpoint
 - Never touch the CB strip styling — Coldwell Banker requirement
 - Never re-add the legalText toggle script to BaseLayout.astro
+- Never run npx wrangler deploy directly — use GitHub Actions only
+- Never add "main" field to wrangler.jsonc — breaks deployment
+- Never add "assets.binding" to wrangler.jsonc — causes assets-only error
+- Never change the deploy mechanism without reading the deployment section above
 
 ## Planned Features (not yet built)
 
@@ -158,7 +214,7 @@ Delete these in a future cleanup commit.
 - /builders/[slug]    — builder spotlights (same workflow)
 - /blog/[slug]        — market updates, open house recaps, neighborhood guides
 - /faq/[slug]         — Q&A pages targeting AEO queries
-- Workflow: Vera writes Markdown → commits to GitHub → Cloudflare auto-deploys
+- Workflow: Vera writes Markdown → commits to GitHub → Actions auto-deploys
 - Each page auto-generates: URL, meta tags, sitemap entry, schema markup
 
 ### Builder Incentives Dashboard
@@ -175,9 +231,11 @@ Delete these in a future cleanup commit.
 - FUB lead capture working
 - IDX search with 64px universal crop working
 - Mobile search native width working
-- SMS compliance text in place
-- Privacy page live at /privacy
+- SMS compliance text in place (FUB-approved carrier language)
+- Privacy page live at /privacy — registered with FUB and Meta
 - Footer legal bar simplified
+- GitHub Actions auto-deploy working via cloudflare/wrangler-action@v3
+- Open house slug: /open-house/open-house (no longer test-open-house)
 
 ## Branching & Deploy Workflow (IMPORTANT)
 
@@ -186,15 +244,14 @@ Delete these in a future cleanup commit.
 2. Create a feature branch: git checkout -b [descriptive-name]
 3. Make all changes on the branch — never commit directly to main
 4. Push the branch: git push origin [branch-name]
-5. Tell the user the branch name and Cloudflare preview URL:
-   https://[branch-name].bluegecko-site.pages.dev
+5. Tell the user the branch name
 6. Wait for explicit approval before merging to main
 7. Merge only when user confirms: git checkout main && git merge [branch-name] && git push origin main && git branch -d [branch-name]
 
-### Cloudflare preview URLs
-Every branch push auto-deploys to a preview URL — use this for testing.
-Format: https://[branch-name].bluegecko-site.pages.dev
-Production is ONLY updated when changes land on main.
+### Branch preview URLs
+Branch pushes do NOT auto-deploy to preview URLs with this non-standard
+Worker setup. Testing happens by reviewing code changes directly.
+Production is ONLY updated when changes land on main via GitHub Actions.
 
 ### Exceptions
 Simple safe changes (fixing a typo, updating a phone number, adding
