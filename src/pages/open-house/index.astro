@@ -1,0 +1,425 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const allEvents = await getCollection('events');
+const allProperties = await getCollection('properties');
+
+// Build property lookup by slug
+const propMap = Object.fromEntries(allProperties.map(p => [p.data.slug, p.data]));
+
+// Date helpers
+function formatTime(t: string): string {
+  const [h, m] = t.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const hour = h % 12 || 12;
+  return `${hour}:${m.toString().padStart(2, '0')} ${period}`;
+}
+
+function formatDate(d: string): string {
+  const [year, month, day] = d.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+function formatPrice(n: number): string {
+  return '$' + n.toLocaleString('en-US');
+}
+
+function firstSentence(text: string): string {
+  const match = text.match(/^.+?[.!?]/);
+  return match ? match[0] : text.slice(0, 160);
+}
+
+const todayStr = new Date().toISOString().split('T')[0];
+
+const sixtyDaysAgo = new Date();
+sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+const sixtyDaysAgoStr = sixtyDaysAgo.toISOString().split('T')[0];
+
+const upcomingEvents = allEvents
+  .filter(e => e.data.date >= todayStr)
+  .sort((a, b) => a.data.date.localeCompare(b.data.date));
+
+const recentEvents = allEvents
+  .filter(e => e.data.date < todayStr && e.data.date >= sixtyDaysAgoStr)
+  .sort((a, b) => b.data.date.localeCompare(a.data.date));
+
+const heroEvent = upcomingEvents[0];
+const remainingUpcoming = upcomingEvents.slice(1);
+---
+
+<BaseLayout title="Open Houses | Blue Gecko" description="Tour homes with William and Lucky — real agents who live and work on the Space Coast.">
+  <main>
+
+    {upcomingEvents.length === 0 ? (
+      <section class="section">
+        <div class="container">
+          <div class="empty-state">
+            <h1>No open houses on the calendar right now.</h1>
+            <p>
+              We host them regularly — check back soon, or let Stella know what you're looking for and
+              she'll flag the right ones when they come up.
+            </p>
+            <button data-stella-trigger="open" class="button button-primary" style="margin-top:1rem;">
+              Talk to Stella
+            </button>
+          </div>
+        </div>
+      </section>
+    ) : (
+      <>
+        {/* ── HERO CARD ───────────────────────────────────── */}
+        {heroEvent && (() => {
+          const prop = propMap[heroEvent.data.property];
+          if (!prop) return null;
+          return (
+            <section class="section hero-section">
+              <div class="container">
+                <p class="eyebrow">Next Open House</p>
+                <div class="hero-card card">
+                  {prop.hero ? (
+                    <img src={prop.hero} alt={prop.address} class="hero-img" />
+                  ) : (
+                    <div class="hero-placeholder">
+                      <span>Photo coming soon</span>
+                    </div>
+                  )}
+                  <div class="hero-body">
+                    <div class="hero-meta">
+                      <span class="price-badge">{formatPrice(prop.price)}</span>
+                      <span class="bed-bath">{prop.beds} bd · {prop.baths} ba</span>
+                    </div>
+                    <h1 class="hero-address">{prop.address}</h1>
+                    <p class="hero-datetime">
+                      {formatDate(heroEvent.data.date)} &nbsp;·&nbsp;
+                      {formatTime(heroEvent.data.start)} – {formatTime(heroEvent.data.end)}
+                    </p>
+                    <p class="hero-desc">{firstSentence(prop.description)}</p>
+                    <div class="hero-actions">
+                      <button data-stella-trigger="open" class="button button-primary">RSVP with Stella</button>
+                      <a
+                        href={`/open-house/${heroEvent.data.property}/${heroEvent.data.date}`}
+                        class="button button-secondary"
+                      >
+                        View details
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          );
+        })()}
+
+        {/* ── UPCOMING GRID ────────────────────────────────── */}
+        {remainingUpcoming.length > 0 && (
+          <section class="section section-muted">
+            <div class="container">
+              <h2 class="section-heading">Also coming up</h2>
+              <div class="event-grid">
+                {remainingUpcoming.map(event => {
+                  const prop = propMap[event.data.property];
+                  if (!prop) return null;
+                  return (
+                    <div class="card event-card">
+                      {prop.hero ? (
+                        <img src={prop.hero} alt={prop.address} class="card-img" />
+                      ) : (
+                        <div class="card-placeholder"><span>Photo coming soon</span></div>
+                      )}
+                      <div class="event-card-body">
+                        <div class="event-meta-row">
+                          <span class="price-badge-sm">{formatPrice(prop.price)}</span>
+                          <span class="bed-bath-sm">{prop.beds} bd · {prop.baths} ba</span>
+                        </div>
+                        <h3 class="event-address">{prop.address}</h3>
+                        <p class="event-datetime">
+                          {formatDate(event.data.date)}<br />
+                          {formatTime(event.data.start)} – {formatTime(event.data.end)}
+                        </p>
+                        <a
+                          href={`/open-house/${event.data.property}/${event.data.date}`}
+                          class="button button-secondary event-cta"
+                        >
+                          View details
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
+      </>
+    )}
+
+    {/* ── RECENT ───────────────────────────────────────── */}
+    {recentEvents.length > 0 && (
+      <section class="section">
+        <div class="container">
+          <h2 class="section-heading">Recently hosted</h2>
+          <div class="event-grid">
+            {recentEvents.map(event => {
+              const prop = propMap[event.data.property];
+              if (!prop) return null;
+              return (
+                <div class="card event-card event-card-past">
+                  {prop.hero && <img src={prop.hero} alt={prop.address} class="card-img" />}
+                  <div class="event-card-body">
+                    <div class="event-meta-row">
+                      <span class="price-badge-sm">{formatPrice(prop.price)}</span>
+                      <span class="bed-bath-sm">{prop.beds} bd · {prop.baths} ba</span>
+                    </div>
+                    <h3 class="event-address">{prop.address}</h3>
+                    <p class="event-datetime">{formatDate(event.data.date)}</p>
+                    <a
+                      href={`/open-house/${event.data.property}/${event.data.date}`}
+                      class="button button-secondary event-cta"
+                    >
+                      View details
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <div class="archive-link-bar">
+      <div class="container">
+        <a href="/open-house/archive" class="archive-link">Browse all past open houses →</a>
+      </div>
+    </div>
+
+  </main>
+</BaseLayout>
+
+<style>
+  .hero-section {
+    padding-top: 2rem;
+  }
+
+  .eyebrow {
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--accent, #c96f4a);
+    margin-bottom: 0.75rem;
+  }
+
+  .hero-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    min-height: 340px;
+  }
+
+  .hero-placeholder {
+    background: #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 340px;
+    color: #999;
+    font-size: 0.9rem;
+  }
+
+  .hero-body {
+    padding: 2rem 2.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  .hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .price-badge {
+    background: var(--brand, #1f5c4d);
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 0.3rem 0.9rem;
+    border-radius: 999px;
+  }
+
+  .price-badge-sm {
+    background: var(--brand, #1f5c4d);
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+  }
+
+  .bed-bath {
+    color: var(--text-soft);
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .bed-bath-sm {
+    color: var(--text-soft);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .hero-address {
+    font-size: 1.5rem;
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  .hero-datetime {
+    color: var(--text-soft);
+    font-size: 0.95rem;
+    margin: 0;
+  }
+
+  .hero-desc {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+
+  .section-heading {
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+    color: var(--text);
+  }
+
+  .event-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  .event-card {
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .event-card-past {
+    opacity: 0.85;
+  }
+
+  .card-img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .card-placeholder {
+    background: #e8e6e0;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    font-size: 0.85rem;
+  }
+
+  .event-card-body {
+    padding: 1.25rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+  }
+
+  .event-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .event-address {
+    font-size: 1.05rem;
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  .event-datetime {
+    color: var(--text-soft);
+    font-size: 0.875rem;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .event-cta {
+    margin-top: auto;
+    align-self: flex-start;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 0;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  .archive-link-bar {
+    padding: 1.5rem 0 2.5rem;
+    text-align: right;
+  }
+
+  .archive-link {
+    color: var(--text-soft);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: underline;
+  }
+
+  @media (max-width: 800px) {
+    .hero-card {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-img,
+    .hero-placeholder {
+      min-height: 220px;
+    }
+
+    .hero-body {
+      padding: 1.5rem;
+    }
+
+    .event-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

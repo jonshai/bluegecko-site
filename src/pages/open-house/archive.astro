@@ -1,0 +1,148 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const allEvents = await getCollection('events');
+const allProperties = await getCollection('properties');
+
+const propMap = Object.fromEntries(allProperties.map(p => [p.data.slug, p.data]));
+
+const sixtyDaysAgo = new Date();
+sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+const sixtyDaysAgoStr = sixtyDaysAgo.toISOString().split('T')[0];
+
+const archivedEvents = allEvents
+  .filter(e => e.data.date < sixtyDaysAgoStr)
+  .sort((a, b) => b.data.date.localeCompare(a.data.date));
+
+function formatDateShort(d: string): string {
+  const [year, month, day] = d.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function formatPrice(n: number): string {
+  return '$' + n.toLocaleString('en-US');
+}
+---
+
+<BaseLayout
+  title="Past Open Houses | Blue Gecko"
+  description="Archive of open houses hosted by William and Lucky on Florida's Space Coast."
+>
+  <main>
+    <section class="section">
+      <div class="container">
+        <p class="back-link"><a href="/open-house">← Open houses</a></p>
+        <h1 class="page-title">Past open houses</h1>
+
+        {archivedEvents.length === 0 ? (
+          <p class="empty">No archived open houses yet — check back after we've hosted a few more.</p>
+        ) : (
+          <div class="archive-list">
+            {archivedEvents.map(event => {
+              const prop = propMap[event.data.property];
+              if (!prop) return null;
+              return (
+                <a
+                  href={`/open-house/${event.data.property}/${event.data.date}`}
+                  class="archive-row"
+                >
+                  <span class="archive-date">{formatDateShort(event.data.date)}</span>
+                  <span class="archive-address">{prop.address}</span>
+                  <span class="archive-price">{formatPrice(prop.price)}</span>
+                  <span class="archive-arrow">→</span>
+                </a>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .back-link {
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .back-link a {
+    color: var(--text-soft);
+    font-weight: 600;
+  }
+
+  .page-title {
+    font-size: 1.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .empty {
+    color: var(--text-soft);
+    font-style: italic;
+  }
+
+  .archive-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-top: 1px solid #e5e3de;
+  }
+
+  .archive-row {
+    display: grid;
+    grid-template-columns: 180px 1fr 120px 32px;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0.5rem;
+    border-bottom: 1px solid #e5e3de;
+    text-decoration: none;
+    color: var(--text);
+    transition: background 0.15s;
+    border-radius: 4px;
+  }
+
+  .archive-row:hover {
+    background: #f0ede7;
+    color: var(--text);
+  }
+
+  .archive-date {
+    color: var(--text-soft);
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+
+  .archive-address {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .archive-price {
+    color: var(--brand, #1f5c4d);
+    font-weight: 700;
+    text-align: right;
+  }
+
+  .archive-arrow {
+    color: var(--text-soft);
+    text-align: right;
+  }
+
+  @media (max-width: 600px) {
+    .archive-row {
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
+    }
+
+    .archive-arrow {
+      display: none;
+    }
+  }
+</style>

@@ -1,0 +1,489 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const allEvents = await getCollection('events');
+  const allProperties = await getCollection('properties');
+  const propMap = Object.fromEntries(allProperties.map(p => [p.data.slug, p]));
+
+  return allEvents.map(event => ({
+    params: {
+      property: event.data.property,
+      date: event.data.date,
+    },
+    props: {
+      event,
+      property: propMap[event.data.property],
+      allEvents,
+    },
+  }));
+}
+
+const { event, property, allEvents } = Astro.props;
+
+if (!property) {
+  return Astro.redirect('/open-house');
+}
+
+const prop = property.data;
+const ev = event.data;
+
+function formatTime(t: string): string {
+  const [h, m] = t.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const hour = h % 12 || 12;
+  return `${hour}:${m.toString().padStart(2, '0')} ${period}`;
+}
+
+function formatDate(d: string): string {
+  const [year, month, day] = d.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+function formatDateShort(d: string): string {
+  const [year, month, day] = d.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function formatPrice(n: number): string {
+  return '$' + n.toLocaleString('en-US');
+}
+
+const todayStr = new Date().toISOString().split('T')[0];
+const isPast = ev.date < todayStr;
+
+// Find next future event for same property (if current is past)
+const futureEventsForProperty = allEvents
+  .filter(e => e.data.property === ev.property && e.data.date >= todayStr)
+  .sort((a, b) => a.data.date.localeCompare(b.data.date));
+const nextEvent = isPast ? futureEventsForProperty[0] : null;
+
+const pageTitle = `${prop.address} Open House — ${formatDateShort(ev.date)}`;
+const pageDesc = `${isPast ? 'Past open house' : 'Upcoming open house'} at ${prop.address} on ${formatDateShort(ev.date)}. ${prop.beds} bed, ${prop.baths} bath, ${prop.sqft.toLocaleString()} sq ft.`;
+---
+
+<BaseLayout title={`${pageTitle} | Blue Gecko`} description={pageDesc}>
+  <main>
+
+    {/* ── HERO IMAGE ───────────────────────────────────── */}
+    {prop.hero ? (
+      <div class="detail-hero">
+        <img src={prop.hero} alt={prop.address} class="detail-hero-img" />
+      </div>
+    ) : (
+      <div class="detail-hero detail-hero-placeholder">
+        <span>No photo yet</span>
+      </div>
+    )}
+
+    {/* ── PROPERTY DETAILS BAR ─────────────────────────── */}
+    <div class="details-bar">
+      <div class="container details-inner">
+        <div class="details-address">
+          <h1>{prop.address}</h1>
+          <p class="details-datetime">
+            {isPast ? 'Was hosted' : 'Open house'} ·
+            {formatDate(ev.date)} ·
+            {formatTime(ev.start)} – {formatTime(ev.end)}
+          </p>
+        </div>
+        <div class="details-stats">
+          <span class="stat-price">{formatPrice(prop.price)}</span>
+          <span class="stat-divider">·</span>
+          <span class="stat">{prop.beds} bd</span>
+          <span class="stat-divider">·</span>
+          <span class="stat">{prop.baths} ba</span>
+          <span class="stat-divider">·</span>
+          <span class="stat">{prop.sqft.toLocaleString()} sq ft</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="container detail-body">
+      <div class="detail-main">
+
+        {/* ── BODY CONTENT ─────────────────────────────── */}
+        <div class="card prose-card">
+          {isPast && nextEvent && (
+            <p class="next-event-notice">
+              <strong>
+                We're hosting another open house at {prop.address} on {formatDateShort(nextEvent.data.date)} —{' '}
+                <a href={`/open-house/${nextEvent.data.property}/${nextEvent.data.date}`}>
+                  come see it in person
+                </a>.
+              </strong>
+            </p>
+          )}
+
+          {ev.notes && (
+            <p class="event-notes">{ev.notes}</p>
+          )}
+
+          <div class="prop-description">
+            {prop.description.split('\n').filter(Boolean).map(para => (
+              <p>{para}</p>
+            ))}
+          </div>
+        </div>
+
+        {/* ── GALLERY ──────────────────────────────────── */}
+        {prop.gallery && prop.gallery.length > 0 && (
+          <div class="gallery">
+            {prop.gallery.map(img => (
+              <img src={img} alt={prop.address} class="gallery-img" loading="lazy" />
+            ))}
+          </div>
+        )}
+
+        {/* ── MAPS EMBED ───────────────────────────────── */}
+        <div class="map-wrap card">
+          <iframe
+            src={`https://maps.google.com/maps?q=${encodeURIComponent(prop.address)}&output=embed`}
+            width="100%"
+            height="300"
+            style="border:0;display:block;"
+            allowfullscreen
+            loading="lazy"
+          ></iframe>
+        </div>
+
+      </div>
+
+      {/* ── LEAD FORM SIDEBAR ───────────────────────────── */}
+      <div class="detail-sidebar">
+        <div class="card form-card">
+          {!isPast ? (
+            <>
+              <h2>RSVP for this open house</h2>
+              <p class="form-intro">Drop your info and we'll make sure you're set — directions, what to look for, anything else worth knowing before you walk in.</p>
+              <form class="contact-form js-lead-form" method="POST" action="/api/lead">
+                <input type="hidden" name="slug" value={`${ev.property}-${ev.date}`} />
+                <input type="hidden" name="sourceOverride" value="Open House" />
+                <input type="hidden" name="formType" value="open-house" />
+                <input type="hidden" name="redirectTo" value="/thank-you" />
+
+                <label>
+                  <span>Name</span>
+                  <input type="text" name="name" required />
+                </label>
+                <label>
+                  <span>Phone</span>
+                  <input type="tel" name="phone" />
+                </label>
+                <label>
+                  <span>Email</span>
+                  <input type="email" name="email" />
+                </label>
+                <label>
+                  <span>Are you working with an agent?</span>
+                  <select name="message">
+                    <option value="Not working with an agent yet">No, not yet</option>
+                    <option value="Yes, working with an agent">Yes, I have an agent</option>
+                    <option value="Just starting to look">Just starting to look</option>
+                  </select>
+                </label>
+
+                <button class="button button-primary" type="submit" style="width:100%;margin-top:0.5rem;">
+                  RSVP — I'll be there
+                </button>
+                <p class="form-consent-text">
+                  By submitting, I agree to be contacted by Jennifer Lee Whipple, LLC via call, email,
+                  and text for real estate services. Reply STOP to opt out. Message and data rates may
+                  apply. See our <a href="/privacy">Privacy Policy</a>.
+                  Data will not be shared with third parties for marketing purposes.
+                </p>
+              </form>
+            </>
+          ) : (
+            <>
+              <h2>Interested in this property?</h2>
+              <p class="form-intro">This open house has passed, but the home may still be available. Reach out and we'll give you the full picture.</p>
+              <form class="contact-form js-lead-form" method="POST" action="/api/lead">
+                <input type="hidden" name="slug" value={`${ev.property}-${ev.date}`} />
+                <input type="hidden" name="sourceOverride" value="Open House" />
+                <input type="hidden" name="formType" value="general-inquiry" />
+                <input type="hidden" name="redirectTo" value="/thank-you" />
+
+                <label>
+                  <span>Name</span>
+                  <input type="text" name="name" required />
+                </label>
+                <label>
+                  <span>Phone</span>
+                  <input type="tel" name="phone" />
+                </label>
+                <label>
+                  <span>Email</span>
+                  <input type="email" name="email" />
+                </label>
+                <label>
+                  <span>Are you working with an agent?</span>
+                  <select name="hasAgent">
+                    <option value="Not working with an agent yet">No, not yet</option>
+                    <option value="Yes, working with an agent">Yes, I have an agent</option>
+                    <option value="Just starting to look">Just starting to look</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Message (optional)</span>
+                  <textarea name="message" rows="4" placeholder="What are you looking for?"></textarea>
+                </label>
+
+                <button class="button button-primary" type="submit" style="width:100%;margin-top:0.5rem;">
+                  Send message
+                </button>
+                <p class="form-consent-text">
+                  By submitting, I agree to be contacted by Jennifer Lee Whipple, LLC via call, email,
+                  and text for real estate services. Reply STOP to opt out. Message and data rates may
+                  apply. See our <a href="/privacy">Privacy Policy</a>.
+                  Data will not be shared with third parties for marketing purposes.
+                </p>
+              </form>
+            </>
+          )}
+        </div>
+
+        <div class="card stella-card">
+          <p>Have questions before you decide? <button data-stella-trigger="open" class="stella-link">Ask Stella</button> — she can help you figure out if this one is worth the drive.</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .detail-hero {
+    width: 100%;
+    max-height: 480px;
+    overflow: hidden;
+  }
+
+  .detail-hero-img {
+    width: 100%;
+    height: 480px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .detail-hero-placeholder {
+    background: #ddd;
+    height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+  }
+
+  .details-bar {
+    background: var(--brand, #1f5c4d);
+    color: white;
+    padding: 1.25rem 0;
+  }
+
+  .details-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .details-address h1 {
+    font-size: 1.35rem;
+    margin: 0;
+    color: white;
+  }
+
+  .details-datetime {
+    margin: 0.25rem 0 0;
+    font-size: 0.9rem;
+    opacity: 0.85;
+  }
+
+  .details-stats {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    font-size: 1rem;
+  }
+
+  .stat-price {
+    font-weight: 700;
+    font-size: 1.2rem;
+  }
+
+  .stat-divider {
+    opacity: 0.5;
+  }
+
+  .stat {
+    font-weight: 600;
+  }
+
+  .detail-body {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 2rem;
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+    align-items: start;
+  }
+
+  .detail-main {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .prose-card {
+    line-height: 1.7;
+  }
+
+  .next-event-notice {
+    background: #fef3c7;
+    border-left: 4px solid #d97706;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1.25rem;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .event-notes {
+    font-style: italic;
+    color: var(--text-soft);
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e3de;
+  }
+
+  .prop-description p {
+    margin: 0 0 1rem;
+  }
+
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .gallery-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: var(--radius, 18px);
+    display: block;
+  }
+
+  .map-wrap {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .detail-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    position: sticky;
+    top: 120px;
+  }
+
+  .form-card h2 {
+    margin-top: 0;
+    font-size: 1.2rem;
+  }
+
+  .form-intro {
+    font-size: 0.9rem;
+    color: var(--text-soft);
+    margin-bottom: 1rem;
+  }
+
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .contact-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .contact-form input,
+  .contact-form select,
+  .contact-form textarea {
+    padding: 0.6rem 0.75rem;
+    border: 1.5px solid #d0cdc5;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    background: white;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .contact-form select {
+    appearance: auto;
+  }
+
+  .form-consent-text {
+    font-size: 0.72rem;
+    color: var(--text-soft);
+    line-height: 1.5;
+    margin-top: 0.5rem;
+  }
+
+  .form-consent-text a {
+    color: inherit;
+  }
+
+  .stella-card {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .stella-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: var(--brand, #1f5c4d);
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  @media (max-width: 900px) {
+    .detail-body {
+      grid-template-columns: 1fr;
+    }
+
+    .detail-sidebar {
+      position: static;
+    }
+
+    .details-inner {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+  }
+</style>

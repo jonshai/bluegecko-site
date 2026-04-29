@@ -1,26 +1,33 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
-import entities from './data/entities.json';
 
-const openHouses = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/open-houses' }),
+const properties = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/properties' }),
   schema: z.object({
-    title: z.string(),
-    slug: z.string().optional(),
-    date: z.string(),
-    location: z.string(),
-    summary: z.string(),
-    heroImage: z.string().optional(),
-    published: z.boolean().default(true),
+    slug: z.string(),
+    address: z.string(),
+    price: z.number(),
+    beds: z.number(),
+    baths: z.number(),
+    sqft: z.number(),
+    description: z.string(),
+    hero: z.string().optional(),
+    gallery: z.array(z.string()).optional(),
   }),
 });
 
-// --- Auto-linking system (build-time) ---
-// This will use the entities.json map to inject internal links
-// during content rendering. Implementation will follow in next step.
-// Entities loaded above:
-// console.log(entities);
+const events = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/events' }),
+  schema: z.object({
+    property: z.string(),
+    date: z.string(),
+    start: z.string(),
+    end: z.string(),
+    notes: z.string().optional(),
+  }),
+});
 
 export const collections = {
-  'open-houses': openHouses,
+  properties,
+  events,
 };

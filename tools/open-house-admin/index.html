@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Blue Gecko · Open House Admin</title>
+  <style>
+    :root {
+      --brand: #1f5c4d;
+      --accent: #c96f4a;
+      --bg: #f7f6f2;
+      --text: #1e2a26;
+      --text-soft: #5a6b65;
+      --radius: 12px;
+      --border: #d0cdc5;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    header {
+      background: var(--brand);
+      color: white;
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    header h1 { font-size: 1.1rem; font-weight: 700; }
+    header span { opacity: 0.7; font-size: 0.85rem; }
+
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border);
+      padding: 0 1.5rem;
+      background: white;
+    }
+
+    .tab-btn {
+      padding: 0.85rem 1.5rem;
+      border: none;
+      background: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-soft);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .tab-btn.active {
+      color: var(--brand);
+      border-bottom-color: var(--brand);
+    }
+
+    .panel { display: none; padding: 1.5rem; max-width: 900px; margin: 0 auto; }
+    .panel.active { display: block; }
+
+    /* ── Tables ── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      margin-bottom: 1.5rem;
+    }
+
+    .data-table th {
+      background: #f0ede7;
+      text-align: left;
+      padding: 0.6rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-soft);
+    }
+
+    .data-table td {
+      padding: 0.7rem 1rem;
+      border-top: 1px solid #eae8e3;
+      font-size: 0.9rem;
+    }
+
+    .data-table tr:hover td { background: #faf9f6; }
+
+    .btn {
+      display: inline-block;
+      padding: 0.5rem 1.1rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 700;
+      transition: opacity 0.15s;
+    }
+
+    .btn:hover { opacity: 0.85; }
+
+    .btn-primary { background: var(--brand); color: white; }
+    .btn-accent { background: var(--accent); color: white; }
+    .btn-ghost { background: transparent; color: var(--brand); border: 1.5px solid var(--brand); }
+    .btn-sm { padding: 0.3rem 0.75rem; font-size: 0.78rem; }
+
+    /* ── Forms ── */
+    .form-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      margin-bottom: 1.5rem;
+    }
+
+    .form-card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 1.25rem;
+      color: var(--brand);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .form-grid .full { grid-column: 1 / -1; }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-soft);
+    }
+
+    input, select, textarea {
+      padding: 0.55rem 0.75rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: white;
+      color: var(--text);
+      width: 100%;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--brand);
+    }
+
+    textarea { resize: vertical; }
+
+    .form-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+      align-items: center;
+    }
+
+    .status {
+      font-size: 0.85rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+    }
+
+    .status.ok { background: #d1fae5; color: #065f46; }
+    .status.err { background: #fee2e2; color: #991b1b; }
+    .status.loading { background: #e0f2fe; color: #0c4a6e; }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .section-header h2 { font-size: 1rem; color: var(--text-soft); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    .upload-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .upload-preview img {
+      height: 80px;
+      width: 80px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1.5px solid var(--border);
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Blue Gecko · Open House Admin</h1>
+  <span>Local only — saves commit to GitHub</span>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="properties">Properties</button>
+  <button class="tab-btn" data-tab="events">Events</button>
+</div>
+
+<!-- ── PROPERTIES PANEL ────────────────────────────────────────────────── -->
+<div class="panel active" id="panel-properties">
+
+  <div class="section-header" style="margin-top:1.25rem;">
+    <h2>Properties</h2>
+    <button class="btn btn-primary" id="btn-add-property">+ Add property</button>
+  </div>
+
+  <table class="data-table" id="prop-table">
+    <thead>
+      <tr>
+        <th>Address</th>
+        <th>Slug</th>
+        <th style="width:80px;"></th>
+      </tr>
+    </thead>
+    <tbody id="prop-tbody">
+      <tr><td colspan="3" style="color:var(--text-soft);font-style:italic;">Loading…</td></tr>
+    </tbody>
+  </table>
+
+  <div class="form-card hidden" id="prop-form-wrap">
+    <h2 id="prop-form-title">Add property</h2>
+    <form id="prop-form">
+      <input type="hidden" id="prop-slug-original" />
+      <div class="form-grid">
+        <label class="full">
+          Address
+          <input type="text" id="f-address" placeholder="5017 Barr St, Palm Bay, FL 32907" required />
+        </label>
+        <label>
+          Price ($)
+          <input type="number" id="f-price" placeholder="289900" required />
+        </label>
+        <label>
+          Sq ft
+          <input type="number" id="f-sqft" placeholder="1612" required />
+        </label>
+        <label>
+          Beds
+          <input type="number" id="f-beds" step="0.5" placeholder="3" required />
+        </label>
+        <label>
+          Baths
+          <input type="number" id="f-baths" step="0.5" placeholder="2" required />
+        </label>
+        <label class="full">
+          Description
+          <textarea id="f-desc" rows="5" required placeholder="Write a natural, honest description of the home…"></textarea>
+        </label>
+        <label class="full">
+          Hero image
+          <input type="file" id="f-hero" accept="image/*" />
+          <div class="upload-preview" id="hero-preview"></div>
+        </label>
+        <label class="full">
+          Gallery images (optional, multi-select)
+          <input type="file" id="f-gallery" accept="image/*" multiple />
+          <div class="upload-preview" id="gallery-preview"></div>
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save property</button>
+        <button type="button" class="btn btn-ghost" id="btn-cancel-prop">Cancel</button>
+        <span class="status hidden" id="prop-status"></span>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<!-- ── EVENTS PANEL ────────────────────────────────────────────────────── -->
+<div class="panel" id="panel-events">
+
+  <div class="section-header" style="margin-top:1.25rem;">
+    <h2>Events</h2>
+    <button class="btn btn-primary" id="btn-add-event">+ Add event</button>
+  </div>
+
+  <table class="data-table" id="event-table">
+    <thead>
+      <tr>
+        <th>Property</th>
+        <th>Date</th>
+        <th>Time</th>
+        <th style="width:80px;"></th>
+      </tr>
+    </thead>
+    <tbody id="event-tbody">
+      <tr><td colspan="4" style="color:var(--text-soft);font-style:italic;">Loading…</td></tr>
+    </tbody>
+  </table>
+
+  <div class="form-card hidden" id="event-form-wrap">
+    <h2 id="event-form-title">Add event</h2>
+    <form id="event-form">
+      <input type="hidden" id="event-id-original" />
+      <div class="form-grid">
+        <label class="full">
+          Property
+          <select id="f-property" required>
+            <option value="">— select a property —</option>
+          </select>
+        </label>
+        <label>
+          Date
+          <input type="date" id="f-date" required />
+        </label>
+        <label style="visibility:hidden;" aria-hidden="true"></label>
+        <label>
+          Start time
+          <input type="time" id="f-start" required />
+        </label>
+        <label>
+          End time
+          <input type="time" id="f-end" required />
+        </label>
+        <label class="full">
+          Notes (optional — shown before property description)
+          <textarea id="f-notes" rows="3" placeholder="Light refreshments provided. Both agents will be on site."></textarea>
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save event</button>
+        <button type="button" class="btn btn-ghost" id="btn-cancel-event">Cancel</button>
+        <span class="status hidden" id="event-status"></span>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<script>
+  // ── Tab switching ─────────────────────────────────────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function showStatus(el, msg, type) {
+    el.textContent = msg;
+    el.className = 'status ' + type;
+    el.classList.remove('hidden');
+    if (type === 'ok') setTimeout(() => el.classList.add('hidden'), 4000);
+  }
+
+  function toSlug(address) {
+    return address.toLowerCase()
+      .replace(/,?\s+(fl|florida)\s*\d*/gi, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 60);
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function previewFiles(input, previewEl) {
+    input.addEventListener('change', () => {
+      previewEl.innerHTML = '';
+      for (const file of input.files) {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        previewEl.appendChild(img);
+      }
+    });
+  }
+
+  previewFiles(document.getElementById('f-hero'), document.getElementById('hero-preview'));
+  previewFiles(document.getElementById('f-gallery'), document.getElementById('gallery-preview'));
+
+  async function uploadFile(slug, file) {
+    const data = await fileToBase64(file);
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug, filename: file.name, data, contentType: file.type }),
+    });
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || 'Upload failed');
+    return json.path;
+  }
+
+  // ── Load properties ───────────────────────────────────────────────────────
+  let allProperties = [];
+
+  async function loadProperties() {
+    const res = await fetch('/api/properties');
+    allProperties = await res.json();
+
+    const tbody = document.getElementById('prop-tbody');
+    tbody.innerHTML = '';
+    if (allProperties.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-soft);font-style:italic;">No properties yet.</td></tr>';
+      return;
+    }
+    for (const p of allProperties) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${p.address}</td>
+        <td style="font-size:0.8rem;color:var(--text-soft);">${p.slug}</td>
+        <td><button class="btn btn-ghost btn-sm" data-edit-prop="${p.slug}">Edit</button></td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    // Populate property select in event form
+    const sel = document.getElementById('f-property');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— select a property —</option>';
+    for (const p of allProperties) {
+      const opt = document.createElement('option');
+      opt.value = p.slug;
+      opt.textContent = p.address;
+      if (p.slug === current) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  }
+
+  // ── Properties form ───────────────────────────────────────────────────────
+  document.getElementById('btn-add-property').addEventListener('click', () => {
+    document.getElementById('prop-form-title').textContent = 'Add property';
+    document.getElementById('prop-form').reset();
+    document.getElementById('prop-slug-original').value = '';
+    document.getElementById('hero-preview').innerHTML = '';
+    document.getElementById('gallery-preview').innerHTML = '';
+    document.getElementById('prop-form-wrap').classList.remove('hidden');
+    document.getElementById('f-address').focus();
+  });
+
+  document.getElementById('btn-cancel-prop').addEventListener('click', () => {
+    document.getElementById('prop-form-wrap').classList.add('hidden');
+  });
+
+  document.addEventListener('click', async e => {
+    const slug = e.target.dataset.editProp;
+    if (!slug) return;
+    const res = await fetch('/api/property/' + slug);
+    if (!res.ok) return;
+    const d = await res.json();
+    document.getElementById('prop-form-title').textContent = 'Edit property';
+    document.getElementById('prop-slug-original').value = d.slug;
+    document.getElementById('f-address').value = d.address || '';
+    document.getElementById('f-price').value = d.price || '';
+    document.getElementById('f-sqft').value = d.sqft || '';
+    document.getElementById('f-beds').value = d.beds || '';
+    document.getElementById('f-baths').value = d.baths || '';
+    document.getElementById('f-desc').value = d.description || '';
+    document.getElementById('hero-preview').innerHTML = d.hero ? `<img src="${d.hero}" />` : '';
+    document.getElementById('gallery-preview').innerHTML = '';
+    document.getElementById('prop-form-wrap').classList.remove('hidden');
+    document.getElementById('f-address').focus();
+  });
+
+  document.getElementById('prop-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const statusEl = document.getElementById('prop-status');
+    showStatus(statusEl, 'Saving…', 'loading');
+
+    try {
+      const address = document.getElementById('f-address').value.trim();
+      const slug = document.getElementById('prop-slug-original').value || toSlug(address);
+
+      // Handle uploads first
+      let hero = null;
+      const heroFile = document.getElementById('f-hero').files[0];
+      if (heroFile) {
+        showStatus(statusEl, 'Uploading hero image…', 'loading');
+        hero = await uploadFile(slug, heroFile);
+      } else {
+        // Keep existing hero if editing
+        const existing = allProperties.find(p => p.slug === slug);
+        if (existing && existing.hero) hero = existing.hero;
+      }
+
+      const gallery = [];
+      for (const file of document.getElementById('f-gallery').files) {
+        showStatus(statusEl, 'Uploading gallery…', 'loading');
+        gallery.push(await uploadFile(slug, file));
+      }
+
+      const payload = {
+        slug,
+        address,
+        price: parseFloat(document.getElementById('f-price').value),
+        sqft: parseFloat(document.getElementById('f-sqft').value),
+        beds: parseFloat(document.getElementById('f-beds').value),
+        baths: parseFloat(document.getElementById('f-baths').value),
+        description: document.getElementById('f-desc').value.trim(),
+        ...(hero ? { hero } : {}),
+        ...(gallery.length > 0 ? { gallery } : {}),
+      };
+
+      showStatus(statusEl, 'Saving to GitHub…', 'loading');
+      const res = await fetch('/api/property', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || 'Save failed');
+
+      showStatus(statusEl, json.github ? '✓ Saved and committed to GitHub' : '✓ Saved locally (no GitHub token)', 'ok');
+      document.getElementById('prop-form-wrap').classList.add('hidden');
+      await loadProperties();
+    } catch (err) {
+      showStatus(statusEl, '✗ ' + err.message, 'err');
+    }
+  });
+
+  // ── Load events ───────────────────────────────────────────────────────────
+  async function loadEvents() {
+    const res = await fetch('/api/events');
+    const events = await res.json();
+
+    const tbody = document.getElementById('event-tbody');
+    tbody.innerHTML = '';
+    if (events.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-soft);font-style:italic;">No events yet.</td></tr>';
+      return;
+    }
+    for (const ev of events) {
+      const prop = allProperties.find(p => p.slug === ev.property);
+      const address = prop ? prop.address : ev.property;
+      const time = ev.start && ev.end ? `${ev.start} – ${ev.end}` : '';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${address}</td>
+        <td>${ev.date || ''}</td>
+        <td style="font-size:0.85rem;">${time}</td>
+        <td><button class="btn btn-ghost btn-sm" data-edit-event="${ev.id}">Edit</button></td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+
+  // ── Events form ───────────────────────────────────────────────────────────
+  document.getElementById('btn-add-event').addEventListener('click', () => {
+    document.getElementById('event-form-title').textContent = 'Add event';
+    document.getElementById('event-form').reset();
+    document.getElementById('event-id-original').value = '';
+    document.getElementById('event-form-wrap').classList.remove('hidden');
+    document.getElementById('f-property').focus();
+  });
+
+  document.getElementById('btn-cancel-event').addEventListener('click', () => {
+    document.getElementById('event-form-wrap').classList.add('hidden');
+  });
+
+  document.addEventListener('click', async e => {
+    const id = e.target.dataset.editEvent;
+    if (!id) return;
+    const res = await fetch('/api/event/' + id);
+    if (!res.ok) return;
+    const d = await res.json();
+    document.getElementById('event-form-title').textContent = 'Edit event';
+    document.getElementById('event-id-original').value = id;
+    document.getElementById('f-property').value = d.property || '';
+    document.getElementById('f-date').value = d.date || '';
+    document.getElementById('f-start').value = d.start || '';
+    document.getElementById('f-end').value = d.end || '';
+    document.getElementById('f-notes').value = d.notes || '';
+    document.getElementById('event-form-wrap').classList.remove('hidden');
+  });
+
+  document.getElementById('event-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const statusEl = document.getElementById('event-status');
+    showStatus(statusEl, 'Saving…', 'loading');
+
+    try {
+      const payload = {
+        property: document.getElementById('f-property').value,
+        date: document.getElementById('f-date').value,
+        start: document.getElementById('f-start').value,
+        end: document.getElementById('f-end').value,
+        notes: document.getElementById('f-notes').value.trim(),
+      };
+
+      const res = await fetch('/api/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || 'Save failed');
+
+      showStatus(statusEl, json.github ? '✓ Saved and committed to GitHub' : '✓ Saved locally (no GitHub token)', 'ok');
+      document.getElementById('event-form-wrap').classList.add('hidden');
+      await loadEvents();
+    } catch (err) {
+      showStatus(statusEl, '✗ ' + err.message, 'err');
+    }
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  (async () => {
+    await loadProperties();
+    await loadEvents();
+  })();
+</script>
+
+</body>
+</html>
