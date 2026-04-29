@@ -3,7 +3,7 @@
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
-	"name": "bluegecko-site",
+	"name": "bluegecko",
 	"assets": {
 		"directory": "./dist/client",
 		"binding": "ASSETS"
