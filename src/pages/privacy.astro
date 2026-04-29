@@ -64,13 +64,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
           <h2 id="sms-terms">3. SMS Terms</h2>
           <p>By providing your mobile number and consenting to SMS communications, you agree to receive text messages from Blue Gecko / Coldwell Banker Realty at the number provided. Messages may include property updates, appointment reminders, market information, and follow-up communications.</p>
-          <ul>
-            <li><strong>Message frequency:</strong> Varies based on your inquiry and preferences.</li>
-            <li><strong>Message &amp; data rates may apply</strong> from your mobile carrier.</li>
-            <li><strong>To stop receiving messages:</strong> Reply <strong>STOP</strong> at any time. You will receive a single confirmation and no further messages.</li>
-            <li><strong>For help:</strong> Reply <strong>HELP</strong> or contact us at 321.341.6650.</li>
-            <li><strong>Carriers are not liable</strong> for delayed or undelivered messages.</li>
-          </ul>
+          <ol>
+            <li>We use SMS to confirm appointments, send reminders, and notify clients of schedule updates or important changes.</li>
+            <li>You can cancel the SMS service at any time. Just text "STOP". After you send the SMS message "STOP" to us, we will send you an SMS message to confirm that you have been unsubscribed. After this, you will no longer receive SMS messages from us. If you want to join again, just sign up as you did the first time and we will start sending SMS messages to you again.</li>
+            <li>If you are experiencing issues with the messaging program, you can reply with the keyword "HELP" for more assistance, or you can get help directly at <a href="mailto:lucky.whipple@cbrealty.com">lucky.whipple@cbrealty.com</a>.</li>
+            <li>Carriers are not liable for delayed or undelivered messages.</li>
+            <li>Message and data rates may apply for any messages sent to you from us and to us from you. Message frequency may vary. If you have questions about your text plan or data plan, contact your wireless provider.</li>
+            <li>If you have any questions regarding privacy, please read our privacy policy: <a href="https://bluegecko.homes/privacy">https://bluegecko.homes/privacy</a></li>
+          </ol>
           <p>Consent to SMS is not a condition of purchasing or selling real estate.</p>
 
           <h2 id="tcpa">4. TCPA Consent</h2>
@@ -246,7 +247,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     color: var(--text);
   }
 
-  .prose ul {
+  .prose ul,
+  .prose ol {
     padding-left: 1.5rem;
     margin: 0.5rem 0 1rem;
   }
