@@ -24,11 +24,8 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Clear stale wrangler deploy config
-        run: rm -f .wrangler/deploy/config.json
-
       - name: Deploy
-        run: cd dist/server && npx wrangler deploy
+        run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
