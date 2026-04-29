@@ -11,31 +11,50 @@ Go to: GitHub → Settings → Developer settings → Personal access tokens →
 
 Create a token with the **`repo`** scope checked. Copy it — you only see it once.
 
-### 2. Start the server
+### 2. Create your .env file
+
+In the `tools/open-house-admin/` folder, copy the example file:
 
 ```bash
-GITHUB_TOKEN=ghp_yourTokenHere node tools/open-house-admin/server.js
+cp tools/open-house-admin/.env.example tools/open-house-admin/.env
 ```
 
-Or export the token first:
+Open `.env` and replace `your_token_here` with your actual token:
+
+```
+GITHUB_TOKEN=ghp_yourActualTokenHere
+```
+
+The `.env` file is gitignored — it will never be committed.
+
+### 3. Start the server
 
 ```bash
-export GITHUB_TOKEN=ghp_yourTokenHere
 node tools/open-house-admin/server.js
 ```
+
+That's it. No token in the command line, no environment variables to set manually.
 
 Open the admin at: **http://localhost:3333**
 
 If you're accessing it from another device on Tailscale, use your Mac's Tailscale IP:
 **http://100.x.x.x:3333**
 
-### 3. What it does when you save
+### 4. What it does when you save
 
 1. Writes the Markdown file to the local repo (`src/content/properties/` or `src/content/events/`)
-2. Commits and pushes it to GitHub via the Contents API (no git required)
+2. Commits it directly to GitHub via the Contents API (no git required)
 3. GitHub Actions detects the push and auto-deploys to bluegecko.homes
 
-If `GITHUB_TOKEN` is not set, files are saved locally only — you'll need to `git add` and push manually.
+---
+
+## Sync all to GitHub
+
+If any saves failed to reach GitHub (no internet, token expired, etc.), use the
+**↑ Sync all to GitHub** button in the top-right corner of the admin.
+
+It will push every local property file, event file, and photo to GitHub in one pass,
+skipping anything already up to date. Check the terminal window for per-file results.
 
 ---
 

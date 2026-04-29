@@ -1,7 +1,8 @@
 /**
  * Blue Gecko Open House Admin Server
  * Plain Node.js — no framework, no extra dependencies.
- * Run: GITHUB_TOKEN=ghp_xxx node tools/open-house-admin/server.js
+ * Setup: copy .env.example to .env, add your token, then run:
+ *   node tools/open-house-admin/server.js
  */
 
 import http from 'http';
@@ -13,6 +14,22 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '../..');
 const PORT = 3333;
+
+// ── Load .env from tools/open-house-admin/.env (no dotenv dependency) ────────
+const envFile = path.join(__dirname, '.env');
+if (fs.existsSync(envFile)) {
+  const lines = fs.readFileSync(envFile, 'utf8').split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx < 1) continue;
+    const key = trimmed.slice(0, eqIdx).trim();
+    const val = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '');
+    if (key && !(key in process.env)) process.env[key] = val;
+  }
+  console.log('[env] Loaded .env');
+}
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const REPO = 'jonshai/bluegecko-site';
@@ -459,6 +476,95 @@ const server = http.createServer(async (req, res) => {
       }
 
       return jsonResponse(res, 200, { ok: true, path: `/uploads/${slug}/${safeFilename}` });
+    } catch (err) {
+      console.error(err);
+      return jsonResponse(res, 500, { error: err.message });
+    }
+  }
+
+  // ── POST /api/sync-all ─────────────────────────────────────────────────────
+  // Commits every local property and event file to GitHub in one pass.
+  // Also commits any photos found in public/uploads/.
+  if (method === 'POST' && pathname === '/api/sync-all') {
+    if (!GITHUB_TOKEN) {
+      return jsonResponse(res, 400, { error: 'GITHUB_TOKEN not set — cannot sync to GitHub.' });
+    }
+    try {
+      const results = { ok: [], failed: [] };
+
+      // Collect all files to sync
+      const filesToSync = [];
+
+      // Properties
+      const propDir = path.join(REPO_ROOT, 'src/content/properties');
+      if (fs.existsSync(propDir)) {
+        for (const f of fs.readdirSync(propDir).filter(f => f.endsWith('.md'))) {
+          filesToSync.push({ repoPath: `src/content/properties/${f}`, localPath: path.join(propDir, f), binary: false });
+        }
+      }
+
+      // Events
+      const eventDir = path.join(REPO_ROOT, 'src/content/events');
+      if (fs.existsSync(eventDir)) {
+        for (const f of fs.readdirSync(eventDir).filter(f => f.endsWith('.md'))) {
+          filesToSync.push({ repoPath: `src/content/events/${f}`, localPath: path.join(eventDir, f), binary: false });
+        }
+      }
+
+      // Photos in public/uploads/
+      const uploadsDir = path.join(REPO_ROOT, 'public/uploads');
+      if (fs.existsSync(uploadsDir)) {
+        for (const slug of fs.readdirSync(uploadsDir)) {
+          const slugDir = path.join(uploadsDir, slug);
+          if (!fs.statSync(slugDir).isDirectory()) continue;
+          for (const f of fs.readdirSync(slugDir)) {
+            if (f.startsWith('.')) continue;
+            filesToSync.push({ repoPath: `public/uploads/${slug}/${f}`, localPath: path.join(slugDir, f), binary: true });
+          }
+        }
+      }
+
+      console.log(`[sync-all] ${filesToSync.length} files to sync`);
+
+      for (const { repoPath, localPath, binary } of filesToSync) {
+        try {
+          const sha = await getFileSha(repoPath);
+          let content, encodedContent;
+
+          if (binary) {
+            const buf = fs.readFileSync(localPath);
+            encodedContent = buf.toString('base64');
+            content = null; // not used for binary commitFile path
+          } else {
+            content = fs.readFileSync(localPath, 'utf8');
+            encodedContent = Buffer.from(content).toString('base64');
+          }
+
+          const body = {
+            message: `content: sync ${repoPath}`,
+            content: encodedContent,
+            branch: BRANCH,
+          };
+          if (sha) body.sha = sha;
+
+          const ghRes = await githubRequest('PUT', `/repos/${REPO}/contents/${repoPath}`, body);
+          if (ghRes.status !== 200 && ghRes.status !== 201) {
+            throw new Error(`status ${ghRes.status}: ${JSON.stringify(ghRes.data)}`);
+          }
+          console.log(`[sync-all] ✓ ${repoPath}`);
+          results.ok.push(repoPath);
+        } catch (err) {
+          console.error(`[sync-all] ✗ ${repoPath}: ${err.message}`);
+          results.failed.push({ path: repoPath, error: err.message });
+        }
+      }
+
+      return jsonResponse(res, 200, {
+        ok: results.failed.length === 0,
+        synced: results.ok.length,
+        failed: results.failed.length,
+        details: results,
+      });
     } catch (err) {
       console.error(err);
       return jsonResponse(res, 500, { error: err.message });

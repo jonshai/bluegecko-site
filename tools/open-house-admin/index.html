@@ -37,6 +37,28 @@
     header h1 { font-size: 1.1rem; font-weight: 700; }
     header span { opacity: 0.7; font-size: 0.85rem; }
 
+    .sync-btn {
+      margin-left: auto;
+      background: white;
+      color: var(--brand);
+      border: none;
+      border-radius: 999px;
+      padding: 0.45rem 1.1rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .sync-btn:hover { opacity: 0.85; }
+    .sync-btn:disabled { opacity: 0.5; cursor: default; }
+
+    #sync-status {
+      font-size: 0.82rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
     .tabs {
       display: flex;
       gap: 0;
@@ -214,7 +236,9 @@
 
 <header>
   <h1>Blue Gecko · Open House Admin</h1>
-  <span>Local only — saves commit to GitHub</span>
+  <span>Saves commit directly to GitHub</span>
+  <span id="sync-status" class="hidden"></span>
+  <button class="sync-btn" id="btn-sync-all">↑ Sync all to GitHub</button>
 </header>
 
 <div class="tabs">
@@ -709,6 +733,39 @@
         alert('Error: ' + err.message);
       }
       return;
+    }
+  });
+
+  // ── Sync all ──────────────────────────────────────────────────────────────
+  document.getElementById('btn-sync-all').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-sync-all');
+    const statusEl = document.getElementById('sync-status');
+
+    btn.disabled = true;
+    btn.textContent = 'Syncing…';
+    statusEl.textContent = 'Pushing all files to GitHub…';
+    statusEl.className = 'status loading';
+    statusEl.classList.remove('hidden');
+
+    try {
+      const res = await fetch('/api/sync-all', { method: 'POST' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Sync failed');
+
+      if (json.failed === 0) {
+        statusEl.textContent = `✓ ${json.synced} file${json.synced !== 1 ? 's' : ''} synced to GitHub`;
+        statusEl.className = 'status ok';
+      } else {
+        statusEl.textContent = `⚠ ${json.synced} synced, ${json.failed} failed — check terminal`;
+        statusEl.className = 'status err';
+      }
+    } catch (err) {
+      statusEl.textContent = '✗ ' + err.message;
+      statusEl.className = 'status err';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '↑ Sync all to GitHub';
+      setTimeout(() => statusEl.classList.add('hidden'), 8000);
     }
   });
 
