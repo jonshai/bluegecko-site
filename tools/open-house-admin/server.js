@@ -301,6 +301,23 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Serve static files from public/ (uploads, favicons, etc.)
+  if (method === 'GET' && !pathname.startsWith('/api/')) {
+    const mimeTypes = {
+      '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
+      '.gif': 'image/gif', '.webp': 'image/webp', '.svg': 'image/svg+xml',
+      '.ico': 'image/x-icon', '.css': 'text/css', '.js': 'application/javascript',
+    };
+    const filePath = path.join(REPO_ROOT, 'public', pathname);
+    const ext = path.extname(filePath).toLowerCase();
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      const mime = mimeTypes[ext] || 'application/octet-stream';
+      res.writeHead(200, { 'Content-Type': mime });
+      fs.createReadStream(filePath).pipe(res);
+      return;
+    }
+  }
+
   // ── GET /api/properties ────────────────────────────────────────────────────
   if (method === 'GET' && pathname === '/api/properties') {
     const props = readLocalProperties().map(p => ({ slug: p.slug, address: p.address }));

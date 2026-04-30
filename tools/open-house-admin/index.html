@@ -271,6 +271,7 @@
     <h2 id="prop-form-title">Add property</h2>
     <form id="prop-form">
       <input type="hidden" id="prop-slug-original" />
+      <input type="hidden" id="f-hero-existing" />
       <div class="form-grid">
         <label class="full">
           Address
@@ -298,13 +299,14 @@
         </label>
         <label class="full">
           Hero image
-          <input type="file" id="f-hero" accept="image/*" />
           <div class="upload-preview" id="hero-preview"></div>
+          <input type="file" id="f-hero" accept="image/*" />
         </label>
         <label class="full">
-          Gallery images (optional, multi-select)
-          <input type="file" id="f-gallery" accept="image/*" multiple />
+          Gallery images
           <div class="upload-preview" id="gallery-preview"></div>
+          <input type="file" id="f-gallery" accept="image/*" multiple />
+          <input type="hidden" id="f-gallery-existing" />
         </label>
       </div>
       <div class="form-actions">
@@ -485,6 +487,8 @@
     document.getElementById('prop-form-title').textContent = 'Add property';
     document.getElementById('prop-form').reset();
     document.getElementById('prop-slug-original').value = '';
+    document.getElementById('f-hero-existing').value = '';
+    document.getElementById('f-gallery-existing').value = '';
     document.getElementById('hero-preview').innerHTML = '';
     document.getElementById('gallery-preview').innerHTML = '';
     document.getElementById('prop-form-wrap').classList.remove('hidden');
@@ -509,8 +513,43 @@
     document.getElementById('f-beds').value = d.beds || '';
     document.getElementById('f-baths').value = d.baths || '';
     document.getElementById('f-desc').value = d.description || '';
-    document.getElementById('hero-preview').innerHTML = d.hero ? `<img src="${d.hero}" />` : '';
-    document.getElementById('gallery-preview').innerHTML = '';
+
+    // Store existing paths in hidden fields for the save handler
+    document.getElementById('f-hero-existing').value = d.hero || '';
+
+    // Hero preview — show current image with filename label
+    const heroPreview = document.getElementById('hero-preview');
+    if (d.hero) {
+      const fname = d.hero.split('/').pop();
+      heroPreview.innerHTML = `
+        <div style="position:relative;display:inline-block;">
+          <img src="${d.hero}" title="${fname}" />
+          <span style="display:block;font-size:0.7rem;color:var(--text-soft);margin-top:2px;">${fname} — upload a new file to replace</span>
+        </div>`;
+    } else {
+      heroPreview.innerHTML = '';
+    }
+
+    // Gallery preview — show all current images
+    const galleryPreview = document.getElementById('gallery-preview');
+    const existingGallery = Array.isArray(d.gallery) ? d.gallery : [];
+    document.getElementById('f-gallery-existing').value = JSON.stringify(existingGallery);
+    if (existingGallery.length > 0) {
+      galleryPreview.innerHTML = existingGallery.map(src => {
+        const fname = src.split('/').pop();
+        return `<div style="text-align:center;">
+          <img src="${src}" title="${fname}" />
+          <span style="display:block;font-size:0.65rem;color:var(--text-soft);">${fname}</span>
+        </div>`;
+      }).join('');
+      galleryPreview.insertAdjacentHTML('beforeend',
+        `<p style="font-size:0.75rem;color:var(--text-soft);width:100%;margin-top:0.25rem;">
+          Select new files to add to the gallery, or leave empty to keep the above.
+        </p>`);
+    } else {
+      galleryPreview.innerHTML = '';
+    }
+
     document.getElementById('prop-form-wrap').classList.remove('hidden');
     document.getElementById('f-address').focus();
   });
@@ -531,12 +570,16 @@
         showStatus(statusEl, 'Uploading hero image…', 'loading');
         hero = await uploadFile(slug, heroFile);
       } else {
-        // Keep existing hero if editing
-        const existing = allProperties.find(p => p.slug === slug);
-        if (existing && existing.hero) hero = existing.hero;
+        // Keep existing hero path stored when the edit form was opened
+        hero = document.getElementById('f-hero-existing').value || null;
       }
 
-      const gallery = [];
+      // Start with existing gallery paths, then append any new uploads
+      let gallery = [];
+      const existingGalleryRaw = document.getElementById('f-gallery-existing').value;
+      if (existingGalleryRaw) {
+        try { gallery = JSON.parse(existingGalleryRaw); } catch { gallery = []; }
+      }
       for (const file of document.getElementById('f-gallery').files) {
         showStatus(statusEl, 'Uploading gallery…', 'loading');
         gallery.push(await uploadFile(slug, file));
