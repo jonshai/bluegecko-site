@@ -88,22 +88,40 @@ async function getFileSha(repoPath) {
   return sha.trim();
 }
 
+async function putFile(repoPath, encodedContent, message) {
+  // Fetch current SHA — validates to 40-char hex or returns null (new file)
+  let sha = await getFileSha(repoPath);
+
+  const buildBody = (s) => {
+    const body = { message, content: encodedContent, branch: BRANCH };
+    if (s && /^[0-9a-f]{40}$/i.test(s.trim())) body.sha = s.trim();
+    return body;
+  };
+
+  let ghRes = await githubRequest('PUT', `/repos/${REPO}/contents/${repoPath}`, buildBody(sha));
+
+  // 409 = stale SHA (file was updated between our GET and PUT), 422 = invalid SHA sent.
+  // Re-fetch SHA and retry once.
+  if (ghRes.status === 409 || ghRes.status === 422) {
+    console.warn(`[putFile] ${ghRes.status} on first attempt for ${repoPath} — re-fetching SHA and retrying`);
+    sha = await getFileSha(repoPath);
+    ghRes = await githubRequest('PUT', `/repos/${REPO}/contents/${repoPath}`, buildBody(sha));
+  }
+
+  if (ghRes.status !== 200 && ghRes.status !== 201) {
+    throw new Error(`GitHub PUT error ${ghRes.status} for ${repoPath}: ${JSON.stringify(ghRes.data)}`);
+  }
+  console.log(`[putFile] ✓ ${repoPath} (${ghRes.status})`);
+  return { ok: true, github: true };
+}
+
 async function commitFile(repoPath, content, message) {
   if (!GITHUB_TOKEN) {
     console.warn('No GITHUB_TOKEN — skipping GitHub commit for', repoPath);
     return { ok: true, github: false };
   }
-
-  const sha = await getFileSha(repoPath);
   const encoded = Buffer.from(content).toString('base64');
-  const body = { message, content: encoded, branch: BRANCH };
-  if (sha) body.sha = sha;
-
-  const res = await githubRequest('PUT', `/repos/${REPO}/contents/${repoPath}`, body);
-  if (res.status !== 200 && res.status !== 201) {
-    throw new Error(`GitHub API error ${res.status}: ${JSON.stringify(res.data)}`);
-  }
-  return { ok: true, github: true };
+  return putFile(repoPath, encoded, message);
 }
 
 async function deleteFileFromGitHub(repoPath, message) {
@@ -503,13 +521,7 @@ const server = http.createServer(async (req, res) => {
       fs.writeFileSync(localPath, Buffer.from(data, 'base64'));
 
       if (GITHUB_TOKEN) {
-        const sha = await getFileSha(repoPath);
-        const body = { message: `content: upload photo for ${slug}`, content: data, branch: BRANCH };
-        if (sha) body.sha = sha;
-        const res2 = await githubRequest('PUT', `/repos/${REPO}/contents/${repoPath}`, body);
-        if (res2.status !== 200 && res2.status !== 201) {
-          throw new Error(`GitHub upload error ${res2.status}: ${JSON.stringify(res2.data)}`);
-        }
+        await putFile(repoPath, data, `content: upload photo for ${slug}`);
       }
 
       return jsonResponse(res, 200, { ok: true, path: `/uploads/${slug}/${safeFilename}` });
@@ -565,30 +577,16 @@ const server = http.createServer(async (req, res) => {
 
       for (const { repoPath, localPath, binary } of filesToSync) {
         try {
-          const sha = await getFileSha(repoPath);
-          let content, encodedContent;
-
+          let encodedContent;
           if (binary) {
             const buf = fs.readFileSync(localPath);
             encodedContent = buf.toString('base64');
-            content = null; // not used for binary commitFile path
           } else {
-            content = fs.readFileSync(localPath, 'utf8');
+            const content = fs.readFileSync(localPath, 'utf8');
             encodedContent = Buffer.from(content).toString('base64');
           }
 
-          const body = {
-            message: `content: sync ${repoPath}`,
-            content: encodedContent,
-            branch: BRANCH,
-          };
-          if (sha) body.sha = sha;
-
-          const ghRes = await githubRequest('PUT', `/repos/${REPO}/contents/${repoPath}`, body);
-          if (ghRes.status !== 200 && ghRes.status !== 201) {
-            throw new Error(`status ${ghRes.status}: ${JSON.stringify(ghRes.data)}`);
-          }
-          console.log(`[sync-all] ✓ ${repoPath}`);
+          await putFile(repoPath, encodedContent, `content: sync ${repoPath}`);
           results.ok.push(repoPath);
         } catch (err) {
           console.error(`[sync-all] ✗ ${repoPath}: ${err.message}`);
