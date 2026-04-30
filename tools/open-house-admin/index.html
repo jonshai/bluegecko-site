@@ -114,6 +114,7 @@
       padding: 0.7rem 1rem;
       border-top: 1px solid #eae8e3;
       font-size: 0.9rem;
+      vertical-align: middle;
     }
 
     .data-table tr:hover td { background: #faf9f6; }
@@ -137,6 +138,7 @@
     .btn-danger { background: transparent; color: #b91c1c; border: 1.5px solid #b91c1c; }
     .btn-danger:hover { background: #fee2e2; opacity: 1; }
     .btn-sm { padding: 0.3rem 0.75rem; font-size: 0.78rem; }
+    .btn-icon { padding: 0.3rem 0.55rem; font-size: 0.9rem; line-height: 1; }
 
     /* ── Forms ── */
     .form-card {
@@ -214,19 +216,103 @@
 
     .section-header h2 { font-size: 1rem; color: var(--text-soft); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
 
+    /* ── Gallery preview ── */
     .upload-preview {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
     }
 
-    .upload-preview img {
+    .gallery-thumb {
+      position: relative;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .gallery-thumb img {
       height: 80px;
       width: 80px;
       object-fit: cover;
       border-radius: 6px;
       border: 1.5px solid var(--border);
+      display: block;
+      transition: opacity 0.2s;
+    }
+
+    .gallery-thumb.removed img {
+      opacity: 0.25;
+      filter: grayscale(1);
+    }
+
+    .gallery-thumb .thumb-label {
+      font-size: 0.65rem;
+      color: var(--text-soft);
+      max-width: 80px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    .gallery-thumb .thumb-label.removed-label {
+      color: #b91c1c;
+      text-decoration: line-through;
+    }
+
+    .gallery-thumb .remove-btn {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: #b91c1c;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 12px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .gallery-thumb .remove-btn:hover { background: #991b1b; }
+
+    .gallery-thumb .undo-btn {
+      font-size: 0.65rem;
+      color: var(--brand);
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+    }
+
+    .gallery-hint {
+      font-size: 0.75rem;
+      color: var(--text-soft);
+      margin-top: 0.25rem;
+      font-weight: 400;
+    }
+
+    .replace-all-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      font-size: 0.82rem;
+      color: var(--text-soft);
+      font-weight: 400;
+    }
+
+    .replace-all-row input[type=checkbox] {
+      width: auto;
+      accent-color: var(--accent);
     }
 
     .hidden { display: none !important; }
@@ -254,12 +340,12 @@
     <button class="btn btn-primary" id="btn-add-property">+ Add property</button>
   </div>
 
-  <table class="data-table" id="prop-table">
+  <table class="data-table">
     <thead>
       <tr>
         <th>Address</th>
         <th>Slug</th>
-        <th style="width:140px;"></th>
+        <th style="width:160px;"></th>
       </tr>
     </thead>
     <tbody id="prop-tbody">
@@ -272,6 +358,7 @@
     <form id="prop-form">
       <input type="hidden" id="prop-slug-original" />
       <input type="hidden" id="f-hero-existing" />
+      <input type="hidden" id="f-gallery-existing" />
       <div class="form-grid">
         <label class="full">
           Address
@@ -297,16 +384,22 @@
           Description
           <textarea id="f-desc" rows="5" required placeholder="Write a natural, honest description of the home…"></textarea>
         </label>
+
         <label class="full">
           Hero image
           <div class="upload-preview" id="hero-preview"></div>
           <input type="file" id="f-hero" accept="image/*" />
         </label>
+
         <label class="full">
           Gallery images
           <div class="upload-preview" id="gallery-preview"></div>
-          <input type="file" id="f-gallery" accept="image/*" multiple />
-          <input type="hidden" id="f-gallery-existing" />
+          <div class="replace-all-row">
+            <input type="checkbox" id="f-replace-all-gallery" />
+            <span>Replace all existing gallery images with new uploads</span>
+          </div>
+          <input type="file" id="f-gallery" accept="image/*" multiple style="margin-top:0.5rem;" />
+          <span class="gallery-hint" id="gallery-hint"></span>
         </label>
       </div>
       <div class="form-actions">
@@ -327,13 +420,13 @@
     <button class="btn btn-primary" id="btn-add-event">+ Add event</button>
   </div>
 
-  <table class="data-table" id="event-table">
+  <table class="data-table">
     <thead>
       <tr>
         <th>Property</th>
         <th>Date</th>
         <th>Time</th>
-        <th style="width:140px;"></th>
+        <th style="width:180px;"></th>
       </tr>
     </thead>
     <tbody id="event-tbody">
@@ -416,20 +509,6 @@
     });
   }
 
-  function previewFiles(input, previewEl) {
-    input.addEventListener('change', () => {
-      previewEl.innerHTML = '';
-      for (const file of input.files) {
-        const img = document.createElement('img');
-        img.src = URL.createObjectURL(file);
-        previewEl.appendChild(img);
-      }
-    });
-  }
-
-  previewFiles(document.getElementById('f-hero'), document.getElementById('hero-preview'));
-  previewFiles(document.getElementById('f-gallery'), document.getElementById('gallery-preview'));
-
   async function uploadFile(slug, file) {
     const data = await fileToBase64(file);
     const res = await fetch('/api/upload', {
@@ -441,6 +520,113 @@
     if (!json.ok) throw new Error(json.error || 'Upload failed');
     return json.path;
   }
+
+  // ── Gallery removal state (cleared when form opens) ───────────────────────
+  let galleryRemovals = new Set();
+
+  function buildGalleryPreview(paths, slug) {
+    galleryRemovals = new Set();
+    const container = document.getElementById('gallery-preview');
+    container.innerHTML = '';
+    if (!paths || paths.length === 0) return;
+
+    for (const src of paths) {
+      const fname = src.split('/').pop();
+      const wrapper = document.createElement('div');
+      wrapper.className = 'gallery-thumb';
+      wrapper.dataset.path = src;
+
+      const img = document.createElement('img');
+      img.src = src;
+      img.title = fname;
+      img.onerror = () => { img.style.background = '#eee'; img.alt = fname; };
+
+      const label = document.createElement('span');
+      label.className = 'thumb-label';
+      label.textContent = fname;
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'remove-btn';
+      removeBtn.title = 'Remove this image';
+      removeBtn.textContent = '×';
+
+      const undoBtn = document.createElement('button');
+      undoBtn.type = 'button';
+      undoBtn.className = 'undo-btn hidden';
+      undoBtn.textContent = 'Undo';
+
+      removeBtn.addEventListener('click', () => {
+        galleryRemovals.add(src);
+        wrapper.classList.add('removed');
+        label.classList.add('removed-label');
+        removeBtn.classList.add('hidden');
+        undoBtn.classList.remove('hidden');
+      });
+
+      undoBtn.addEventListener('click', () => {
+        galleryRemovals.delete(src);
+        wrapper.classList.remove('removed');
+        label.classList.remove('removed-label');
+        removeBtn.classList.remove('hidden');
+        undoBtn.classList.add('hidden');
+      });
+
+      wrapper.appendChild(removeBtn);
+      wrapper.appendChild(img);
+      wrapper.appendChild(label);
+      wrapper.appendChild(undoBtn);
+      container.appendChild(wrapper);
+    }
+  }
+
+  // ── Hero file picker preview ──────────────────────────────────────────────
+  document.getElementById('f-hero').addEventListener('change', function () {
+    const preview = document.getElementById('hero-preview');
+    if (!this.files[0]) return;
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(this.files[0]);
+    img.style.cssText = 'height:80px;width:80px;object-fit:cover;border-radius:6px;border:1.5px solid var(--border);';
+    preview.innerHTML = '';
+    preview.appendChild(img);
+  });
+
+  // ── Gallery new-file picker preview ──────────────────────────────────────
+  document.getElementById('f-gallery').addEventListener('change', function () {
+    const hint = document.getElementById('gallery-hint');
+    hint.textContent = this.files.length > 0
+      ? `${this.files.length} new file${this.files.length > 1 ? 's' : ''} selected — will be added to gallery on save`
+      : '';
+  });
+
+  // ── Replace-all checkbox ──────────────────────────────────────────────────
+  document.getElementById('f-replace-all-gallery').addEventListener('change', function () {
+    const preview = document.getElementById('gallery-preview');
+    if (this.checked) {
+      // Mark all existing for removal
+      preview.querySelectorAll('.gallery-thumb').forEach(wrapper => {
+        const src = wrapper.dataset.path;
+        if (src) {
+          galleryRemovals.add(src);
+          wrapper.classList.add('removed');
+          wrapper.querySelector('.thumb-label').classList.add('removed-label');
+          wrapper.querySelector('.remove-btn').classList.add('hidden');
+          const undo = wrapper.querySelector('.undo-btn');
+          if (undo) undo.classList.remove('hidden');
+        }
+      });
+    } else {
+      // Undo all removals
+      galleryRemovals = new Set();
+      preview.querySelectorAll('.gallery-thumb').forEach(wrapper => {
+        wrapper.classList.remove('removed');
+        wrapper.querySelector('.thumb-label').classList.remove('removed-label');
+        wrapper.querySelector('.remove-btn').classList.remove('hidden');
+        const undo = wrapper.querySelector('.undo-btn');
+        if (undo) undo.classList.add('hidden');
+      });
+    }
+  });
 
   // ── Load properties ───────────────────────────────────────────────────────
   let allProperties = [];
@@ -458,14 +644,17 @@
     for (const p of allProperties) {
       const tr = document.createElement('tr');
       tr.dataset.propSlug = p.slug;
+      const td = document.createElement('td');
+      td.style.cssText = 'display:flex;gap:0.4rem;padding:0.5rem 1rem;';
+      td.innerHTML = `
+        <button class="btn btn-ghost btn-sm" data-edit-prop="${p.slug}">Edit</button>
+        <button class="btn btn-danger btn-sm" data-delete-prop="${p.slug}" data-address="${p.address.replace(/"/g,'&quot;')}">Delete</button>
+      `;
       tr.innerHTML = `
         <td>${p.address}</td>
         <td style="font-size:0.8rem;color:var(--text-soft);">${p.slug}</td>
-        <td style="display:flex;gap:0.4rem;padding:0.5rem 1rem;">
-          <button class="btn btn-ghost btn-sm" data-edit-prop="${p.slug}">Edit</button>
-          <button class="btn btn-danger btn-sm" data-delete-prop="${p.slug}" data-address="${p.address}">Delete</button>
-        </td>
       `;
+      tr.appendChild(td);
       tbody.appendChild(tr);
     }
 
@@ -482,19 +671,58 @@
     }
   }
 
-  // ── Properties form ───────────────────────────────────────────────────────
-  document.getElementById('btn-add-property').addEventListener('click', () => {
-    document.getElementById('prop-form-title').textContent = 'Add property';
+  // ── Open property form (shared by add and edit) ───────────────────────────
+  function openPropForm(data) {
+    document.getElementById('prop-form-title').textContent = data ? 'Edit property' : 'Add property';
     document.getElementById('prop-form').reset();
-    document.getElementById('prop-slug-original').value = '';
-    document.getElementById('f-hero-existing').value = '';
-    document.getElementById('f-gallery-existing').value = '';
-    document.getElementById('hero-preview').innerHTML = '';
-    document.getElementById('gallery-preview').innerHTML = '';
+    document.getElementById('prop-slug-original').value = data ? (data.slug || '') : '';
+    document.getElementById('f-hero-existing').value = data ? (data.hero || '') : '';
+    document.getElementById('f-gallery-existing').value = data ? JSON.stringify(Array.isArray(data.gallery) ? data.gallery : []) : '[]';
+    document.getElementById('f-replace-all-gallery').checked = false;
+    document.getElementById('gallery-hint').textContent = '';
+
+    if (data) {
+      document.getElementById('f-address').value = data.address || '';
+      document.getElementById('f-price').value = data.price || '';
+      document.getElementById('f-sqft').value = data.sqft || '';
+      document.getElementById('f-beds').value = data.beds || '';
+      document.getElementById('f-baths').value = data.baths || '';
+      document.getElementById('f-desc').value = data.description || '';
+
+      // Hero preview
+      const heroPreview = document.getElementById('hero-preview');
+      if (data.hero) {
+        const fname = data.hero.split('/').pop();
+        heroPreview.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = data.hero;
+        img.title = fname;
+        img.style.cssText = 'height:80px;width:80px;object-fit:cover;border-radius:6px;border:1.5px solid var(--border);';
+        img.onerror = () => { img.alt = fname; img.style.background = '#eee'; };
+        const note = document.createElement('span');
+        note.style.cssText = 'display:block;font-size:0.7rem;color:var(--text-soft);margin-top:2px;';
+        note.textContent = `${fname} — upload a new file to replace`;
+        const wrap = document.createElement('div');
+        wrap.appendChild(img);
+        wrap.appendChild(note);
+        heroPreview.appendChild(wrap);
+      } else {
+        document.getElementById('hero-preview').innerHTML = '';
+      }
+
+      // Gallery preview with per-image remove buttons
+      buildGalleryPreview(Array.isArray(data.gallery) ? data.gallery : [], data.slug);
+    } else {
+      document.getElementById('hero-preview').innerHTML = '';
+      document.getElementById('gallery-preview').innerHTML = '';
+      galleryRemovals = new Set();
+    }
+
     document.getElementById('prop-form-wrap').classList.remove('hidden');
     document.getElementById('f-address').focus();
-  });
+  }
 
+  document.getElementById('btn-add-property').addEventListener('click', () => openPropForm(null));
   document.getElementById('btn-cancel-prop').addEventListener('click', () => {
     document.getElementById('prop-form-wrap').classList.add('hidden');
   });
@@ -504,56 +732,10 @@
     if (!slug) return;
     const res = await fetch('/api/property/' + slug);
     if (!res.ok) return;
-    const d = await res.json();
-    document.getElementById('prop-form-title').textContent = 'Edit property';
-    document.getElementById('prop-slug-original').value = d.slug;
-    document.getElementById('f-address').value = d.address || '';
-    document.getElementById('f-price').value = d.price || '';
-    document.getElementById('f-sqft').value = d.sqft || '';
-    document.getElementById('f-beds').value = d.beds || '';
-    document.getElementById('f-baths').value = d.baths || '';
-    document.getElementById('f-desc').value = d.description || '';
-
-    // Store existing paths in hidden fields for the save handler
-    document.getElementById('f-hero-existing').value = d.hero || '';
-
-    // Hero preview — show current image with filename label
-    const heroPreview = document.getElementById('hero-preview');
-    if (d.hero) {
-      const fname = d.hero.split('/').pop();
-      heroPreview.innerHTML = `
-        <div style="position:relative;display:inline-block;">
-          <img src="${d.hero}" title="${fname}" />
-          <span style="display:block;font-size:0.7rem;color:var(--text-soft);margin-top:2px;">${fname} — upload a new file to replace</span>
-        </div>`;
-    } else {
-      heroPreview.innerHTML = '';
-    }
-
-    // Gallery preview — show all current images
-    const galleryPreview = document.getElementById('gallery-preview');
-    const existingGallery = Array.isArray(d.gallery) ? d.gallery : [];
-    document.getElementById('f-gallery-existing').value = JSON.stringify(existingGallery);
-    if (existingGallery.length > 0) {
-      galleryPreview.innerHTML = existingGallery.map(src => {
-        const fname = src.split('/').pop();
-        return `<div style="text-align:center;">
-          <img src="${src}" title="${fname}" />
-          <span style="display:block;font-size:0.65rem;color:var(--text-soft);">${fname}</span>
-        </div>`;
-      }).join('');
-      galleryPreview.insertAdjacentHTML('beforeend',
-        `<p style="font-size:0.75rem;color:var(--text-soft);width:100%;margin-top:0.25rem;">
-          Select new files to add to the gallery, or leave empty to keep the above.
-        </p>`);
-    } else {
-      galleryPreview.innerHTML = '';
-    }
-
-    document.getElementById('prop-form-wrap').classList.remove('hidden');
-    document.getElementById('f-address').focus();
+    openPropForm(await res.json());
   });
 
+  // ── Property form submit ──────────────────────────────────────────────────
   document.getElementById('prop-form').addEventListener('submit', async e => {
     e.preventDefault();
     const statusEl = document.getElementById('prop-status');
@@ -563,27 +745,33 @@
       const address = document.getElementById('f-address').value.trim();
       const slug = document.getElementById('prop-slug-original').value || toSlug(address);
 
-      // Handle uploads first
+      // Hero
       let hero = null;
       const heroFile = document.getElementById('f-hero').files[0];
       if (heroFile) {
         showStatus(statusEl, 'Uploading hero image…', 'loading');
         hero = await uploadFile(slug, heroFile);
       } else {
-        // Keep existing hero path stored when the edit form was opened
         hero = document.getElementById('f-hero-existing').value || null;
       }
 
-      // Start with existing gallery paths, then append any new uploads
-      let gallery = [];
-      const existingGalleryRaw = document.getElementById('f-gallery-existing').value;
-      if (existingGalleryRaw) {
-        try { gallery = JSON.parse(existingGalleryRaw); } catch { gallery = []; }
+      // Gallery: start from existing, apply removals, append new uploads
+      const replaceAll = document.getElementById('f-replace-all-gallery').checked;
+      let existingGallery = [];
+      if (!replaceAll) {
+        try { existingGallery = JSON.parse(document.getElementById('f-gallery-existing').value || '[]'); } catch {}
+        // Remove items marked for deletion
+        existingGallery = existingGallery.filter(p => !galleryRemovals.has(p));
       }
+
+      const newUploads = [];
       for (const file of document.getElementById('f-gallery').files) {
         showStatus(statusEl, 'Uploading gallery…', 'loading');
-        gallery.push(await uploadFile(slug, file));
+        newUploads.push(await uploadFile(slug, file));
       }
+
+      // De-duplicate: existing (minus removed) + new uploads
+      const gallery = [...new Set([...existingGallery, ...newUploads])];
 
       const payload = {
         slug,
@@ -598,15 +786,31 @@
       };
 
       showStatus(statusEl, 'Saving to GitHub…', 'loading');
-      const res = await fetch('/api/property', {
+      const saveRes = await fetch('/api/property', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      const json = await res.json();
-      if (!json.ok) throw new Error(json.error || 'Save failed');
+      const saveJson = await saveRes.json();
+      if (!saveJson.ok) throw new Error(saveJson.error || 'Save failed');
 
-      showStatus(statusEl, json.github ? '✓ Saved and committed to GitHub' : '✓ Saved locally (no GitHub token)', 'ok');
+      // Delete removed images from disk and GitHub
+      for (const imgPath of galleryRemovals) {
+        // imgPath is like /uploads/slug/file.jpg — convert to repoPath
+        const repoPath = 'public' + imgPath;
+        try {
+          await fetch('/api/image', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ repoPath }),
+          });
+        } catch (err) {
+          console.warn('Failed to delete image', repoPath, err);
+        }
+      }
+      galleryRemovals = new Set();
+
+      showStatus(statusEl, saveJson.github ? '✓ Saved and committed to GitHub' : '✓ Saved locally (no GitHub token)', 'ok');
       document.getElementById('prop-form-wrap').classList.add('hidden');
       await loadProperties();
     } catch (err) {
@@ -615,70 +819,143 @@
   });
 
   // ── Load events ───────────────────────────────────────────────────────────
+  let allEvents = [];
+
   async function loadEvents() {
     const res = await fetch('/api/events');
-    const events = await res.json();
-    allEvents = events;
+    allEvents = await res.json();
 
     const tbody = document.getElementById('event-tbody');
     tbody.innerHTML = '';
-    if (events.length === 0) {
+    if (allEvents.length === 0) {
       tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-soft);font-style:italic;">No events yet.</td></tr>';
       return;
     }
-    for (const ev of events) {
+    for (const ev of allEvents) {
       const prop = allProperties.find(p => p.slug === ev.property);
       const address = prop ? prop.address : ev.property;
       const time = ev.start && ev.end ? `${ev.start} – ${ev.end}` : '';
       const tr = document.createElement('tr');
       tr.dataset.eventId = ev.id;
+
+      const td = document.createElement('td');
+      td.style.cssText = 'display:flex;gap:0.4rem;padding:0.5rem 1rem;';
+      td.innerHTML = `
+        <button class="btn btn-ghost btn-sm btn-icon" title="Duplicate for a new date" data-dupe-event="${ev.id}">+</button>
+        <button class="btn btn-ghost btn-sm" data-edit-event="${ev.id}">Edit</button>
+        <button class="btn btn-danger btn-sm" data-delete-event="${ev.id}" data-address="${address.replace(/"/g,'&quot;')}" data-date="${ev.date || ''}">Delete</button>
+      `;
       tr.innerHTML = `
         <td>${address}</td>
         <td>${ev.date || ''}</td>
         <td style="font-size:0.85rem;">${time}</td>
-        <td style="display:flex;gap:0.4rem;padding:0.5rem 1rem;">
-          <button class="btn btn-ghost btn-sm" data-edit-event="${ev.id}">Edit</button>
-          <button class="btn btn-danger btn-sm" data-delete-event="${ev.id}" data-address="${address}" data-date="${ev.date || ''}">Delete</button>
-        </td>
       `;
+      tr.appendChild(td);
       tbody.appendChild(tr);
     }
   }
 
-  // ── Events form ───────────────────────────────────────────────────────────
-  document.getElementById('btn-add-event').addEventListener('click', () => {
-    document.getElementById('event-form-title').textContent = 'Add event';
-    document.getElementById('event-form').reset();
-    document.getElementById('event-id-original').value = '';
+  // ── Open event form (shared) ──────────────────────────────────────────────
+  function openEventForm({ id, property, date, start, end, notes, isNew }) {
+    document.getElementById('event-form-title').textContent = isNew ? 'Add event' : 'Edit event';
+    document.getElementById('event-id-original').value = isNew ? '' : (id || '');
+    document.getElementById('f-property').value = property || '';
+    document.getElementById('f-date').value = date || '';
+    document.getElementById('f-start').value = start || '';
+    document.getElementById('f-end').value = end || '';
+    document.getElementById('f-notes').value = notes || '';
     document.getElementById('event-form-wrap').classList.remove('hidden');
-    document.getElementById('f-property').focus();
+    document.getElementById('event-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('f-date').focus();
+  }
+
+  document.getElementById('btn-add-event').addEventListener('click', () => {
+    openEventForm({ isNew: true });
   });
 
   document.getElementById('btn-cancel-event').addEventListener('click', () => {
     document.getElementById('event-form-wrap').classList.add('hidden');
   });
 
+  // Edit, duplicate, and delete all wired through one delegated handler
   document.addEventListener('click', async e => {
-    const id = e.target.dataset.editEvent;
-    if (!id) return;
-    const res = await fetch('/api/event/' + id);
-    if (!res.ok) return;
-    const d = await res.json();
-    document.getElementById('event-form-title').textContent = 'Edit event';
-    document.getElementById('event-id-original').value = id;
-    document.getElementById('f-property').value = d.property || '';
-    document.getElementById('f-date').value = d.date || '';
-    document.getElementById('f-start').value = d.start || '';
-    document.getElementById('f-end').value = d.end || '';
-    document.getElementById('f-notes').value = d.notes || '';
-    document.getElementById('event-form-wrap').classList.remove('hidden');
+    // ── Duplicate event ───────────────────────────────────────────────────
+    const dupeId = e.target.dataset.dupeEvent;
+    if (dupeId) {
+      const res = await fetch('/api/event/' + dupeId);
+      if (!res.ok) return;
+      const d = await res.json();
+      // Switch to Events tab if not already there
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelector('[data-tab="events"]').classList.add('active');
+      document.getElementById('panel-events').classList.add('active');
+      openEventForm({ property: d.property, start: d.start, end: d.end, notes: d.notes, isNew: true });
+      return;
+    }
+
+    // ── Edit event ────────────────────────────────────────────────────────
+    const editId = e.target.dataset.editEvent;
+    if (editId) {
+      const res = await fetch('/api/event/' + editId);
+      if (!res.ok) return;
+      const d = await res.json();
+      openEventForm({ id: editId, property: d.property, date: d.date, start: d.start, end: d.end, notes: d.notes, isNew: false });
+      return;
+    }
+
+    // ── Delete event ──────────────────────────────────────────────────────
+    const deleteEventId = e.target.dataset.deleteEvent;
+    if (deleteEventId) {
+      const address = e.target.dataset.address;
+      const date = e.target.dataset.date;
+      if (!confirm(`Delete open house at ${address} on ${date}?\n\nThis cannot be undone.`)) return;
+      try {
+        const res = await fetch('/api/event/' + deleteEventId, { method: 'DELETE' });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || 'Delete failed');
+        document.querySelector(`tr[data-event-id="${deleteEventId}"]`)?.remove();
+        allEvents = allEvents.filter(ev => ev.id !== deleteEventId);
+        if (!document.getElementById('event-tbody').querySelector('tr[data-event-id]')) {
+          document.getElementById('event-tbody').innerHTML =
+            '<tr><td colspan="4" style="color:var(--text-soft);font-style:italic;">No events yet.</td></tr>';
+        }
+      } catch (err) { alert('Error: ' + err.message); }
+      return;
+    }
+
+    // ── Delete property ───────────────────────────────────────────────────
+    const deletePropSlug = e.target.dataset.deleteProp;
+    if (deletePropSlug) {
+      const address = e.target.dataset.address;
+      const linked = allEvents.filter(ev => ev.property === deletePropSlug);
+      if (linked.length > 0) {
+        alert(`This property has ${linked.length} open house event${linked.length > 1 ? 's' : ''} referencing it. Delete those first.`);
+        return;
+      }
+      if (!confirm(`Delete property "${address}"?\n\nThis cannot be undone.`)) return;
+      try {
+        const res = await fetch('/api/property/' + deletePropSlug, { method: 'DELETE' });
+        const json = await res.json();
+        if (res.status === 409) { alert(json.error); return; }
+        if (!json.ok) throw new Error(json.error || 'Delete failed');
+        document.querySelector(`tr[data-prop-slug="${deletePropSlug}"]`)?.remove();
+        allProperties = allProperties.filter(p => p.slug !== deletePropSlug);
+        if (!document.getElementById('prop-tbody').querySelector('tr[data-prop-slug]')) {
+          document.getElementById('prop-tbody').innerHTML =
+            '<tr><td colspan="3" style="color:var(--text-soft);font-style:italic;">No properties yet.</td></tr>';
+        }
+        document.querySelector(`#f-property option[value="${deletePropSlug}"]`)?.remove();
+      } catch (err) { alert('Error: ' + err.message); }
+      return;
+    }
   });
 
+  // ── Event form submit ─────────────────────────────────────────────────────
   document.getElementById('event-form').addEventListener('submit', async e => {
     e.preventDefault();
     const statusEl = document.getElementById('event-status');
     showStatus(statusEl, 'Saving…', 'loading');
-
     try {
       const originalId = document.getElementById('event-id-original').value;
       const payload = {
@@ -689,7 +966,6 @@
         notes: document.getElementById('f-notes').value.trim(),
         ...(originalId ? { originalId } : {}),
       };
-
       const res = await fetch('/api/event', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -697,7 +973,6 @@
       });
       const json = await res.json();
       if (!json.ok) throw new Error(json.error || 'Save failed');
-
       showStatus(statusEl, json.github ? '✓ Saved and committed to GitHub' : '✓ Saved locally (no GitHub token)', 'ok');
       document.getElementById('event-form-wrap').classList.add('hidden');
       await loadEvents();
@@ -706,95 +981,19 @@
     }
   });
 
-  // ── Delete handlers ───────────────────────────────────────────────────────
-  let allEvents = [];
-
-  document.addEventListener('click', async e => {
-    // Delete event
-    const eventId = e.target.dataset.deleteEvent;
-    if (eventId) {
-      const address = e.target.dataset.address;
-      const date = e.target.dataset.date;
-      const confirmed = confirm(`Delete open house at ${address} on ${date}?\n\nThis cannot be undone.`);
-      if (!confirmed) return;
-
-      try {
-        const res = await fetch('/api/event/' + eventId, { method: 'DELETE' });
-        const json = await res.json();
-        if (!json.ok) throw new Error(json.error || 'Delete failed');
-        // Remove the row immediately
-        const tr = document.querySelector(`tr[data-event-id="${eventId}"]`);
-        if (tr) tr.remove();
-        // Refresh allEvents
-        allEvents = allEvents.filter(ev => ev.id !== eventId);
-        const tbody = document.getElementById('event-tbody');
-        if (tbody.querySelectorAll('tr').length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-soft);font-style:italic;">No events yet.</td></tr>';
-        }
-      } catch (err) {
-        alert('Error: ' + err.message);
-      }
-      return;
-    }
-
-    // Delete property
-    const propSlug = e.target.dataset.deleteProp;
-    if (propSlug) {
-      const address = e.target.dataset.address;
-
-      // Safety check: count events referencing this property in our loaded data
-      const linkedEvents = allEvents.filter(ev => ev.property === propSlug);
-      if (linkedEvents.length > 0) {
-        alert(`This property has ${linkedEvents.length} open house event${linkedEvents.length > 1 ? 's' : ''} referencing it. Delete those first.`);
-        return;
-      }
-
-      const confirmed = confirm(`Delete property "${address}"?\n\nThis cannot be undone.`);
-      if (!confirmed) return;
-
-      try {
-        const res = await fetch('/api/property/' + propSlug, { method: 'DELETE' });
-        const json = await res.json();
-        if (res.status === 409) {
-          // Server-side safety check (in case local data was stale)
-          alert(json.error);
-          return;
-        }
-        if (!json.ok) throw new Error(json.error || 'Delete failed');
-        // Remove the row immediately
-        const tr = document.querySelector(`tr[data-prop-slug="${propSlug}"]`);
-        if (tr) tr.remove();
-        allProperties = allProperties.filter(p => p.slug !== propSlug);
-        const tbody = document.getElementById('prop-tbody');
-        if (tbody.querySelectorAll('tr').length === 0) {
-          tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-soft);font-style:italic;">No properties yet.</td></tr>';
-        }
-        // Remove from event form dropdown too
-        const opt = document.querySelector(`#f-property option[value="${propSlug}"]`);
-        if (opt) opt.remove();
-      } catch (err) {
-        alert('Error: ' + err.message);
-      }
-      return;
-    }
-  });
-
   // ── Sync all ──────────────────────────────────────────────────────────────
   document.getElementById('btn-sync-all').addEventListener('click', async () => {
     const btn = document.getElementById('btn-sync-all');
     const statusEl = document.getElementById('sync-status');
-
     btn.disabled = true;
     btn.textContent = 'Syncing…';
     statusEl.textContent = 'Pushing all files to GitHub…';
     statusEl.className = 'status loading';
     statusEl.classList.remove('hidden');
-
     try {
       const res = await fetch('/api/sync-all', { method: 'POST' });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Sync failed');
-
       if (json.failed === 0) {
         statusEl.textContent = `✓ ${json.synced} file${json.synced !== 1 ? 's' : ''} synced to GitHub`;
         statusEl.className = 'status ok';

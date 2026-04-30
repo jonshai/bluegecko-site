@@ -5,7 +5,7 @@ price: 299000
 beds: 3
 baths: 2
 sqft: 1542
-hero: "/uploads/141-ensenada-st/Exterior.jpg"
+hero: "/uploads/141-ensenada-st/Front.jpg"
 gallery:
   - "/uploads/141-ensenada-st/Interior-1.jpg"
   - "/uploads/141-ensenada-st/Interior-2.jpg"

@@ -151,9 +151,10 @@ function buildPropertyFrontmatter(d) {
 
   if (d.hero) lines.push(`hero: ${JSON.stringify(d.hero)}`);
 
-  if (d.gallery && d.gallery.length > 0) {
+  const gallery = d.gallery ? [...new Set(d.gallery.filter(Boolean))] : [];
+  if (gallery.length > 0) {
     lines.push('gallery:');
-    for (const g of d.gallery) lines.push(`  - ${JSON.stringify(g)}`);
+    for (const g of gallery) lines.push(`  - ${JSON.stringify(g)}`);
   }
 
   lines.push('description: |');
@@ -462,6 +463,25 @@ const server = http.createServer(async (req, res) => {
         `content: ${isNew && !originalId ? 'add' : 'update'} open house event ${newId}`
       );
       return jsonResponse(res, 200, { ok: true, id: newId, ...result });
+    } catch (err) {
+      console.error(err);
+      return jsonResponse(res, 500, { error: err.message });
+    }
+  }
+
+  // ── DELETE /api/image ─────────────────────────────────────────────────────
+  // Body: { repoPath: "public/uploads/slug/file.jpg" }
+  if (method === 'DELETE' && pathname === '/api/image') {
+    try {
+      const raw = await readBody(req);
+      const { repoPath } = JSON.parse(raw);
+      if (!repoPath || !repoPath.startsWith('public/uploads/')) {
+        return jsonResponse(res, 400, { error: 'invalid repoPath' });
+      }
+      const localPath = path.join(REPO_ROOT, repoPath);
+      if (fs.existsSync(localPath)) fs.unlinkSync(localPath);
+      const result = await deleteFileFromGitHub(repoPath, `content: remove image ${repoPath}`);
+      return jsonResponse(res, 200, { ok: true, ...result });
     } catch (err) {
       console.error(err);
       return jsonResponse(res, 500, { error: err.message });
