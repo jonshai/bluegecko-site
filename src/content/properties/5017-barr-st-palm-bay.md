@@ -5,7 +5,7 @@ price: 419000
 beds: 4
 baths: 2
 sqft: 1847
-hero: "/uploads/5017-barr-st-palm-bay/5017-Barr-Front.jpg"
+hero: "/uploads/5017-barr-st-palm-bay/IMG_2211.jpeg"
 gallery:
   - "/uploads/5017-barr-st-palm-bay/Living.jpg"
   - "/uploads/5017-barr-st-palm-bay/kitchen.jpg"
