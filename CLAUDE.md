@@ -93,14 +93,33 @@ src/
     contact.astro            — contact form
     list-my-house.astro      — seller page
     privacy.astro            — privacy policy & terms (all legal)
+    open-house/
+      index.astro            — listing page (hero card, upcoming, recent)
+      archive.astro          — all events older than 60 days
+      [property]/[date].astro — detail page
     api/lead.ts              — FUB lead submission API
   components/
     LeadForm.astro           — reusable lead form
+  content/
+    properties/              — one .md per property (shared across events)
+    events/                  — one .md per open house date
+  content.config.ts          — Zod schemas for properties + events collections
 public/
   stella-loader.js           — loads Stella widget from PANTHEON
   lead-form.js               — handles contact form fetch submission
+  uploads/                   — property photos, organized by slug
+    [property-slug]/
+      hero.jpg (or similar)
+      gallery images...
 scripts/
   inject-scripts.mjs         — post-build script injection
+tools/
+  open-house-admin/          — local admin tool (NOT part of Astro build)
+    server.js                — Node.js HTTP server on port 3333
+    index.html               — admin UI (Properties + Events tabs)
+    .env                     — GITHUB_TOKEN (never committed)
+    .env.example             — template
+    README.md                — setup instructions
 .github/workflows/
   deploy.yml                 — GitHub Actions auto-deploy (only deploy mechanism)
 
@@ -135,8 +154,7 @@ promotional purposes."
 - Phone: 321.341.6650
 
 ## Footer Legal Bar
-- Simplified to: single <a href="/privacy"> link + plain-English
-  Pro Whimsy paragraph
+- Single <a href="/privacy"> link + plain-English Pro Whimsy paragraph
 - The legalText object and legal-toggle event listeners are GONE
 - Do NOT re-add toggle buttons or inline disclaimer script
 
@@ -169,18 +187,57 @@ Why npx wrangler deploy fails: the bluegecko worker was originally
 created via wrangler pages deploy and lives under a different Cloudflare
 API path. Only cloudflare/wrangler-action@v3 handles this correctly.
 
-### Verification
-After deploy completes:
+### Verification after deploy
 curl -s 'https://bluegecko.homes' | grep "stella-loader"
 
 ### CC pushes directly to remote
 GitHub Desktop requires Pull after CC commits or local changes conflict.
+Working directory for CC: /Users/jonshai/AI Projects/bluegecko-site
+
+## Open House System
+
+### Data model
+Two Astro content collections:
+
+src/content/properties/[slug].md
+  slug, address, price, beds, baths, sqft, description
+  hero: /uploads/[slug]/filename.jpg (optional)
+  gallery: [array of /uploads/[slug]/filename.jpg] (optional)
+
+src/content/events/[property-slug]-[YYYY-MM-DD].md
+  property: [slug], date: YYYY-MM-DD, start: HH:MM, end: HH:MM
+  notes: optional per-event text
+
+### Pages
+/open-house           — hero card (next event), upcoming grid, recent (60d)
+/open-house/[p]/[d]  — detail: hero, map, gallery, RSVP or inquiry form
+/open-house/archive   — all events older than 60 days
+
+### Admin tool (tools/open-house-admin/)
+- Runs locally on port 3333, accessed via Tailscale
+- Start: node tools/open-house-admin/server.js (reads .env automatically)
+- GITHUB_TOKEN in tools/open-house-admin/.env — expires periodically,
+  regenerate at github.com → Settings → Developer settings → Tokens (classic)
+  repo scope required
+- "Sync all to GitHub" button commits all local files to repo
+- Properties tab: create/edit/delete properties, upload hero + gallery
+- Events tab: create/edit/delete events, + button duplicates event (clears date)
+- Images stored in public/uploads/[property-slug]/[filename]
+- Each property should have unique photos — filenames like Front.jpg can
+  exist in multiple slugs since they're in separate subdirectories
+
+### Image upload pipeline (fixed)
+putFile() function handles all GitHub API writes with:
+- SHA validation (40-char hex or null)
+- Retry on 422 (stale SHA race condition)
+- Creates new file if SHA is null, updates if SHA present
+- All four write paths (upload, sync-all, property save, event save)
+  route through this single function
 
 ## Common Debugging
 
 # Check what's live vs local build:
 curl -s 'https://bluegecko.homes' | grep "stella-loader\|lead-form"
-grep "stella-loader" dist/client/index.html
 
 # Test lead API:
 curl -s -X POST 'https://bluegecko.homes/api/lead' \
@@ -205,7 +262,7 @@ Delete these in a future cleanup commit.
 - Never run npx wrangler deploy directly — use GitHub Actions only
 - Never add "main" field to wrangler.jsonc — breaks deployment
 - Never add "assets.binding" to wrangler.jsonc — causes assets-only error
-- Never change the deploy mechanism without reading the deployment section above
+- Never change the deploy mechanism without reading the deployment section
 
 ## Planned Features (not yet built)
 
@@ -215,51 +272,39 @@ Delete these in a future cleanup commit.
 - /blog/[slug]        — market updates, open house recaps, neighborhood guides
 - /faq/[slug]         — Q&A pages targeting AEO queries
 - Workflow: Vera writes Markdown → commits to GitHub → Actions auto-deploys
-- Each page auto-generates: URL, meta tags, sitemap entry, schema markup
 
 ### Builder Incentives Dashboard
 - Landing page at /incentives (or /new-homes)
-- Public-facing summary of current builder incentives on the Space Coast
-- Data fed by TSoT (The Source of Truth) — separate project, not yet online
-- bluegecko.homes will be a consumer of the TSoT API
-- Includes incentives dashboard UI + lead capture CTA
+- Data fed by TSoT API (separate project, not yet online)
 - Design TBD — build begins when TSoT data feed is available
 
 ## Current State
-- All Stella trigger buttons working (data-stella-trigger="open")
+- Stella trigger buttons working (data-stella-trigger="open")
 - Contact form → thank-you redirect working
 - FUB lead capture working
 - IDX search with 64px universal crop working
-- Mobile search native width working
-- SMS compliance text in place (FUB-approved carrier language)
 - Privacy page live at /privacy — registered with FUB and Meta
-- Footer legal bar simplified
+- Footer legal bar: plain-English paragraph + /privacy link
 - GitHub Actions auto-deploy working via cloudflare/wrangler-action@v3
-- Open house slug: /open-house/open-house (no longer test-open-house)
+- Open house system live: listing, detail, archive pages
+- Open house admin tool working at port 3333 (Tailscale access)
+- Image upload pipeline fixed — putFile() with SHA retry
+- Open house nav: /open-house (not test-open-house)
+- 4 properties still need real photos re-uploaded by Lucky:
+  296-delake-rd-nw, 4645-pagosa-springs-circle-melbourne,
+  480-park-ave, 4926-barr-street
 
-## Branching & Deploy Workflow (IMPORTANT)
+## Branching Workflow (REQUIRED)
 
-### Default workflow for all changes
-1. Pull latest main before starting: git pull origin main
-2. Create a feature branch: git checkout -b [descriptive-name]
-3. Make all changes on the branch — never commit directly to main
-4. Push the branch: git push origin [branch-name]
-5. Tell the user the branch name
-6. Wait for explicit approval before merging to main
-7. Merge only when user confirms: git checkout main && git merge [branch-name] && git push origin main && git branch -d [branch-name]
+1. git pull origin main
+2. git checkout -b [type/description]
+   Types: fix/ feature/ content/ style/
+3. Make all changes on branch
+4. Push branch, get approval before merging
+5. Merge: git checkout main && git merge [branch] && git push && git branch -d [branch]
 
-### Branch preview URLs
-Branch pushes do NOT auto-deploy to preview URLs with this non-standard
-Worker setup. Testing happens by reviewing code changes directly.
-Production is ONLY updated when changes land on main via GitHub Actions.
+Branch previews do NOT work with this non-standard Worker setup.
+Review code changes directly before merging to main.
 
-### Exceptions
-Simple safe changes (fixing a typo, updating a phone number, adding
-a new content file that can't break existing pages) may go directly
-to main at user's discretion — but ask first rather than assume.
-
-### Branch naming convention
-- fix/description     — bug fixes
-- feature/description — new pages or functionality
-- content/description — new blog, community, builder, FAQ pages
-- style/description   — CSS or visual changes
+Exception: CLAUDE.md updates and single-file content additions that
+cannot break existing pages may go direct to main — ask first.
