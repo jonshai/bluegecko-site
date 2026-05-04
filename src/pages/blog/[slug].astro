@@ -1,0 +1,264 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const allPosts = await getCollection('blog');
+  const sorted = allPosts.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+  return sorted.map((post, i) => ({
+    params: { slug: post.id },
+    props: {
+      post,
+      prev: sorted[i + 1] ?? null,
+      next: sorted[i - 1] ?? null,
+    },
+  }));
+}
+
+const { post, prev, next } = Astro.props;
+const { Content } = await render(post);
+
+function formatDate(d: Date): string {
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+---
+
+<BaseLayout
+  title={`${post.data.title} | Blue Gecko`}
+  description={post.data.excerpt}
+>
+  <main>
+    {post.data.hero && (
+      <div class="hero-image-wrap">
+        <img src={post.data.hero} alt={post.data.title} class="hero-image" />
+      </div>
+    )}
+
+    <section class="section">
+      <div class="container content-wrap">
+        <nav class="breadcrumb">
+          <a href="/blog">← Back to Blog</a>
+        </nav>
+
+        <div class="post-meta-row">
+          <span class="post-date">{formatDate(post.data.date)}</span>
+          <span class="meta-sep">·</span>
+          <span class="post-author">{post.data.author}</span>
+          {post.data.tags && post.data.tags.length > 0 && (
+            <>
+              <span class="meta-sep">·</span>
+              <div class="post-tags">
+                {post.data.tags.map(tag => (
+                  <a
+                    href={`/blog/tag/${tag.toLowerCase().replace(/\s+/g, '-')}`}
+                    class="tag-chip"
+                  >{tag}</a>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        <h1>{post.data.title}</h1>
+        <p class="excerpt">{post.data.excerpt}</p>
+
+        <div class="prose">
+          <Content />
+        </div>
+
+        <div class="cta-row">
+          <button data-stella-trigger="open" class="button button-primary">Ask Stella</button>
+          <a href="/contact" class="button button-secondary">Talk to Us</a>
+        </div>
+
+        {(prev || next) && (
+          <nav class="post-nav">
+            <div class="post-nav-item">
+              {prev && (
+                <a href={`/blog/${prev.id}`} class="post-nav-link post-nav-prev">
+                  <span class="nav-label">← Older</span>
+                  <span class="nav-title">{prev.data.title}</span>
+                </a>
+              )}
+            </div>
+            <div class="post-nav-item post-nav-right">
+              {next && (
+                <a href={`/blog/${next.id}`} class="post-nav-link post-nav-next">
+                  <span class="nav-label">Newer →</span>
+                  <span class="nav-title">{next.data.title}</span>
+                </a>
+              )}
+            </div>
+          </nav>
+        )}
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .hero-image-wrap {
+    width: 100%;
+    max-height: 480px;
+    overflow: hidden;
+  }
+
+  .hero-image {
+    width: 100%;
+    height: 480px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .content-wrap {
+    max-width: 740px;
+  }
+
+  .breadcrumb {
+    font-size: 0.88rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .breadcrumb a {
+    color: var(--brand, #1f5c4d);
+    font-weight: 600;
+  }
+
+  .post-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: var(--text-soft);
+    margin-bottom: 1rem;
+  }
+
+  .meta-sep {
+    opacity: 0.4;
+  }
+
+  .post-date,
+  .post-author {
+    font-weight: 600;
+  }
+
+  .post-tags {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .tag-chip {
+    background: #e8e6e0;
+    color: var(--text);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    text-decoration: none;
+  }
+
+  .tag-chip:hover {
+    background: var(--brand, #1f5c4d);
+    color: white;
+  }
+
+  h1 {
+    font-size: 2rem;
+    line-height: 1.25;
+    margin-bottom: 0.75rem;
+  }
+
+  .excerpt {
+    font-size: 1.15rem;
+    line-height: 1.65;
+    color: var(--text-soft);
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e8e6e0;
+  }
+
+  .prose {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: var(--text);
+  }
+
+  .prose p {
+    margin-bottom: 1.25rem;
+  }
+
+  .prose h2 {
+    font-size: 1.35rem;
+    margin: 2rem 0 0.75rem;
+  }
+
+  .prose h3 {
+    font-size: 1.15rem;
+    margin: 1.75rem 0 0.5rem;
+  }
+
+  .cta-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e8e6e0;
+  }
+
+  .post-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e8e6e0;
+  }
+
+  .post-nav-item {
+    flex: 1;
+  }
+
+  .post-nav-right {
+    text-align: right;
+  }
+
+  .post-nav-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  .post-nav-link:hover .nav-title {
+    color: var(--brand, #1f5c4d);
+  }
+
+  .nav-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--text-soft);
+    text-transform: uppercase;
+  }
+
+  .nav-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.3;
+    transition: color 0.15s;
+  }
+
+  @media (max-width: 600px) {
+    .hero-image {
+      height: 260px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+    }
+  }
+</style>

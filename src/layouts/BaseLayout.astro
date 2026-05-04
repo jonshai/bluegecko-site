@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { getCollection } from 'astro:content';
 
 interface Props {
   title?: string;
@@ -10,6 +11,18 @@ const {
   title = 'Blue Gecko Homes',
   description = 'Blue Gecko Real Estate',
 } = Astro.props;
+
+const [builders, communities, blog, faq] = await Promise.all([
+  getCollection('builders'),
+  getCollection('communities'),
+  getCollection('blog'),
+  getCollection('faq'),
+]);
+
+const showBuilders = builders.length > 0;
+const showCommunities = communities.length > 0;
+const showBlog = blog.length > 0;
+const showFaq = faq.length > 0;
 ---
 
 <!doctype html>
@@ -40,6 +53,9 @@ const {
             <a href="/buy">Buy</a>
             <a href="/list-my-house">Sell</a>
             <a href="/open-house">Open Houses</a>
+            {showBuilders && <a href="/builders">Builders</a>}
+            {showCommunities && <a href="/communities">Communities</a>}
+            {showBlog && <a href="/blog">Blog</a>}
             <a href="/contact">Contact</a>
           </nav>
         </div>
@@ -62,6 +78,8 @@ const {
             <span class="team-brand">© {new Date().getFullYear()} Blue Gecko, a Coldwell Banker Realty Team</span>
 
             <div class="legal-links">
+              {showFaq && <a href="/faq" class="privacy-link">FAQ</a>}
+              <a href="/contact" class="privacy-link">CONTACT</a>
               <a href="/privacy" class="privacy-link">PRIVACY POLICY &amp; TERMS</a>
             </div>
 

@@ -1,0 +1,327 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const allPosts = await getCollection('blog');
+const posts = allPosts.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const featured = posts[0];
+const rest = posts.slice(1);
+
+// Collect all unique tags
+const allTags = [...new Set(posts.flatMap(p => p.data.tags ?? []))].sort();
+
+function formatDate(d: Date): string {
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+---
+
+<BaseLayout
+  title="Blog | Blue Gecko Homes"
+  description="Market updates, neighborhood guides, and open house recaps from William and Lucky on the Space Coast."
+>
+  <main>
+    <section class="section hero-section">
+      <div class="container">
+        <p class="eyebrow">From the Field</p>
+        <h1>What's happening on the Space Coast.</h1>
+        <p class="lead">
+          Market updates, neighborhood guides, open house recaps — written by people who actually live here.
+        </p>
+        {allTags.length > 0 && (
+          <div class="tag-row">
+            {allTags.map(tag => (
+              <a href={`/blog/tag/${tag.toLowerCase().replace(/\s+/g, '-')}`} class="tag-chip">{tag}</a>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+
+    {posts.length === 0 ? (
+      <section class="section">
+        <div class="container">
+          <div class="empty-state">
+            <p>Nothing published yet — the first post is coming soon. Ask Stella what's going on in the market in the meantime.</p>
+            <button data-stella-trigger="open" class="button button-primary" style="margin-top:1rem;">
+              Ask Stella
+            </button>
+          </div>
+        </div>
+      </section>
+    ) : (
+      <>
+        {featured && (
+          <section class="section featured-section">
+            <div class="container">
+              <a href={`/blog/${featured.id}`} class="card featured-card">
+                {featured.data.hero && (
+                  <img src={featured.data.hero} alt={featured.data.title} class="featured-img" />
+                )}
+                <div class="featured-body">
+                  <p class="eyebrow">Latest Post</p>
+                  <h2>{featured.data.title}</h2>
+                  <p class="post-meta">{formatDate(featured.data.date)} · {featured.data.author}</p>
+                  <p class="excerpt">{featured.data.excerpt}</p>
+                  <span class="read-more">Read more →</span>
+                </div>
+              </a>
+            </div>
+          </section>
+        )}
+
+        {rest.length > 0 && (
+          <section class="section section-muted">
+            <div class="container">
+              <div class="post-grid">
+                {rest.map(post => (
+                  <a href={`/blog/${post.id}`} class="card post-card">
+                    {post.data.hero && (
+                      <img src={post.data.hero} alt={post.data.title} class="post-img" />
+                    )}
+                    <div class="post-body">
+                      <h3>{post.data.title}</h3>
+                      <p class="post-meta">{formatDate(post.data.date)} · {post.data.author}</p>
+                      <p class="excerpt">{post.data.excerpt}</p>
+                      {post.data.tags && post.data.tags.length > 0 && (
+                        <div class="post-tags">
+                          {post.data.tags.map(tag => (
+                            <span class="tag-chip tag-chip-sm">{tag}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+      </>
+    )}
+
+    <section class="section cta-band">
+      <div class="container cta-inner">
+        <div>
+          <p class="eyebrow">Keep in touch</p>
+          <h2>Want the local market in your inbox?</h2>
+          <p>Drop us a line — we'll keep you posted on what's actually moving on the Space Coast.</p>
+        </div>
+        <a href="/contact" class="button button-primary">Get in Touch</a>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .hero-section {
+    padding-top: 2.5rem;
+  }
+
+  .eyebrow {
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--accent, #c96f4a);
+    margin-bottom: 0.75rem;
+  }
+
+  .lead {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: var(--text-soft);
+    max-width: 600px;
+    margin-top: 0.75rem;
+  }
+
+  .tag-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 1.25rem;
+  }
+
+  .tag-chip {
+    background: #e8e6e0;
+    color: var(--text);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+
+  .tag-chip:hover {
+    background: var(--brand, #1f5c4d);
+    color: white;
+  }
+
+  .tag-chip-sm {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .featured-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    overflow: hidden;
+    padding: 0;
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  .featured-card:hover .read-more {
+    color: var(--brand, #1f5c4d);
+  }
+
+  .featured-img {
+    width: 100%;
+    height: 100%;
+    min-height: 340px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .featured-body {
+    padding: 2.25rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  .featured-body h2 {
+    font-size: 1.6rem;
+    line-height: 1.3;
+    margin: 0;
+  }
+
+  .post-meta {
+    font-size: 0.85rem;
+    color: var(--text-soft);
+    margin: 0;
+  }
+
+  .excerpt {
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--text-soft);
+    margin: 0;
+  }
+
+  .read-more {
+    font-weight: 700;
+    color: var(--accent, #c96f4a);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+    transition: color 0.15s;
+  }
+
+  .post-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  .post-card {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  .post-card:hover h3 {
+    color: var(--brand, #1f5c4d);
+  }
+
+  .post-img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .post-body {
+    padding: 1.25rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+  }
+
+  .post-body h3 {
+    font-size: 1.05rem;
+    margin: 0;
+    line-height: 1.3;
+    transition: color 0.15s;
+  }
+
+  .post-tags {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 0;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .cta-band {
+    background: var(--brand, #1f5c4d);
+    color: white;
+  }
+
+  .cta-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .cta-inner .eyebrow {
+    color: rgba(255,255,255,0.7);
+  }
+
+  .cta-inner h2 {
+    color: white;
+    margin: 0.25rem 0;
+  }
+
+  .cta-inner p {
+    color: rgba(255,255,255,0.82);
+    margin: 0;
+  }
+
+  @media (max-width: 800px) {
+    .featured-card {
+      grid-template-columns: 1fr;
+    }
+
+    .featured-img {
+      min-height: 220px;
+    }
+
+    .featured-body {
+      padding: 1.5rem;
+    }
+
+    .post-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .cta-inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

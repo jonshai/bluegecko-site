@@ -1,0 +1,208 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const allFaq = await getCollection('faq');
+
+// Sort by order (undefined last), then alphabetically by question
+const sorted = allFaq.sort((a, b) => {
+  const ao = a.data.order ?? 9999;
+  const bo = b.data.order ?? 9999;
+  if (ao !== bo) return ao - bo;
+  return a.data.question.localeCompare(b.data.question);
+});
+
+// Group by category
+const hasCategories = sorted.some(f => f.data.category);
+const grouped: Record<string, typeof sorted> = {};
+
+if (hasCategories) {
+  for (const faq of sorted) {
+    const cat = faq.data.category ?? 'General';
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(faq);
+  }
+} else {
+  grouped[''] = sorted;
+}
+---
+
+<BaseLayout
+  title="FAQ | Blue Gecko Homes"
+  description="Real answers to real questions about buying, selling, and navigating Space Coast real estate with Blue Gecko."
+>
+  <main>
+    <section class="section hero-section">
+      <div class="container">
+        <p class="eyebrow">Real Answers</p>
+        <h1>Questions we actually get asked.</h1>
+        <p class="lead">
+          No fluff, no FAQ theatre — just honest answers to what buyers and sellers on the
+          Space Coast want to know before picking up the phone.
+        </p>
+      </div>
+    </section>
+
+    {sorted.length === 0 ? (
+      <section class="section">
+        <div class="container">
+          <div class="empty-state">
+            <p>Nothing here yet — check back soon, or ask Stella anything you're wondering about.</p>
+            <button data-stella-trigger="open" class="button button-primary" style="margin-top:1rem;">
+              Ask Stella
+            </button>
+          </div>
+        </div>
+      </section>
+    ) : (
+      Object.entries(grouped).map(([category, faqs]) => (
+        <section class="section">
+          <div class="container">
+            {category && <h2 class="category-heading">{category}</h2>}
+            <div class="faq-grid">
+              {faqs.map(faq => (
+                <a href={`/faq/${faq.id}`} class="card faq-card">
+                  <h3 class="faq-question">{faq.data.question}</h3>
+                  <span class="faq-arrow">→</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+      ))
+    )}
+
+    <section class="section cta-band">
+      <div class="container cta-inner">
+        <div>
+          <p class="eyebrow">Still wondering?</p>
+          <h2>Stella knows a lot, and so do we.</h2>
+          <p>Ask the widget anything — or reach us directly if you'd rather talk it through.</p>
+        </div>
+        <div class="cta-buttons">
+          <button data-stella-trigger="open" class="button button-primary">Ask Stella</button>
+          <a href="/contact" class="button button-secondary">Contact Us</a>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .hero-section {
+    padding-top: 2.5rem;
+  }
+
+  .eyebrow {
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--accent, #c96f4a);
+    margin-bottom: 0.75rem;
+  }
+
+  .lead {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: var(--text-soft);
+    max-width: 640px;
+    margin-top: 0.75rem;
+  }
+
+  .category-heading {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--brand, #1f5c4d);
+    margin-bottom: 1.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.9rem;
+  }
+
+  .faq-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .faq-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    text-decoration: none;
+    color: var(--text);
+    transition: box-shadow 0.15s;
+  }
+
+  .faq-card:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+
+  .faq-question {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .faq-arrow {
+    font-size: 1.2rem;
+    color: var(--accent, #c96f4a);
+    flex-shrink: 0;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 0;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .cta-band {
+    background: var(--brand, #1f5c4d);
+    color: white;
+  }
+
+  .cta-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .cta-inner .eyebrow {
+    color: rgba(255,255,255,0.7);
+  }
+
+  .cta-inner h2 {
+    color: white;
+    margin: 0.25rem 0;
+  }
+
+  .cta-inner p {
+    color: rgba(255,255,255,0.82);
+    margin: 0;
+  }
+
+  .cta-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 700px) {
+    .faq-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .cta-inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

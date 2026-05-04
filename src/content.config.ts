@@ -27,7 +27,53 @@ const events = defineCollection({
   }),
 });
 
+const faq = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/faq' }),
+  schema: z.object({
+    question: z.string(),
+    category: z.string().optional(),
+    order: z.number().optional(),
+  }),
+});
+
+const blog = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/blog' }),
+  schema: z.object({
+    title: z.string(),
+    date: z.coerce.date(),
+    author: z.string().default('Blue Gecko Team'),
+    excerpt: z.string(),
+    hero: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+  }),
+});
+
+const communities = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/communities' }),
+  schema: z.object({
+    name: z.string(),
+    tagline: z.string(),
+    hero: z.string().optional(),
+    order: z.number().optional(),
+  }),
+});
+
+const builders = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/builders' }),
+  schema: z.object({
+    name: z.string(),
+    tagline: z.string(),
+    hero: z.string().optional(),
+    website: z.string().url().optional(),
+    communities: z.array(z.string()).optional(),
+  }),
+});
+
 export const collections = {
   properties,
   events,
+  faq,
+  blog,
+  communities,
+  builders,
 };

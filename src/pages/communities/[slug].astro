@@ -1,0 +1,181 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const allCommunities = await getCollection('communities');
+  return allCommunities.map(c => ({
+    params: { slug: c.id },
+    props: { community: c },
+  }));
+}
+
+const { community } = Astro.props;
+const { Content } = await render(community);
+---
+
+<BaseLayout
+  title={`${community.data.name} | Communities | Blue Gecko`}
+  description={community.data.tagline}
+>
+  <main>
+    {community.data.hero && (
+      <div class="hero-image-wrap">
+        <img src={community.data.hero} alt={community.data.name} class="hero-image" />
+      </div>
+    )}
+
+    <section class="section">
+      <div class="container content-wrap">
+        <nav class="breadcrumb">
+          <a href="/communities">← All Communities</a>
+        </nav>
+
+        <h1>{community.data.name}</h1>
+        <p class="tagline">{community.data.tagline}</p>
+
+        <div class="prose">
+          <Content />
+        </div>
+
+        <div class="cta-grid">
+          <a href="/search" class="cta-card cta-search">
+            <span class="cta-icon">🔍</span>
+            <div>
+              <strong>Search Listings</strong>
+              <p>Browse active homes in {community.data.name} and surrounding areas.</p>
+            </div>
+          </a>
+          <button data-stella-trigger="open" class="cta-card cta-stella">
+            <span class="cta-icon">💬</span>
+            <div>
+              <strong>Ask Stella</strong>
+              <p>Get quick answers about schools, commutes, pricing, and what it's actually like to live here.</p>
+            </div>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .hero-image-wrap {
+    width: 100%;
+    max-height: 440px;
+    overflow: hidden;
+  }
+
+  .hero-image {
+    width: 100%;
+    height: 440px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .content-wrap {
+    max-width: 780px;
+  }
+
+  .breadcrumb {
+    font-size: 0.88rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .breadcrumb a {
+    color: var(--brand, #1f5c4d);
+    font-weight: 600;
+  }
+
+  h1 {
+    font-size: 2rem;
+    line-height: 1.25;
+    margin-bottom: 0.5rem;
+  }
+
+  .tagline {
+    font-size: 1.2rem;
+    color: var(--text-soft);
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e8e6e0;
+    line-height: 1.6;
+  }
+
+  .prose {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: var(--text);
+    margin-bottom: 2.5rem;
+  }
+
+  .prose p {
+    margin-bottom: 1.25rem;
+  }
+
+  .prose h2 {
+    font-size: 1.35rem;
+    margin: 2rem 0 0.75rem;
+  }
+
+  .cta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e8e6e0;
+  }
+
+  .cta-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-radius: var(--radius, 18px);
+    border: 2px solid #e8e6e0;
+    text-decoration: none;
+    color: var(--text);
+    background: white;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
+    text-align: left;
+    transition: border-color 0.15s;
+  }
+
+  .cta-card:hover {
+    border-color: var(--brand, #1f5c4d);
+  }
+
+  .cta-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .cta-card strong {
+    display: block;
+    font-size: 1rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .cta-card p {
+    font-size: 0.9rem;
+    color: var(--text-soft);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 600px) {
+    .hero-image {
+      height: 260px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+    }
+
+    .cta-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

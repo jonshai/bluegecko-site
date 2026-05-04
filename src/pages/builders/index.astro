@@ -1,0 +1,231 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const allBuilders = await getCollection('builders');
+const builders = allBuilders.sort((a, b) => a.data.name.localeCompare(b.data.name));
+---
+
+<BaseLayout
+  title="Builders | Blue Gecko Homes"
+  description="New construction builders on the Space Coast — what they build, where they build it, and why you still need your own agent."
+>
+  <main>
+    <section class="section hero-section">
+      <div class="container">
+        <p class="eyebrow">New Construction</p>
+        <h1>Know your builders before you walk a model home.</h1>
+        <p class="lead">
+          There are a handful of active builders on the Space Coast right now — each with different
+          floor plans, communities, and incentive structures. Here's the lay of the land.
+        </p>
+      </div>
+    </section>
+
+    {builders.length === 0 ? (
+      <section class="section">
+        <div class="container">
+          <div class="empty-state">
+            <p>Builder profiles are coming soon. Ask Stella about what's being built right now — she stays pretty current.</p>
+            <button data-stella-trigger="open" class="button button-primary" style="margin-top:1rem;">
+              Ask Stella
+            </button>
+          </div>
+        </div>
+      </section>
+    ) : (
+      <section class="section">
+        <div class="container">
+          <div class="builder-grid">
+            {builders.map(b => (
+              <a href={`/builders/${b.id}`} class="card builder-card">
+                {b.data.hero ? (
+                  <img src={b.data.hero} alt={b.data.name} class="builder-img" />
+                ) : (
+                  <div class="builder-placeholder">
+                    <span>{b.data.name.slice(0, 2).toUpperCase()}</span>
+                  </div>
+                )}
+                <div class="builder-body">
+                  <h2 class="builder-name">{b.data.name}</h2>
+                  <p class="builder-tagline">{b.data.tagline}</p>
+                  {b.data.communities && b.data.communities.length > 0 && (
+                    <div class="community-chips">
+                      {b.data.communities.map(slug => (
+                        <span class="chip">{slug.replace(/-/g, ' ')}</span>
+                      ))}
+                    </div>
+                  )}
+                  <span class="read-more">Learn more →</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <section class="section section-muted incentive-note">
+      <div class="container">
+        <div class="note-inner">
+          <p class="eyebrow">About Incentives</p>
+          <h2>Current incentives change fast.</h2>
+          <p>
+            Builders adjust their offers constantly — rate buydowns, closing cost credits, design
+            center allowances. What's listed in a brochure may be gone by Tuesday. Stella gets
+            updated regularly and can give you a more current picture of what's on the table.
+          </p>
+          <button data-stella-trigger="open" class="button button-primary" style="margin-top:1rem;">
+            Ask Stella About Incentives
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .hero-section {
+    padding-top: 2.5rem;
+  }
+
+  .eyebrow {
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--accent, #c96f4a);
+    margin-bottom: 0.75rem;
+  }
+
+  .lead {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: var(--text-soft);
+    max-width: 640px;
+    margin-top: 0.75rem;
+  }
+
+  .builder-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .builder-card {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  .builder-card:hover .read-more {
+    color: var(--brand, #1f5c4d);
+  }
+
+  .builder-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .builder-placeholder {
+    width: 100%;
+    height: 180px;
+    background: #e8e6e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--brand, #1f5c4d);
+    opacity: 0.4;
+    letter-spacing: 0.1em;
+  }
+
+  .builder-body {
+    padding: 1.25rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+  }
+
+  .builder-name {
+    font-size: 1.1rem;
+    margin: 0;
+    line-height: 1.25;
+  }
+
+  .builder-tagline {
+    font-size: 0.88rem;
+    color: var(--text-soft);
+    margin: 0;
+    line-height: 1.5;
+    flex: 1;
+  }
+
+  .community-chips {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+  }
+
+  .chip {
+    background: #e8e6e0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    text-transform: capitalize;
+  }
+
+  .read-more {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--accent, #c96f4a);
+    margin-top: 0.25rem;
+    transition: color 0.15s;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 0;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .incentive-note {
+    padding: 2.5rem 0;
+  }
+
+  .note-inner {
+    max-width: 620px;
+  }
+
+  .note-inner h2 {
+    margin: 0.25rem 0 0.75rem;
+  }
+
+  .note-inner p {
+    color: var(--text-soft);
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  @media (max-width: 900px) {
+    .builder-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .builder-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

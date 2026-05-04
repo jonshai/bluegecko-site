@@ -1,0 +1,255 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const allBuilders = await getCollection('builders');
+  return allBuilders.map(b => ({
+    params: { slug: b.id },
+    props: { builder: b },
+  }));
+}
+
+const { builder } = Astro.props;
+const { Content } = await render(builder);
+---
+
+<BaseLayout
+  title={`${builder.data.name} | Builders | Blue Gecko`}
+  description={builder.data.tagline}
+>
+  <main>
+    {builder.data.hero && (
+      <div class="hero-image-wrap">
+        <img src={builder.data.hero} alt={builder.data.name} class="hero-image" />
+      </div>
+    )}
+
+    <section class="section">
+      <div class="container content-wrap">
+        <nav class="breadcrumb">
+          <a href="/builders">← All Builders</a>
+        </nav>
+
+        <div class="builder-header">
+          <div>
+            <h1>{builder.data.name}</h1>
+            <p class="tagline">{builder.data.tagline}</p>
+          </div>
+          {builder.data.website && (
+            <a
+              href={builder.data.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="website-link"
+            >
+              Official Site →
+            </a>
+          )}
+        </div>
+
+        {builder.data.communities && builder.data.communities.length > 0 && (
+          <div class="communities-row">
+            <span class="communities-label">Active communities:</span>
+            <div class="community-chips">
+              {builder.data.communities.map(slug => (
+                <a href={`/communities/${slug}`} class="community-chip">
+                  {slug.replace(/-/g, ' ')}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div class="prose">
+          <Content />
+        </div>
+
+        <div class="agent-pitch card">
+          <h3>Why you still need your own agent.</h3>
+          <p>
+            The builder's sales agent works for the builder — their job is to protect the builder's
+            margin and close the deal. That's not a judgment, it's just how it works. Having Blue
+            Gecko represent you costs you nothing (the builder pays buyer's agent commission), and
+            means you have someone in your corner on contract terms, inspections, upgrades, and the
+            parts of the process where builders have the advantage.
+          </p>
+          <p>
+            We've walked through more new construction on the Space Coast than we can count. We know
+            what's negotiable, what isn't, and when to push.
+          </p>
+        </div>
+
+        <div class="cta-row">
+          <a href="/contact" class="button button-primary">Talk to Us First</a>
+          <button data-stella-trigger="open" class="button button-secondary">Ask Stella</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .hero-image-wrap {
+    width: 100%;
+    max-height: 420px;
+    overflow: hidden;
+  }
+
+  .hero-image {
+    width: 100%;
+    height: 420px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .content-wrap {
+    max-width: 780px;
+  }
+
+  .breadcrumb {
+    font-size: 0.88rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .breadcrumb a {
+    color: var(--brand, #1f5c4d);
+    font-weight: 600;
+  }
+
+  .builder-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+    line-height: 1.25;
+    margin-bottom: 0.4rem;
+  }
+
+  .tagline {
+    font-size: 1.1rem;
+    color: var(--text-soft);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .website-link {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--brand, #1f5c4d);
+    text-decoration: none;
+    flex-shrink: 0;
+    margin-top: 0.5rem;
+  }
+
+  .website-link:hover {
+    text-decoration: underline;
+  }
+
+  .communities-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e8e6e0;
+  }
+
+  .communities-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-soft);
+  }
+
+  .community-chips {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .community-chip {
+    background: #e8e6e0;
+    color: var(--text);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    text-decoration: none;
+    text-transform: capitalize;
+    transition: background 0.15s;
+  }
+
+  .community-chip:hover {
+    background: var(--brand, #1f5c4d);
+    color: white;
+  }
+
+  .prose {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: var(--text);
+    margin-bottom: 2rem;
+  }
+
+  .prose p {
+    margin-bottom: 1.25rem;
+  }
+
+  .prose h2 {
+    font-size: 1.35rem;
+    margin: 2rem 0 0.75rem;
+  }
+
+  .agent-pitch {
+    background: #f0f7f4;
+    border: none;
+    padding: 1.75rem 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .agent-pitch h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    color: var(--brand, #1f5c4d);
+  }
+
+  .agent-pitch p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-soft);
+    margin-bottom: 0.75rem;
+  }
+
+  .agent-pitch p:last-child {
+    margin-bottom: 0;
+  }
+
+  .cta-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e8e6e0;
+  }
+
+  @media (max-width: 600px) {
+    .hero-image {
+      height: 240px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+    }
+
+    .builder-header {
+      flex-direction: column;
+    }
+  }
+</style>

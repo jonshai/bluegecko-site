@@ -1,0 +1,234 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const allCommunities = await getCollection('communities');
+const communities = allCommunities.sort((a, b) => {
+  const ao = a.data.order ?? 9999;
+  const bo = b.data.order ?? 9999;
+  if (ao !== bo) return ao - bo;
+  return a.data.name.localeCompare(b.data.name);
+});
+---
+
+<BaseLayout
+  title="Communities | Blue Gecko Homes"
+  description="Explore Space Coast neighborhoods — from beachside Melbourne to the quiet pocket communities of Palm Bay and Sebastian."
+>
+  <main>
+    <section class="section hero-section">
+      <div class="container">
+        <p class="eyebrow">Space Coast Neighborhoods</p>
+        <h1>Find your corner of the coast.</h1>
+        <p class="lead">
+          The Space Coast isn't one place — it's a loose collection of towns, pockets, and vibes
+          that each attract a pretty different type of buyer. Here's what you're actually choosing between.
+        </p>
+      </div>
+    </section>
+
+    {communities.length === 0 ? (
+      <section class="section">
+        <div class="container">
+          <div class="empty-state">
+            <p>Community spotlights are coming soon. In the meantime, Stella can tell you a lot about what's going on in any neighborhood you're eyeing.</p>
+            <button data-stella-trigger="open" class="button button-primary" style="margin-top:1rem;">
+              Ask Stella
+            </button>
+          </div>
+        </div>
+      </section>
+    ) : (
+      <section class="section">
+        <div class="container">
+          <div class="community-grid">
+            {communities.map(c => (
+              <a href={`/communities/${c.id}`} class="card community-card">
+                {c.data.hero ? (
+                  <img src={c.data.hero} alt={c.data.name} class="community-img" />
+                ) : (
+                  <div class="community-placeholder">
+                    <span>{c.data.name.slice(0, 2).toUpperCase()}</span>
+                  </div>
+                )}
+                <div class="community-body">
+                  <h2 class="community-name">{c.data.name}</h2>
+                  <p class="community-tagline">{c.data.tagline}</p>
+                  <span class="read-more">Explore →</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <section class="section cta-band">
+      <div class="container cta-inner">
+        <div>
+          <p class="eyebrow">Not sure where to start?</p>
+          <h2>Tell Stella what matters to you.</h2>
+          <p>
+            Commute time, school zone, walkable to water, or just a quiet street — Stella can help
+            you narrow it down before you start scheduling tours.
+          </p>
+        </div>
+        <div class="cta-buttons">
+          <button data-stella-trigger="open" class="button button-primary">Talk to Stella</button>
+          <a href="/search" class="button button-secondary">Search Listings</a>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .hero-section {
+    padding-top: 2.5rem;
+  }
+
+  .eyebrow {
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--accent, #c96f4a);
+    margin-bottom: 0.75rem;
+  }
+
+  .lead {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: var(--text-soft);
+    max-width: 640px;
+    margin-top: 0.75rem;
+  }
+
+  .community-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .community-card {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  .community-card:hover .read-more {
+    color: var(--brand, #1f5c4d);
+  }
+
+  .community-img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .community-placeholder {
+    width: 100%;
+    height: 200px;
+    background: var(--brand, #1f5c4d);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.1em;
+  }
+
+  .community-body {
+    padding: 1.25rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    flex: 1;
+  }
+
+  .community-name {
+    font-size: 1.15rem;
+    margin: 0;
+    line-height: 1.25;
+  }
+
+  .community-tagline {
+    font-size: 0.9rem;
+    color: var(--text-soft);
+    margin: 0;
+    line-height: 1.5;
+    flex: 1;
+  }
+
+  .read-more {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--accent, #c96f4a);
+    margin-top: 0.5rem;
+    transition: color 0.15s;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 0;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .cta-band {
+    background: var(--brand, #1f5c4d);
+    color: white;
+  }
+
+  .cta-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .cta-inner .eyebrow {
+    color: rgba(255,255,255,0.7);
+  }
+
+  .cta-inner h2 {
+    color: white;
+    margin: 0.25rem 0;
+  }
+
+  .cta-inner p {
+    color: rgba(255,255,255,0.82);
+    margin: 0;
+    max-width: 520px;
+  }
+
+  .cta-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 900px) {
+    .community-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .community-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .cta-inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

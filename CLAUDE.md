@@ -1,6 +1,14 @@
 # bluegecko-site — Blue Gecko Real Estate Website
 # Claude Code Context File — Read this before doing anything
 
+## CC + Claude.ai Workflow
+Strategic planning and prompt writing happens in Claude.ai (claude.ai).
+All code execution happens in CC against the live repo.
+Claude.ai output should always be a CC prompt, never raw files.
+Keep CC prompts to a single focused pass. Minimize context size —
+every unnecessary file read costs tokens. New CC sessions for new
+features. CLAUDE.md is the handoff document between sessions.
+
 ## What This Is
 Astro + Cloudflare Pages website for Blue Gecko real estate team.
 GitHub repo: jonshai/bluegecko-site (auto-deploys on push to main)
@@ -93,6 +101,18 @@ src/
     contact.astro            — contact form
     list-my-house.astro      — seller page
     privacy.astro            — privacy policy & terms (all legal)
+    faq/
+      index.astro            — FAQ listing page (grouped by category)
+      [slug].astro           — FAQ detail page
+    blog/
+      index.astro            — Blog listing (featured + grid)
+      [slug].astro           — Blog post with prev/next nav
+    communities/
+      index.astro            — Community grid
+      [slug].astro           — Community detail page
+    builders/
+      index.astro            — Builder grid
+      [slug].astro           — Builder detail page
     open-house/
       index.astro            — listing page (hero card, upcoming, recent)
       archive.astro          — all events older than 60 days
@@ -103,7 +123,11 @@ src/
   content/
     properties/              — one .md per property (shared across events)
     events/                  — one .md per open house date
-  content.config.ts          — Zod schemas for properties + events collections
+    faq/                     — one .md per FAQ entry
+    blog/                    — one .md per blog post
+    communities/             — one .md per community spotlight
+    builders/                — one .md per builder profile
+  content.config.ts          — Zod schemas for all 6 collections
 public/
   stella-loader.js           — loads Stella widget from PANTHEON
   lead-form.js               — handles contact form fetch submission
@@ -122,6 +146,67 @@ tools/
     README.md                — setup instructions
 .github/workflows/
   deploy.yml                 — GitHub Actions auto-deploy (only deploy mechanism)
+
+## Content Collections
+
+### Schemas (src/content.config.ts)
+
+properties: slug, address, price, beds, baths, sqft, description, hero?, gallery?
+events:     property, date (YYYY-MM-DD), start (HH:MM), end (HH:MM), notes?
+faq:        question, category?, order?
+blog:       title, date, author (default 'Blue Gecko Team'), excerpt, hero?, tags?
+communities: name, tagline, hero?, order?
+builders:   name, tagline, hero?, website? (url), communities? (slugs array)
+
+### Content authoring workflow
+Vera writes Markdown → commits to GitHub → Actions auto-deploys
+
+### faq/[slug].md
+---
+question: "What's the difference between pre-qualification and pre-approval?"
+category: Buying
+order: 1
+---
+Answer body in Markdown.
+
+### blog/[slug].md
+---
+title: "..."
+date: YYYY-MM-DD
+author: "Blue Gecko Team"
+excerpt: "One-sentence summary."
+hero: /uploads/blog/slug/hero.jpg  # optional
+tags: [Market Update, Palm Bay]    # optional
+---
+Post body in Markdown.
+
+### communities/[slug].md
+---
+name: "Palm Bay"
+tagline: "Quiet streets, big lots, and room to breathe."
+hero: /uploads/communities/palm-bay/hero.jpg  # optional
+order: 1
+---
+Body in Markdown.
+
+### builders/[slug].md
+---
+name: "Maronda Homes"
+tagline: "..."
+hero: /uploads/builders/maronda/hero.jpg  # optional
+website: https://marondahomes.com         # optional
+communities: [palm-bay, west-melbourne]   # optional, community slugs
+---
+Body in Markdown.
+
+## Nav — Auto-activating Links
+BaseLayout.astro runs getCollection() for all four new collections at
+build time. Nav links for Builders, Communities, and Blog only render
+when the collection has at least one entry.
+
+Nav order: Buy · Sell · Open Houses · Builders* · Communities* · Blog* · Contact
+Footer links: FAQ* · Contact · Privacy Policy & Terms
+(* = conditional on collection having entries)
 
 ## Design System
 
@@ -154,7 +239,8 @@ promotional purposes."
 - Phone: 321.341.6650
 
 ## Footer Legal Bar
-- Single <a href="/privacy"> link + plain-English Pro Whimsy paragraph
+- Links: FAQ (conditional) · Contact · Privacy Policy & Terms
+- Plain-English Pro Whimsy paragraph
 - The legalText object and legal-toggle event listeners are GONE
 - Do NOT re-add toggle buttons or inline disclaimer script
 
@@ -266,13 +352,6 @@ Delete these in a future cleanup commit.
 
 ## Planned Features (not yet built)
 
-### Content Collections
-- /communities/[slug] — community spotlights (Vera writes, photo + article)
-- /builders/[slug]    — builder spotlights (same workflow)
-- /blog/[slug]        — market updates, open house recaps, neighborhood guides
-- /faq/[slug]         — Q&A pages targeting AEO queries
-- Workflow: Vera writes Markdown → commits to GitHub → Actions auto-deploys
-
 ### Builder Incentives Dashboard
 - Landing page at /incentives (or /new-homes)
 - Data fed by TSoT API (separate project, not yet online)
@@ -284,7 +363,7 @@ Delete these in a future cleanup commit.
 - FUB lead capture working
 - IDX search with 64px universal crop working
 - Privacy page live at /privacy — registered with FUB and Meta
-- Footer legal bar: plain-English paragraph + /privacy link
+- Footer legal bar: FAQ (conditional) + Contact + Privacy links + plain-English paragraph
 - GitHub Actions auto-deploy working via cloudflare/wrangler-action@v3
 - Open house system live: listing, detail, archive pages
 - Open house admin tool working at port 3333 (Tailscale access)
@@ -293,6 +372,11 @@ Delete these in a future cleanup commit.
 - 4 properties still need real photos re-uploaded by Lucky:
   296-delake-rd-nw, 4645-pagosa-springs-circle-melbourne,
   480-park-ave, 4926-barr-street
+- Content collections live: faq, blog, communities, builders
+  All 4 are empty — pages build clean, nav links hidden until entries added
+  Routes: /faq, /faq/[slug], /blog, /blog/[slug],
+          /communities, /communities/[slug], /builders, /builders/[slug]
+- Nav auto-activates: Builders/Communities/Blog links appear when collection has content
 
 ## Branching Workflow (REQUIRED)
 
