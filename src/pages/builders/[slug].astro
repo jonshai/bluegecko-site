@@ -54,30 +54,43 @@ function blockToHtml(block: string): string {
 const rawBlocks = (builder.body ?? '').split(/\n\n+/).filter((b: string) => b.trim());
 const gallery: string[] = builder.data.gallery ?? [];
 
+function galleryImg(index: number): string {
+  return `<img src="${gallery[index]}" alt="${builder.data.name} gallery image ${index + 1}" loading="lazy" class="gallery-inline" />`;
+}
+
 const htmlParts: string[] = [];
 let galleryIndex = 0;
-let blockCount = 0;
 
-for (const block of rawBlocks) {
-  const blockHtml = blockToHtml(block);
-  if (blockHtml) {
-    htmlParts.push(blockHtml);
-    blockCount++;
-    if (blockCount % 3 === 0 && galleryIndex < gallery.length) {
-      htmlParts.push(
-        `<img src="${gallery[galleryIndex]}" alt="${builder.data.name} gallery image ${galleryIndex + 1}" loading="lazy" class="gallery-inline" />`
-      );
-      galleryIndex++;
+// Prefer placing images before h2/h3 headings if any exist
+const hasHeadings = rawBlocks.some(b => b.trim().match(/^#{2,3} /));
+
+if (hasHeadings) {
+  for (const block of rawBlocks) {
+    const isSection = block.trim().match(/^#{2,3} /);
+    if (isSection && galleryIndex < gallery.length) {
+      htmlParts.push(galleryImg(galleryIndex++));
+    }
+    const blockHtml = blockToHtml(block);
+    if (blockHtml) htmlParts.push(blockHtml);
+  }
+} else {
+  // Fallback: one image per 3 content blocks
+  let blockCount = 0;
+  for (const block of rawBlocks) {
+    const blockHtml = blockToHtml(block);
+    if (blockHtml) {
+      htmlParts.push(blockHtml);
+      blockCount++;
+      if (blockCount % 3 === 0 && galleryIndex < gallery.length) {
+        htmlParts.push(galleryImg(galleryIndex++));
+      }
     }
   }
 }
 
 // Append any remaining gallery images after all content
 while (galleryIndex < gallery.length) {
-  htmlParts.push(
-    `<img src="${gallery[galleryIndex]}" alt="${builder.data.name} gallery image ${galleryIndex + 1}" loading="lazy" class="gallery-inline" />`
-  );
-  galleryIndex++;
+  htmlParts.push(galleryImg(galleryIndex++));
 }
 
 const interleavedHtml = htmlParts.join('\n');
@@ -94,6 +107,7 @@ const interleavedHtml = htmlParts.join('\n');
           title={builder.data.name}
           tagline={builder.data.tagline}
           image={builder.data.hero}
+          layout="stacked"
         />
       </div>
     </section>

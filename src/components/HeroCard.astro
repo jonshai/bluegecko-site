@@ -4,9 +4,10 @@ interface Props {
   tagline?: string;
   image?: string;
   href?: string;
+  layout?: 'side-by-side' | 'stacked';
 }
 
-const { title, tagline, image, href } = Astro.props;
+const { title, tagline, image, href, layout = 'side-by-side' } = Astro.props;
 
 const beforeTitle = Astro.slots.has('before-title')
   ? await Astro.slots.render('before-title')
@@ -14,10 +15,12 @@ const beforeTitle = Astro.slots.has('before-title')
 const bodyContent = Astro.slots.has('default')
   ? await Astro.slots.render('default')
   : '';
+
+const cardClass = layout === 'stacked' ? 'hero-card hero-card-stacked card' : 'hero-card card';
 ---
 
 {href ? (
-  <a href={href} class="hero-card card">
+  <a href={href} class={cardClass}>
     {image ? (
       <img src={image} alt={title} class="hero-img" />
     ) : (
@@ -33,7 +36,7 @@ const bodyContent = Astro.slots.has('default')
     </div>
   </a>
 ) : (
-  <div class="hero-card card">
+  <div class={cardClass}>
     {image ? (
       <img src={image} alt={title} class="hero-img" />
     ) : (
@@ -51,6 +54,7 @@ const bodyContent = Astro.slots.has('default')
 )}
 
 <style>
+  /* ── Side-by-side (default — open house hero) ── */
   .hero-card {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -61,7 +65,7 @@ const bodyContent = Astro.slots.has('default')
     color: inherit;
   }
 
-  .hero-img {
+  .hero-card .hero-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -69,7 +73,7 @@ const bodyContent = Astro.slots.has('default')
     min-height: 340px;
   }
 
-  .hero-placeholder {
+  .hero-card .hero-placeholder {
     background: #ddd;
     display: flex;
     align-items: center;
@@ -79,7 +83,7 @@ const bodyContent = Astro.slots.has('default')
     font-size: 0.9rem;
   }
 
-  .hero-body {
+  .hero-card .hero-body {
     padding: 2rem 2.25rem;
     display: flex;
     flex-direction: column;
@@ -87,6 +91,30 @@ const bodyContent = Astro.slots.has('default')
     gap: 0.75rem;
   }
 
+  /* ── Stacked (builder detail) ── */
+  .hero-card-stacked {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-card-stacked .hero-img {
+    width: 100%;
+    height: 420px;
+    min-height: unset;
+    object-fit: cover;
+    display: block;
+  }
+
+  .hero-card-stacked .hero-placeholder {
+    height: 280px;
+    min-height: unset;
+  }
+
+  .hero-card-stacked .hero-body {
+    padding: 1.75rem 2rem;
+    justify-content: flex-start;
+  }
+
+  /* ── Shared text styles ── */
   .hero-title {
     font-size: 1.5rem;
     margin: 0;
@@ -100,18 +128,23 @@ const bodyContent = Astro.slots.has('default')
     color: var(--text-soft);
   }
 
+  /* ── Responsive ── */
   @media (max-width: 800px) {
     .hero-card {
       grid-template-columns: 1fr;
     }
 
-    .hero-img,
-    .hero-placeholder {
+    .hero-card .hero-img,
+    .hero-card .hero-placeholder {
       min-height: 220px;
     }
 
-    .hero-body {
+    .hero-card .hero-body {
       padding: 1.5rem;
+    }
+
+    .hero-card-stacked .hero-img {
+      height: 240px;
     }
   }
 </style>
