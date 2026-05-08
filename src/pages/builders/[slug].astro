@@ -25,6 +25,18 @@ const { Content } = await render(builder);
       </div>
     )}
 
+    {builder.data.gallery && builder.data.gallery.length > 0 && (
+      <section class="builder-gallery">
+        <h2>Gallery</h2>
+        <div class="gallery-grid">
+          {builder.data.gallery.map((img, i) => (
+            <img src={img} alt={`${builder.data.name} gallery image ${i + 1}`}
+                 loading="lazy" />
+          ))}
+        </div>
+      </section>
+    )}
+
     <section class="section">
       <div class="container content-wrap">
         <nav class="breadcrumb">
@@ -239,6 +251,32 @@ const { Content } = await render(builder);
     border-top: 1px solid #e8e6e0;
   }
 
+  .builder-gallery {
+    padding: 2.5rem 1.5rem;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .builder-gallery h2 {
+    font-size: 1.35rem;
+    color: var(--brand, #1f5c4d);
+    margin-bottom: 1.25rem;
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .gallery-grid img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--radius, 18px);
+    display: block;
+  }
+
   @media (max-width: 600px) {
     .hero-image {
       height: 240px;
@@ -250,6 +288,10 @@ const { Content } = await render(builder);
 
     .builder-header {
       flex-direction: column;
+    }
+
+    .gallery-grid {
+      grid-template-columns: 1fr;
     }
   }
 </style>

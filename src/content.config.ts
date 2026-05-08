@@ -64,6 +64,7 @@ const builders = defineCollection({
     name: z.string(),
     tagline: z.string(),
     hero: z.string().optional(),
+    gallery: z.array(z.string()).optional(),
     website: z.string().url().optional(),
     communities: z.array(z.string()).optional(),
   }),
