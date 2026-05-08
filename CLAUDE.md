@@ -377,6 +377,11 @@ Delete these in a future cleanup commit.
   Routes: /faq, /faq/[slug], /blog, /blog/[slug],
           /communities, /communities/[slug], /builders, /builders/[slug]
 - Nav auto-activates: Builders/Communities/Blog links appear when collection has content
+- Builder and community detail pages use HeroCard component
+  (src/components/HeroCard.astro) for hero treatment.
+  Gallery images interleave through body at 1 per 3 paragraphs,
+  template-driven. Hero and gallery arrays are independent —
+  template never cross-references them.
 
 ## Branching Workflow (REQUIRED)
 

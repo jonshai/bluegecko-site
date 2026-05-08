@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getCollection, render } from 'astro:content';
+import HeroCard from '../../components/HeroCard.astro';
+import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
   const allBuilders = await getCollection('builders');
@@ -11,7 +12,75 @@ export async function getStaticPaths() {
 }
 
 const { builder } = Astro.props;
-const { Content } = await render(builder);
+
+// Inline markdown renderer — handles paragraphs, headings, lists, bold, italic, links
+function inlineToHtml(text: string): string {
+  return text
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+    .replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
+    .replace(/_([^_\n]+)_/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+
+function blockToHtml(block: string): string {
+  const trimmed = block.trim();
+  if (!trimmed) return '';
+
+  const h4 = trimmed.match(/^#### (.+)/);
+  if (h4) return `<h4>${inlineToHtml(h4[1].trim())}</h4>`;
+  const h3 = trimmed.match(/^### (.+)/);
+  if (h3) return `<h3>${inlineToHtml(h3[1].trim())}</h3>`;
+  const h2 = trimmed.match(/^## (.+)/);
+  if (h2) return `<h2>${inlineToHtml(h2[1].trim())}</h2>`;
+  const h1 = trimmed.match(/^# (.+)/);
+  if (h1) return `<h1>${inlineToHtml(h1[1].trim())}</h1>`;
+
+  const lines = trimmed.split('\n');
+  if (lines.length > 0 && lines.every(l => l.trim().match(/^[-*+] /))) {
+    const items = lines
+      .filter(l => l.trim())
+      .map(l => `<li>${inlineToHtml(l.replace(/^[-*+] /, '').trim())}</li>`)
+      .join('');
+    return `<ul>${items}</ul>`;
+  }
+
+  const content = lines.map(l => inlineToHtml(l.trim())).join(' ');
+  return `<p>${content}</p>`;
+}
+
+// Build interleaved prose + gallery HTML
+const rawBlocks = (builder.body ?? '').split(/\n\n+/).filter((b: string) => b.trim());
+const gallery: string[] = builder.data.gallery ?? [];
+
+const htmlParts: string[] = [];
+let galleryIndex = 0;
+let blockCount = 0;
+
+for (const block of rawBlocks) {
+  const blockHtml = blockToHtml(block);
+  if (blockHtml) {
+    htmlParts.push(blockHtml);
+    blockCount++;
+    if (blockCount % 3 === 0 && galleryIndex < gallery.length) {
+      htmlParts.push(
+        `<img src="${gallery[galleryIndex]}" alt="${builder.data.name} gallery image ${galleryIndex + 1}" loading="lazy" class="gallery-inline" />`
+      );
+      galleryIndex++;
+    }
+  }
+}
+
+// Append any remaining gallery images after all content
+while (galleryIndex < gallery.length) {
+  htmlParts.push(
+    `<img src="${gallery[galleryIndex]}" alt="${builder.data.name} gallery image ${galleryIndex + 1}" loading="lazy" class="gallery-inline" />`
+  );
+  galleryIndex++;
+}
+
+const interleavedHtml = htmlParts.join('\n');
 ---
 
 <BaseLayout
@@ -19,23 +88,15 @@ const { Content } = await render(builder);
   description={builder.data.tagline}
 >
   <main>
-    {builder.data.hero && (
-      <div class="hero-image-wrap">
-        <img src={builder.data.hero} alt={builder.data.name} class="hero-image" />
+    <section class="section hero-section">
+      <div class="container">
+        <HeroCard
+          title={builder.data.name}
+          tagline={builder.data.tagline}
+          image={builder.data.hero}
+        />
       </div>
-    )}
-
-    {builder.data.gallery && builder.data.gallery.length > 0 && (
-      <section class="builder-gallery">
-        <h2>Gallery</h2>
-        <div class="gallery-grid">
-          {builder.data.gallery.map((img, i) => (
-            <img src={img} alt={`${builder.data.name} gallery image ${i + 1}`}
-                 loading="lazy" />
-          ))}
-        </div>
-      </section>
-    )}
+    </section>
 
     <section class="section">
       <div class="container content-wrap">
@@ -43,12 +104,8 @@ const { Content } = await render(builder);
           <a href="/builders">← All Builders</a>
         </nav>
 
-        <div class="builder-header">
-          <div>
-            <h1>{builder.data.name}</h1>
-            <p class="tagline">{builder.data.tagline}</p>
-          </div>
-          {builder.data.website && (
+        {builder.data.website && (
+          <div class="website-row">
             <a
               href={builder.data.website}
               target="_blank"
@@ -57,14 +114,14 @@ const { Content } = await render(builder);
             >
               Official Site →
             </a>
-          )}
-        </div>
+          </div>
+        )}
 
         {builder.data.communities && builder.data.communities.length > 0 && (
           <div class="communities-row">
             <span class="communities-label">Active communities:</span>
             <div class="community-chips">
-              {builder.data.communities.map(slug => (
+              {builder.data.communities.map((slug: string) => (
                 <a href={`/communities/${slug}`} class="community-chip">
                   {slug.replace(/-/g, ' ')}
                 </a>
@@ -73,9 +130,7 @@ const { Content } = await render(builder);
           </div>
         )}
 
-        <div class="prose">
-          <Content />
-        </div>
+        <div class="prose" set:html={interleavedHtml} />
 
         <div class="agent-pitch card">
           <h3>Why you still need your own agent.</h3>
@@ -102,17 +157,8 @@ const { Content } = await render(builder);
 </BaseLayout>
 
 <style>
-  .hero-image-wrap {
-    width: 100%;
-    max-height: 420px;
-    overflow: hidden;
-  }
-
-  .hero-image {
-    width: 100%;
-    height: 420px;
-    object-fit: cover;
-    display: block;
+  .hero-section {
+    padding-top: 2rem;
   }
 
   .content-wrap {
@@ -121,7 +167,7 @@ const { Content } = await render(builder);
 
   .breadcrumb {
     font-size: 0.88rem;
-    margin-bottom: 1.75rem;
+    margin-bottom: 1.25rem;
   }
 
   .breadcrumb a {
@@ -129,26 +175,8 @@ const { Content } = await render(builder);
     font-weight: 600;
   }
 
-  .builder-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1.5rem;
-    flex-wrap: wrap;
+  .website-row {
     margin-bottom: 1.5rem;
-  }
-
-  h1 {
-    font-size: 2rem;
-    line-height: 1.25;
-    margin-bottom: 0.4rem;
-  }
-
-  .tagline {
-    font-size: 1.1rem;
-    color: var(--text-soft);
-    margin: 0;
-    line-height: 1.5;
   }
 
   .website-link {
@@ -156,8 +184,6 @@ const { Content } = await render(builder);
     font-weight: 700;
     color: var(--brand, #1f5c4d);
     text-decoration: none;
-    flex-shrink: 0;
-    margin-top: 0.5rem;
   }
 
   .website-link:hover {
@@ -210,13 +236,55 @@ const { Content } = await render(builder);
     margin-bottom: 2rem;
   }
 
-  .prose p {
+  .prose :global(p) {
     margin-bottom: 1.25rem;
   }
 
-  .prose h2 {
+  .prose :global(h2) {
     font-size: 1.35rem;
     margin: 2rem 0 0.75rem;
+    color: var(--text);
+  }
+
+  .prose :global(h3) {
+    font-size: 1.15rem;
+    margin: 1.5rem 0 0.5rem;
+    color: var(--text);
+  }
+
+  .prose :global(h4) {
+    font-size: 1rem;
+    margin: 1.25rem 0 0.4rem;
+    color: var(--text);
+  }
+
+  .prose :global(ul) {
+    margin-bottom: 1.25rem;
+    padding-left: 1.5rem;
+  }
+
+  .prose :global(li) {
+    margin-bottom: 0.4rem;
+  }
+
+  .prose :global(a) {
+    color: var(--brand, #1f5c4d);
+    text-decoration: underline;
+  }
+
+  .prose :global(code) {
+    font-size: 0.9em;
+    background: #e8e6e0;
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+  }
+
+  .prose :global(.gallery-inline) {
+    width: 100%;
+    border-radius: var(--radius, 18px);
+    display: block;
+    margin: 1.75rem 0;
+    object-fit: cover;
   }
 
   .agent-pitch {
@@ -251,47 +319,10 @@ const { Content } = await render(builder);
     border-top: 1px solid #e8e6e0;
   }
 
-  .builder-gallery {
-    padding: 2.5rem 1.5rem;
-    max-width: 960px;
-    margin: 0 auto;
-  }
-
-  .builder-gallery h2 {
-    font-size: 1.35rem;
-    color: var(--brand, #1f5c4d);
-    margin-bottom: 1.25rem;
-  }
-
-  .gallery-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-  }
-
-  .gallery-grid img {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    border-radius: var(--radius, 18px);
-    display: block;
-  }
-
   @media (max-width: 600px) {
-    .hero-image {
-      height: 240px;
-    }
-
-    h1 {
-      font-size: 1.6rem;
-    }
-
-    .builder-header {
+    .communities-row {
       flex-direction: column;
-    }
-
-    .gallery-grid {
-      grid-template-columns: 1fr;
+      align-items: flex-start;
     }
   }
 </style>
