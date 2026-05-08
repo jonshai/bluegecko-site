@@ -1,11 +1,12 @@
 ---
 name: K. Hovnanian
 tagline: Family-owned builder since 1959, building thoughtfully designed homes on scatter lots throughout Palm Bay with no HOA.
-hero: /uploads/builders/k-hovnanian/hero.jpg
+hero: /uploads/builders/k-hovnanian/aegean-exterior.png
 gallery:
-  - /uploads/builders/k-hovnanian/gallery-01.jpg
-  - /uploads/builders/k-hovnanian/gallery-02.jpg
-  - /uploads/builders/k-hovnanian/gallery-03.jpg
+  - /uploads/builders/k-hovnanian/aegean-ensuite-plus.png
+  - /uploads/builders/k-hovnanian/aegean-exterior.png
+  - /uploads/builders/k-hovnanian/azalea-model-kitchen-living.png
+  - /uploads/builders/k-hovnanian/azalea-model-primary-bath.png
 ---
 
 You've probably walked past a K. Hovnanian home in Palm Bay without realizing it. They've been quietly building since 1959—family owned, twelve states, their own mortgage company. They don't make headlines. They just show up everywhere.
