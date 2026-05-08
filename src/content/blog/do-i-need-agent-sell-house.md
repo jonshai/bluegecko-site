@@ -1,9 +1,11 @@
 ---
 title: Do I Need an Agent to Sell My House?
 date: 2026-05-08
-excerpt: Surprisingly, no — and that's the honest answer. No law in Florida, or anywhere in the United States, requires a homeowner to use a real estate agent. Let's review what that looks like.
+excerpt: Surprisingly, no. There's no law requiring it. Let's review what that looks like.
 hero: /uploads/blog/do-i-need-agent-sell-house/DIY-home-photos.png
 ---
+
+# Do I Need an Agent to Sell My House?
 
 Surprisingly, no — and that's the honest answer. No law in Florida, or anywhere in the United States, requires a homeowner to use a real estate agent. License laws govern who can represent *other people* in a transaction, but your home is yours. Sell it however you like, as long as everything you do stays on the legal side of things. (Real estate law has teeth, so that caveat matters.)
 
@@ -48,8 +50,6 @@ None of that means FSBO can't work. It means most people, after looking at every
 You don't need an agent. That was always true. You should be very skeptical of anyone who tells you otherwise.
 
 If somewhere in this article you found yourself thinking *I'd really rather someone else handle the folding chairs* — Blue Gecko is here when you're ready. No pressure, no pitch. Just someone who's done this a few hundred times and knows where the chairs are kept.
-
-**[Talk to a Blue Gecko agent →]**
 
 ---
 
