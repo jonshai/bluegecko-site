@@ -1,7 +1,7 @@
 ---
 slug: 480-park-ave
 address: "480 Park Avenue, Satellite Beach, FL 32937"
-price: 789900
+price: 774900
 beds: 4
 baths: 2
 sqft: 2150
