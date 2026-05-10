@@ -350,6 +350,44 @@ Delete these in a future cleanup commit.
 - Never add "assets.binding" to wrangler.jsonc — causes assets-only error
 - Never change the deploy mechanism without reading the deployment section
 
+## Autolink System
+
+Build-time remark plugin that injects cross-links into Markdown content.
+Runs during `astro build` — no source files are modified.
+
+### Control file: src/data/link-targets.json
+- Edit this file to add aliases, flip link_target, or correct canonical targets
+- Structure: { blog: [...], builders: [...], communities: [...] }
+- Each entry: slug, url, title, link_target (bool), aliases (array of strings)
+- Builders and communities auto-register from their collection directories
+  (src/content/builders/*.md, src/content/communities/*.md) — no JSON update needed
+- JSON entries override aliases and link_target for auto-registered entries
+
+### Blog posts
+- Add `link_target: true` to frontmatter to make a post a link target
+- Default if absent: false (post will not be linked to from other pages)
+- Aliases for a blog post must be added manually to link-targets.json
+
+### autolink_cap frontmatter field
+- Overrides default cap of 8 injected links per page
+- Set `autolink_cap: 0` to disable autolink on a specific page
+- FAQ pages have a default cap of 999 (effectively unlimited)
+
+### Rules
+- First mention of a phrase per document only
+- Never inside an existing link or heading node
+- Never a self-link (a page never links to itself)
+- Phrases matched longest-first to prevent partial matches
+
+### Plugin location
+- src/plugins/remark-autolink.mjs
+- Registered in astro.config.mjs: markdown.remarkPlugins
+
+### Important
+- Never hardcode specific slugs in the plugin — use link-targets.json
+- src/utils/autoLink.ts and src/data/entities.json are legacy files
+  from a prior HTML-based approach — no longer used, can be deleted in cleanup
+
 ## Planned Features (not yet built)
 
 ### Builder Incentives Dashboard
@@ -373,7 +411,9 @@ Delete these in a future cleanup commit.
   296-delake-rd-nw, 4645-pagosa-springs-circle-melbourne,
   480-park-ave, 4926-barr-street
 - Content collections live: faq, blog, communities, builders
-  All 4 are empty — pages build clean, nav links hidden until entries added
+  Blog: 2 posts (do-i-need-agent-sell-house, fsbo-checklist)
+  Builders: 2 entries (k-hovnanian, carharp-homes)
+  Communities: empty. FAQ: empty.
   Routes: /faq, /faq/[slug], /blog, /blog/[slug],
           /communities, /communities/[slug], /builders, /builders/[slug]
 - Nav auto-activates: Builders/Communities/Blog links appear when collection has content

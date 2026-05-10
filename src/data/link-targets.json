@@ -1,0 +1,35 @@
+{
+  "blog": [
+    {
+      "slug": "do-i-need-agent-sell-house",
+      "url": "/blog/do-i-need-agent-sell-house",
+      "title": "Do I Need an Agent to Sell My House?",
+      "link_target": true,
+      "aliases": ["FSBO", "for sale by owner", "sell your own home", "selling your own home"]
+    },
+    {
+      "slug": "fsbo-checklist",
+      "url": "/blog/fsbo-checklist",
+      "title": "Sell Your Own Home: The Complete FSBO Checklist",
+      "link_target": false,
+      "aliases": []
+    }
+  ],
+  "builders": [
+    {
+      "slug": "k-hovnanian",
+      "url": "/builders/k-hovnanian",
+      "title": "K. Hovnanian",
+      "link_target": true,
+      "aliases": []
+    },
+    {
+      "slug": "carharp-homes",
+      "url": "/builders/carharp-homes",
+      "title": "Carharp Homes",
+      "link_target": true,
+      "aliases": []
+    }
+  ],
+  "communities": []
+}

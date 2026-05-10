@@ -53,4 +53,4 @@ If somewhere in this article you found yourself thinking *I'd really rather some
 
 ---
 
-*Want to try it yourself? Here's our complete [step-by-step guide to selling your own home](#) — every task, in order, nothing left out.*
+*Want to try it yourself? Here's our complete [step-by-step guide to selling your own home](/blog/fsbo-checklist) — every task, in order, nothing left out.*

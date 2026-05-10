@@ -45,6 +45,8 @@ const blog = defineCollection({
     excerpt: z.string(),
     hero: z.string().optional(),
     tags: z.array(z.string()).optional(),
+    link_target: z.boolean().optional(),
+    autolink_cap: z.number().optional(),
   }),
 });
 
@@ -55,6 +57,7 @@ const communities = defineCollection({
     tagline: z.string(),
     hero: z.string().optional(),
     order: z.number().optional(),
+    autolink_cap: z.number().optional(),
   }),
 });
 
@@ -67,6 +70,7 @@ const builders = defineCollection({
     gallery: z.array(z.string()).optional(),
     website: z.string().url().optional(),
     communities: z.array(z.string()).optional(),
+    autolink_cap: z.number().optional(),
   }),
 });
 
