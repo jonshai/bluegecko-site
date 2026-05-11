@@ -19,16 +19,26 @@ const { Content } = await render(faq);
   description={`Answer: ${faq.data.question}`}
 >
   <main>
-    <section class="section">
-      <div class="container content-wrap">
+    <section class="section hero-section">
+      <div class="container">
         <nav class="breadcrumb">
           <a href="/faq">← Back to FAQ</a>
           {faq.data.category && <span class="crumb-sep">·</span>}
           {faq.data.category && <span class="crumb-cat">{faq.data.category}</span>}
         </nav>
 
-        <h1>{faq.data.question}</h1>
+        <div class="hero-card">
+          <!-- Top band: renders hero image if the schema ever gains one, brand color otherwise -->
+          <div class="hero-band" />
+          <div class="hero-meta">
+            <h1>{faq.data.question}</h1>
+          </div>
+        </div>
+      </div>
+    </section>
 
+    <section class="section">
+      <div class="container content-wrap">
         <div class="prose">
           <Content />
         </div>
@@ -43,8 +53,9 @@ const { Content } = await render(faq);
 </BaseLayout>
 
 <style>
-  .content-wrap {
-    max-width: 720px;
+  /* ── Hero card (stacked) ── */
+  .hero-section {
+    padding-bottom: 0;
   }
 
   .breadcrumb {
@@ -52,7 +63,7 @@ const { Content } = await render(faq);
     align-items: center;
     gap: 0.5rem;
     font-size: 0.88rem;
-    margin-bottom: 1.75rem;
+    margin-bottom: 1.5rem;
     color: var(--text-soft);
   }
 
@@ -73,10 +84,37 @@ const { Content } = await render(faq);
     color: var(--accent, #c96f4a);
   }
 
-  h1 {
-    font-size: 1.8rem;
+  .hero-card {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius, 18px);
+    overflow: hidden;
+    background: var(--surface, #fff);
+    border: 1px solid var(--line, #d7d1c5);
+    box-shadow: var(--shadow, 0 10px 30px rgba(0, 0, 0, 0.08));
+  }
+
+  .hero-band {
+    width: 100%;
+    height: 160px;
+    background: var(--brand, #1f5c4d);
+    flex-shrink: 0;
+  }
+
+  .hero-meta {
+    padding: 1.75rem 2rem;
+  }
+
+  .hero-meta h1 {
+    font-size: 1.5rem;
     line-height: 1.3;
-    margin-bottom: 2rem;
+    margin: 0;
+  }
+
+  /* ── Content ── */
+  .content-wrap {
+    max-width: 720px;
+    padding-top: 2.5rem;
   }
 
   .prose {
@@ -96,5 +134,16 @@ const { Content } = await render(faq);
     margin-top: 2.5rem;
     padding-top: 2rem;
     border-top: 1px solid #e8e6e0;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .hero-band {
+      height: 100px;
+    }
+
+    .hero-meta h1 {
+      font-size: 1.25rem;
+    }
   }
 </style>

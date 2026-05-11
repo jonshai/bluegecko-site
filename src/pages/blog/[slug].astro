@@ -56,6 +56,7 @@ function formatDate(d: Date): string {
               </div>
             )}
             <h1>{post.data.title}</h1>
+            <p class="hero-excerpt">{post.data.excerpt}</p>
           </div>
         </div>
       </div>
@@ -115,11 +116,11 @@ function formatDate(d: Date): string {
 
   .hero-card {
     display: flex;
-    max-width: 800px;
     border-radius: var(--radius, 18px);
     overflow: hidden;
-    background: #fff;
-    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+    background: var(--surface, #fff);
+    border: 1px solid var(--line, #d7d1c5);
+    box-shadow: var(--shadow, 0 10px 30px rgba(0, 0, 0, 0.08));
   }
 
   .hero-img,
@@ -189,15 +190,17 @@ function formatDate(d: Date): string {
     margin: 0;
   }
 
+  .hero-excerpt {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-soft);
+  }
+
   /* ── Article prose ── */
   .content-wrap {
     max-width: 740px;
     padding-top: 2.5rem;
-  }
-
-  /* Hide duplicate h1 rendered from markdown body */
-  .prose > h1:first-child {
-    display: none;
   }
 
   .prose {
