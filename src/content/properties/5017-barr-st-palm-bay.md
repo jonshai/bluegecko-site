@@ -1,7 +1,7 @@
 ---
 slug: 5017-barr-st-palm-bay
 address: "5017 Barr St, Palm Bay, FL 32907"
-price: 419000
+price: 399900
 beds: 4
 baths: 2
 sqft: 1847
