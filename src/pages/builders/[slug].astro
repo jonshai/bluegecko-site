@@ -118,6 +118,22 @@ const interleavedHtml = htmlParts.join('\n');
           <a href="/builders">← All Builders</a>
         </nav>
 
+        {(builder.data.author_name || builder.data.date || builder.data.last_updated) && (
+          <div class="article-meta">
+            {builder.data.author_name && <span class="author">{builder.data.author_name}</span>}
+            {builder.data.date && (
+              <span class="pub-date">
+                {builder.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </span>
+            )}
+            {builder.data.last_updated && (
+              <span class="last-updated">
+                Updated {builder.data.last_updated.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </span>
+            )}
+          </div>
+        )}
+
         {builder.data.website && (
           <div class="website-row">
             <a
@@ -145,6 +161,21 @@ const interleavedHtml = htmlParts.join('\n');
         )}
 
         <div class="prose" set:html={interleavedHtml} />
+
+        {builder.data.author_photo && (
+          <section class="author-byline">
+            <h2>About the Author</h2>
+            <div class="byline-inner">
+              <img
+                src={builder.data.author_photo}
+                alt={`Photo of ${builder.data.author_name}`}
+                class="author-photo"
+                loading="lazy"
+              />
+              <p class="author-bio">{builder.data.author_bio}</p>
+            </div>
+          </section>
+        )}
 
         <div class="agent-pitch card">
           <h3>Why you still need your own agent.</h3>
@@ -331,6 +362,55 @@ const interleavedHtml = htmlParts.join('\n');
     flex-wrap: wrap;
     padding-top: 1.5rem;
     border-top: 1px solid #e8e6e0;
+  }
+
+  /* ── Article meta ── */
+  .article-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    font-size: 0.82rem;
+    color: var(--text-soft);
+    margin-bottom: 1.25rem;
+  }
+
+  .article-meta .author,
+  .article-meta .pub-date,
+  .article-meta .last-updated {
+    font-weight: 600;
+  }
+
+  /* ── Author byline ── */
+  .author-byline {
+    max-width: var(--prose-width, 72ch);
+    margin-top: 3rem;
+    margin-bottom: 2rem;
+  }
+
+  .author-byline h2 {
+    font-size: 1.35rem;
+    margin: 2rem 0 0.75rem;
+    color: var(--text);
+  }
+
+  .byline-inner {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+
+  .author-photo {
+    width: 20%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: var(--radius, 18px);
+    flex-shrink: 0;
+  }
+
+  .author-bio {
+    width: 80%;
+    margin: 0;
   }
 
   @media (max-width: 600px) {

@@ -42,8 +42,14 @@ function formatDate(d: Date): string {
           <div class="hero-meta">
             <div class="meta-row">
               <span class="post-date">{formatDate(post.data.date)}</span>
+              {post.data.last_updated && (
+                <>
+                  <span class="meta-sep">·</span>
+                  <span class="last-updated">Updated {formatDate(post.data.last_updated)}</span>
+                </>
+              )}
               <span class="meta-sep">·</span>
-              <span class="post-author">{post.data.author}</span>
+              <span class="post-author">{post.data.author_name}</span>
             </div>
             {post.data.tags && post.data.tags.length > 0 && (
               <div class="post-tags">
@@ -67,6 +73,21 @@ function formatDate(d: Date): string {
         <div class="prose">
           <Content />
         </div>
+
+        {post.data.author_photo && (
+          <section class="author-byline">
+            <h2>About the Author</h2>
+            <div class="byline-inner">
+              <img
+                src={post.data.author_photo}
+                alt={`Photo of ${post.data.author_name}`}
+                class="author-photo"
+                loading="lazy"
+              />
+              <p class="author-bio">{post.data.author_bio}</p>
+            </div>
+          </section>
+        )}
 
         <div class="cta-row">
           <button data-stella-trigger="open" class="button button-primary">Ask Stella</button>
@@ -274,6 +295,36 @@ function formatDate(d: Date): string {
     font-weight: 600;
     line-height: 1.3;
     transition: color 0.15s;
+  }
+
+  /* ── Author byline ── */
+  .author-byline {
+    max-width: var(--prose-width, 72ch);
+    margin-top: 3rem;
+  }
+
+  .author-byline h2 {
+    font-size: 1.35rem;
+    margin: 2rem 0 0.75rem;
+  }
+
+  .byline-inner {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+
+  .author-photo {
+    width: 20%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: var(--radius, 18px);
+    flex-shrink: 0;
+  }
+
+  .author-bio {
+    width: 80%;
+    margin: 0;
   }
 
   /* ── Responsive ── */

@@ -40,9 +40,40 @@ const { Content } = await render(community);
 
     <section class="section">
       <div class="container content-wrap">
+        {(community.data.author_name || community.data.date || community.data.last_updated) && (
+          <div class="article-meta">
+            {community.data.author_name && <span class="author">{community.data.author_name}</span>}
+            {community.data.date && (
+              <span class="pub-date">
+                {community.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </span>
+            )}
+            {community.data.last_updated && (
+              <span class="last-updated">
+                Updated {community.data.last_updated.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </span>
+            )}
+          </div>
+        )}
+
         <div class="prose">
           <Content />
         </div>
+
+        {community.data.author_photo && (
+          <section class="author-byline">
+            <h2>About the Author</h2>
+            <div class="byline-inner">
+              <img
+                src={community.data.author_photo}
+                alt={`Photo of ${community.data.author_name}`}
+                class="author-photo"
+                loading="lazy"
+              />
+              <p class="author-bio">{community.data.author_bio}</p>
+            </div>
+          </section>
+        )}
 
         <div class="cta-grid">
           <a href="/search" class="cta-card cta-search">
@@ -192,6 +223,54 @@ const { Content } = await render(community);
     color: var(--text-soft);
     margin: 0;
     line-height: 1.5;
+  }
+
+  /* ── Article meta ── */
+  .article-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    font-size: 0.82rem;
+    color: var(--text-soft);
+    margin-bottom: 1.5rem;
+  }
+
+  .article-meta .author,
+  .article-meta .pub-date,
+  .article-meta .last-updated {
+    font-weight: 600;
+  }
+
+  /* ── Author byline ── */
+  .author-byline {
+    max-width: var(--prose-width, 72ch);
+    margin-top: 3rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .author-byline h2 {
+    font-size: 1.35rem;
+    margin: 2rem 0 0.75rem;
+  }
+
+  .byline-inner {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+
+  .author-photo {
+    width: 20%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: var(--radius, 18px);
+    flex-shrink: 0;
+  }
+
+  .author-bio {
+    width: 80%;
+    margin: 0;
   }
 
   /* ── Responsive ── */
