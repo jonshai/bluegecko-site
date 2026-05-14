@@ -1,6 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection, render } from 'astro:content';
+import { getAuthor } from '../../data/authors';
+import type { AuthorName } from '../../data/authors';
 
 export async function getStaticPaths() {
   const allCommunities = await getCollection('communities');
@@ -12,6 +14,10 @@ export async function getStaticPaths() {
 
 const { community } = Astro.props;
 const { Content } = await render(community);
+
+const author = community.data.author_name
+  ? getAuthor(community.data.author_name as AuthorName)
+  : null;
 ---
 
 <BaseLayout
@@ -40,9 +46,9 @@ const { Content } = await render(community);
 
     <section class="section">
       <div class="container content-wrap">
-        {(community.data.author_name || community.data.date || community.data.last_updated) && (
+        {(author || community.data.date || community.data.last_updated) && (
           <div class="article-meta">
-            {community.data.author_name && <span class="author">{community.data.author_name}</span>}
+            {author && <span class="author">{author.name}</span>}
             {community.data.date && (
               <span class="pub-date">
                 {community.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
@@ -60,17 +66,17 @@ const { Content } = await render(community);
           <Content />
         </div>
 
-        {community.data.author_photo && (
+        {author && (
           <section class="author-byline">
             <h2>About the Author</h2>
             <div class="byline-inner">
               <img
-                src={community.data.author_photo}
-                alt={`Photo of ${community.data.author_name}`}
+                src={author.photo}
+                alt={`Photo of ${author.name}`}
                 class="author-photo"
                 loading="lazy"
               />
-              <p class="author-bio">{community.data.author_bio}</p>
+              <p class="author-bio">{author.bio}</p>
             </div>
           </section>
         )}
