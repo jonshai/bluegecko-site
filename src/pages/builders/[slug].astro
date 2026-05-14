@@ -2,6 +2,8 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import HeroCard from '../../components/HeroCard.astro';
 import { getCollection } from 'astro:content';
+import { getAuthor } from '../../data/authors';
+import type { AuthorName } from '../../data/authors';
 
 export async function getStaticPaths() {
   const allBuilders = await getCollection('builders');
@@ -12,6 +14,10 @@ export async function getStaticPaths() {
 }
 
 const { builder } = Astro.props;
+
+const author = builder.data.author_name
+  ? getAuthor(builder.data.author_name as AuthorName)
+  : null;
 
 // Inline markdown renderer — handles paragraphs, headings, lists, bold, italic, links
 function inlineToHtml(text: string): string {
@@ -118,9 +124,9 @@ const interleavedHtml = htmlParts.join('\n');
           <a href="/builders">← All Builders</a>
         </nav>
 
-        {(builder.data.author_name || builder.data.date || builder.data.last_updated) && (
+        {(author || builder.data.date || builder.data.last_updated) && (
           <div class="article-meta">
-            {builder.data.author_name && <span class="author">{builder.data.author_name}</span>}
+            {author && <span class="author">{author.name}</span>}
             {builder.data.date && (
               <span class="pub-date">
                 {builder.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
@@ -162,17 +168,17 @@ const interleavedHtml = htmlParts.join('\n');
 
         <div class="prose" set:html={interleavedHtml} />
 
-        {builder.data.author_photo && (
+        {author && (
           <section class="author-byline">
             <h2>About the Author</h2>
             <div class="byline-inner">
               <img
-                src={builder.data.author_photo}
-                alt={`Photo of ${builder.data.author_name}`}
+                src={author.photo}
+                alt={`Photo of ${author.name}`}
                 class="author-photo"
                 loading="lazy"
               />
-              <p class="author-bio">{builder.data.author_bio}</p>
+              <p class="author-bio">{author.bio}</p>
             </div>
           </section>
         )}

@@ -1,6 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection, render } from 'astro:content';
+import { getAuthor } from '../../data/authors';
+import type { AuthorName } from '../../data/authors';
 
 export async function getStaticPaths() {
   const allPosts = await getCollection('blog');
@@ -17,6 +19,10 @@ export async function getStaticPaths() {
 
 const { post, prev, next } = Astro.props;
 const { Content } = await render(post);
+
+const author = post.data.author_name
+  ? getAuthor(post.data.author_name as AuthorName)
+  : null;
 
 function formatDate(d: Date): string {
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -48,8 +54,12 @@ function formatDate(d: Date): string {
                   <span class="last-updated">Updated {formatDate(post.data.last_updated)}</span>
                 </>
               )}
-              <span class="meta-sep">·</span>
-              <span class="post-author">{post.data.author_name}</span>
+              {author && (
+                <>
+                  <span class="meta-sep">·</span>
+                  <span class="post-author">{author.name}</span>
+                </>
+              )}
             </div>
             {post.data.tags && post.data.tags.length > 0 && (
               <div class="post-tags">
@@ -74,17 +84,17 @@ function formatDate(d: Date): string {
           <Content />
         </div>
 
-        {post.data.author_photo && (
+        {author && (
           <section class="author-byline">
             <h2>About the Author</h2>
             <div class="byline-inner">
               <img
-                src={post.data.author_photo}
-                alt={`Photo of ${post.data.author_name}`}
+                src={author.photo}
+                alt={`Photo of ${author.name}`}
                 class="author-photo"
                 loading="lazy"
               />
-              <p class="author-bio">{post.data.author_bio}</p>
+              <p class="author-bio">{author.bio}</p>
             </div>
           </section>
         )}
