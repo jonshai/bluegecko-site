@@ -1,16 +1,13 @@
 ---
 name: Stanley Martin Homes
 tagline: DC-based builder brings production excellence to Country Club Estates.
-hero: /uploads/builders/stanley-martin-homes/hero.jpg
+hero: /uploads/builders/stanley-martin-homes/Stanley Martin Exterior.jpg
 gallery:
-  - /uploads/builders/stanley-martin-homes/exterior-40ft.jpg
-  - /uploads/builders/stanley-martin-homes/exterior-60ft.jpg
-  - /uploads/builders/stanley-martin-homes/kitchen.jpg
-  - /uploads/builders/stanley-martin-homes/floorplan-1.jpg
-  - /uploads/builders/stanley-martin-homes/floorplan-2.jpg
-  - /uploads/builders/stanley-martin-homes/floorplan-3.jpg
-  - /uploads/builders/stanley-martin-homes/living-area.jpg
-  - /uploads/builders/stanley-martin-homes/dual-vanity-bathroom.jpg
+  - /uploads/builders/stanley-martin-homes/Stanly Martin-laundry.jpg
+  - /uploads/builders/stanley-martin-homes/Stanley Martin Kitchen.jpg
+  - /uploads/builders/stanley-martin-homes/Stanley Martin Living Room.jpg
+  - /uploads/builders/stanley-martin-homes/Stanley martin - split vanity.jpg
+  - /uploads/builders/stanley-martin-homes/Stanley Martin 2-story Exterior.jpg
 ---
 
 # Stanley Martin Homes
