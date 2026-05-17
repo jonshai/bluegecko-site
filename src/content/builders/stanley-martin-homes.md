@@ -8,6 +8,7 @@ gallery:
   - /uploads/builders/stanley-martin-homes/Stanley Martin Living Room.jpg
   - /uploads/builders/stanley-martin-homes/Stanley martin - split vanity.jpg
   - /uploads/builders/stanley-martin-homes/Stanley Martin 2-story Exterior.jpg
+author_name: Lucky Whipple
 ---
 
 # Stanley Martin Homes
@@ -24,7 +25,4 @@ Three sides are sodded with St. Augustine grass fed by in-ground irrigation. Pav
 
 This is production building done right: consistent quality, reasonable pricing, and a builder confident enough in their process to skip the upsell carousel.
 
----
 
-Written by Lucky Whipple, Florida Realtor & Residential Geek
-Powered by G.E.C.K.O. AI Research Systems
