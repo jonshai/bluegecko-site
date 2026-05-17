@@ -1,6 +1,7 @@
 ---
 name: Risewell at Country Club Estates
 tagline: Four-bedroom excellence where quality of life trumps compromise.
+author_name: Lucky Whipple
 hero: /uploads/builders/risewell-country-club-estates/risewell-exterior.png
 gallery:
   - /uploads/builders/risewell-country-club-estates/risewell-kitchen.png
@@ -22,8 +23,3 @@ Think Viera-level quality without the master-planned overhead. You get the gated
 HOA is $61 a month. No CDD. The gate is the only amenity — because sometimes what you don't build matters as much as what you do.
 
 This is the community for the buyer who's tired of compromise. Price takes a backseat to how it actually feels to live there.
-
----
-
-Written by Lucky Whipple, Florida Realtor & Residential Geek
-Powered by G.E.C.K.O. AI Research Systems
