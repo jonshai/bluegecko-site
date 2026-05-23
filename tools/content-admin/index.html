@@ -402,7 +402,7 @@
     /* ── Panel 4: Image Optimizer ── */
     .optimizer-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
       gap: 16px;
       padding: 20px 24px;
       overflow-y: auto;
@@ -414,8 +414,35 @@
       border: 1px solid var(--border);
       border-radius: 12px;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     .img-card.unsupported { opacity: 0.6; }
+
+    .img-card-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 14px;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+    }
+    .img-card-name {
+      font-weight: 600;
+      color: var(--text-bright);
+      font-size: 13px;
+      word-break: break-all;
+    }
+    .img-size-badge {
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .img-size-badge.oversized { color: #e07070; }
+    .img-size-badge.warning   { color: #f0b940; }
+    .img-size-badge.ok        { color: var(--text-dim); }
 
     .img-thumb {
       width: 100%;
@@ -424,40 +451,34 @@
       background: var(--bg3);
       display: block;
     }
-    .img-card-body { padding: 14px; }
-    .img-card-name {
-      font-weight: 600;
-      color: var(--text-bright);
-      font-size: 13px;
-      word-break: break-all;
-      margin-bottom: 4px;
-    }
-    .img-card-path { font-size: 11px; color: var(--text-dim); font-family: monospace; margin-bottom: 10px; word-break: break-all; }
+    .img-card-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+    .img-card-path { font-size: 11px; color: var(--text-dim); font-family: monospace; word-break: break-all; }
 
     .img-card-controls { display: flex; flex-direction: column; gap: 8px; }
     .control-row { display: flex; align-items: center; gap: 8px; }
-    .control-label { font-size: 11px; color: var(--text-dim); width: 80px; flex-shrink: 0; }
+    .control-label { font-size: 11px; color: var(--text-dim); width: 90px; flex-shrink: 0; }
     .control-row input[type="range"] { flex: 1; accent-color: var(--gecko-lt); }
     .control-row input[type="number"] { width: 80px; }
     .quality-val { font-size: 11px; color: var(--gecko-lt); width: 28px; text-align: right; }
 
-    .img-card-footer {
-      padding: 10px 14px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .optimize-btn-row { display: flex; align-items: center; gap: 10px; }
+    .btn-spinner {
+      display: inline-block;
+      width: 11px;
+      height: 11px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 4px;
     }
-    .img-size-info { font-size: 12px; color: var(--text-dim); flex: 1; }
-    .img-size-info .oversized { color: #e07070; }
-    .img-size-info .warning { color: #f0b940; }
 
     .optimize-result {
       font-size: 12px;
-      margin-top: 8px;
-      padding: 6px 8px;
+      padding: 5px 8px;
       border-radius: 6px;
-      text-align: center;
+      flex: 1;
     }
     .optimize-result.success { background: rgba(39,174,96,0.15); color: #6fcf97; }
     .optimize-result.error { background: rgba(192,57,43,0.15); color: #e07070; }
@@ -1213,6 +1234,7 @@ function renderAuditTable() {
 
 let optimizerLoaded = false;
 let optimizerImages = [];
+const optimizedInSession = new Set();
 
 async function loadOptimizer() {
   optimizerLoaded = true;
@@ -1248,36 +1270,39 @@ function renderOptimizerGrid() {
 
   grid.innerHTML = optimizerImages.map((img, idx) => {
     const isWebP = img.ext === '.webp';
-    const sizeClass = img.sizeKb > 400 ? 'oversized' : 'warning';
+    const sizeCls = img.sizeKb > 400 ? 'oversized' : 'warning';
 
     return `<div class="img-card${isWebP ? ' unsupported' : ''}" id="img-card-${idx}">
+      <div class="img-card-header">
+        <span class="img-card-name">${escapeHtml(img.filename)}</span>
+        <span class="img-size-badge ${sizeCls}" id="img-size-${idx}">${img.sizeKb} KB</span>
+      </div>
       <img class="img-thumb" src="${escapeHtml(img.rawUrl)}" alt="${escapeHtml(img.filename)}" loading="lazy" />
       <div class="img-card-body">
-        <div class="img-card-name">${escapeHtml(img.filename)}</div>
         <div class="img-card-path">${escapeHtml(img.path)}</div>
-        ${isWebP ? `<div class="optimize-result error">WebP source — optimize manually (not supported via canvas)</div>` : `
-        <div class="img-card-controls">
-          <div class="control-row">
-            <span class="control-label">Quality</span>
-            <input type="range" min="50" max="95" value="82" class="quality-slider"
-              data-idx="${idx}" oninput="this.nextElementSibling.textContent=this.value">
-            <span class="quality-val">82</span>
-          </div>
-          <div class="control-row">
-            <span class="control-label">Max width</span>
-            <input type="number" class="maxwidth-input" data-idx="${idx}" value="1920" min="200" max="4000">
-            <span style="font-size:11px;color:var(--text-dim)">px</span>
-          </div>
-        </div>`}
+        ${isWebP
+          ? `<div class="optimize-result error">WebP source — optimize manually (canvas export not supported)</div>`
+          : `<div class="img-card-controls">
+              <div class="control-row">
+                <span class="control-label">Quality</span>
+                <input type="range" min="50" max="95" value="82" class="quality-slider"
+                  data-idx="${idx}" oninput="this.nextElementSibling.textContent=this.value">
+                <span class="quality-val">82</span>
+              </div>
+              <div class="control-row">
+                <span class="control-label">Max width (px)</span>
+                <input type="number" class="maxwidth-input" data-idx="${idx}" value="1920" min="200" max="4000">
+              </div>
+            </div>
+            <div class="optimize-btn-row">
+              <button class="btn-primary" style="font-size:12px;padding:5px 14px"
+                onclick="optimizeImage(${idx}, this)">
+                <span class="btn-spinner hidden"></span><span class="btn-label">Optimize</span>
+              </button>
+              <div id="opt-result-${idx}" class="optimize-result" style="display:none"></div>
+            </div>`
+        }
       </div>
-      <div class="img-card-footer">
-        <div class="img-size-info">
-          <span class="${sizeClass}">${img.sizeKb} KB</span>
-        </div>
-        ${isWebP ? '' : `<button class="btn-primary" style="font-size:12px;padding:5px 12px"
-          onclick="optimizeImage(${idx}, this)">Optimize</button>`}
-      </div>
-      <div id="opt-result-${idx}"></div>
     </div>`;
   }).join('');
 }
@@ -1290,12 +1315,17 @@ async function optimizeImage(idx, btn, silent = false) {
   const resultDiv = document.getElementById(`opt-result-${idx}`);
   const qualityInput = card ? card.querySelector('.quality-slider') : null;
   const maxWidthInput = card ? card.querySelector('.maxwidth-input') : null;
+  const spinner = btn ? btn.querySelector('.btn-spinner') : null;
+  const label   = btn ? btn.querySelector('.btn-label')   : null;
 
-  const quality = qualityInput ? parseInt(qualityInput.value) / 100 : 0.82;
+  const quality  = qualityInput  ? parseInt(qualityInput.value)  / 100 : 0.82;
   const maxWidth = maxWidthInput ? parseInt(maxWidthInput.value) || 1920 : 1920;
 
   if (!silent) {
-    if (btn) { btn.disabled = true; btn.textContent = 'Optimizing…'; }
+    if (btn)      btn.disabled = true;
+    if (spinner)  spinner.classList.remove('hidden');
+    if (label)    label.textContent = 'Optimizing…';
+    if (resultDiv) resultDiv.style.display = 'none';
   }
 
   try {
@@ -1305,66 +1335,69 @@ async function optimizeImage(idx, btn, silent = false) {
     const blob = await fetchRes.blob();
 
     // 2. Draw to canvas
-    const bmp = await createImageBitmap(blob);
-    const srcW = bmp.width;
-    const srcH = bmp.height;
-
-    let dstW = srcW;
-    let dstH = srcH;
+    const bmp  = await createImageBitmap(blob);
+    let dstW = bmp.width;
+    let dstH = bmp.height;
     if (dstW > maxWidth) {
       dstH = Math.round(dstH * (maxWidth / dstW));
       dstW = maxWidth;
     }
 
     const canvas = document.createElement('canvas');
-    canvas.width = dstW;
+    canvas.width  = dstW;
     canvas.height = dstH;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(bmp, 0, 0, dstW, dstH);
+    canvas.getContext('2d').drawImage(bmp, 0, 0, dstW, dstH);
 
-    // 3. Export as JPEG (or PNG for .png source files)
+    // 3. Export as JPEG (PNG for .png sources)
     const mimeOut = img.ext === '.png' ? 'image/png' : 'image/jpeg';
     const outBlob = await new Promise(resolve => canvas.toBlob(resolve, mimeOut, quality));
     if (!outBlob) throw new Error('canvas.toBlob returned null');
 
-    const newSizeKb = Math.round(outBlob.size / 1024 * 10) / 10;
     const oldSizeKb = img.sizeKb;
+    const newSizeKb = Math.round(outBlob.size / 1024 * 10) / 10;
 
     // 4. Convert to base64
-    const arrayBuf = await outBlob.arrayBuffer();
-    const uint8 = new Uint8Array(arrayBuf);
+    const uint8 = new Uint8Array(await outBlob.arrayBuffer());
     let binary = '';
     for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
     const base64 = btoa(binary);
 
     // 5. Upload via PUT
     const encodedPath = img.path.split('/').map(encodeURIComponent).join('/');
-    await apiPut(`/api/assets/${encodedPath}`, {
-      content: base64,
-      oldSizeKb,
-      newSizeKb,
-    });
+    await apiPut(`/api/assets/${encodedPath}`, { content: base64, oldSizeKb, newSizeKb });
 
-    // Update local size
+    // Update local size and mark session-optimized
     img.sizeKb = newSizeKb;
     optimizerImages[idx].sizeKb = newSizeKb;
+    optimizedInSession.add(idx);
+
+    // Update size badge
+    const sizeBadge = document.getElementById(`img-size-${idx}`);
+    if (sizeBadge) {
+      sizeBadge.textContent = `${newSizeKb} KB`;
+      sizeBadge.className = 'img-size-badge ' +
+        (newSizeKb > 400 ? 'oversized' : newSizeKb > 150 ? 'warning' : 'ok');
+    }
 
     if (!silent && resultDiv) {
-      resultDiv.innerHTML = `<div class="optimize-result success">
-        ✓ ${oldSizeKb} KB → ${newSizeKb} KB (saved ${Math.round((oldSizeKb - newSizeKb) / oldSizeKb * 100)}%)
-      </div>`;
+      resultDiv.style.display = '';
+      resultDiv.className = 'optimize-result success';
+      resultDiv.textContent = `✓ Optimized: ${oldSizeKb}KB → ${newSizeKb}KB`;
     }
 
     return { ok: true, oldSizeKb, newSizeKb };
   } catch (err) {
     if (!silent && resultDiv) {
-      resultDiv.innerHTML = `<div class="optimize-result error">Error: ${escapeHtml(err.message)}</div>`;
+      resultDiv.style.display = '';
+      resultDiv.className = 'optimize-result error';
+      resultDiv.textContent = `Error: ${err.message}`;
     }
     throw err;
   } finally {
     if (!silent && btn) {
       btn.disabled = false;
-      btn.textContent = 'Optimize';
+      if (spinner) spinner.classList.add('hidden');
+      if (label)   label.textContent = 'Optimize';
     }
   }
 }
@@ -1374,7 +1407,7 @@ async function optimizeImage(idx, btn, silent = false) {
 document.getElementById('batch-optimize-btn').addEventListener('click', async () => {
   const flagged = optimizerImages
     .map((img, idx) => ({ img, idx }))
-    .filter(({ img }) => img.sizeKb > 400 && img.ext !== '.webp');
+    .filter(({ img, idx }) => img.sizeKb > 400 && img.ext !== '.webp' && !optimizedInSession.has(idx));
 
   if (flagged.length === 0) {
     alert('No images over 400KB (excluding WebP) to optimize.');
