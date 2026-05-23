@@ -63,8 +63,9 @@ function githubRequest(method, endpoint, body) {
       path: endpoint,
       method,
       headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
+        Authorization: `Bearer ${GITHUB_TOKEN}`,
         Accept: 'application/vnd.github.v3+json',
+        'X-GitHub-Api-Version': '2022-11-28',
         'User-Agent': 'bluegecko-content-admin/1.0',
         'Content-Type': 'application/json',
         ...(payload ? { 'Content-Length': Buffer.byteLength(payload) } : {}),
@@ -482,7 +483,7 @@ const server = http.createServer(async (req, res) => {
       }));
 
       // Fetch static pages directory listing
-      const pagesRes = await githubRequest('GET', `/repos/${REPO}/git/trees/HEAD?recursive=1`);
+      const pagesRes = await githubRequest('GET', `/repos/${REPO}/git/trees/${BRANCH}?recursive=1`);
       const allFiles = pagesRes.status === 200 ? (pagesRes.data.tree || []) : [];
       const staticPages = allFiles
         .filter(f => f.path.startsWith('src/pages/') && f.path.endsWith('.astro') && f.type === 'blob')
@@ -638,11 +639,28 @@ const server = http.createServer(async (req, res) => {
   return jsonResponse(res, 404, { error: 'Not found' });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log('');
   console.log('Blue Gecko Content Admin Dashboard');
   console.log(`Running at http://localhost:${PORT}`);
   console.log(`GitHub repo: ${REPO} (branch: ${BRANCH})`);
   console.log('Press Ctrl+C to stop.');
+  console.log('');
+
+  // Startup auth check
+  try {
+    const check = await githubRequest('GET', `/repos/${REPO}`);
+    if (check.status === 200) {
+      console.log('[auth] GitHub API auth OK');
+    } else if (check.status === 401) {
+      console.error('[auth] ERROR: GITHUB_TOKEN is invalid or missing required scopes. Needs: repo, actions:read');
+    } else if (check.status === 403) {
+      console.error(`[auth] ERROR: GITHUB_TOKEN lacks permission (403). Ensure it has repo and actions:read scopes.`);
+    } else {
+      console.warn(`[auth] GitHub API check returned status ${check.status}`);
+    }
+  } catch (err) {
+    console.error('[auth] ERROR: Could not reach GitHub API:', err.message);
+  }
   console.log('');
 });
