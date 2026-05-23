@@ -635,6 +635,41 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // ── GET /api/proxy-image?path=public/... ─────────────────────────────────────
+  // Proxies a file from GitHub Contents API to avoid CORS on raw.githubusercontent.com
+  if (method === 'GET' && pathname === '/api/proxy-image') {
+    const filePath = url.searchParams.get('path');
+    if (!filePath) return jsonResponse(res, 400, { error: 'path param required' });
+    if (!filePath.startsWith('public/')) return jsonResponse(res, 403, { error: 'Only public/ assets allowed' });
+
+    try {
+      const ghRes = await githubRequest('GET', `/repos/${REPO}/contents/${encodeURIComponent(filePath)}?ref=${BRANCH}`);
+      if (ghRes.status !== 200) {
+        return jsonResponse(res, ghRes.status, { error: `GitHub returned ${ghRes.status}` });
+      }
+      if (!ghRes.data.content) return jsonResponse(res, 404, { error: 'No content returned' });
+
+      const binary = Buffer.from(ghRes.data.content.replace(/\n/g, ''), 'base64');
+      const ext = path.extname(filePath).toLowerCase();
+      const contentType = ext === '.png'  ? 'image/png'
+        : ext === '.gif'  ? 'image/gif'
+        : ext === '.webp' ? 'image/webp'
+        : ext === '.svg'  ? 'image/svg+xml'
+        : 'image/jpeg';
+
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Content-Length': binary.length,
+        'Cache-Control': 'public, max-age=300',
+      });
+      res.end(binary);
+    } catch (err) {
+      console.error(err);
+      return jsonResponse(res, 500, { error: err.message });
+    }
+    return;
+  }
+
   // 404 for unmatched routes
   return jsonResponse(res, 404, { error: 'Not found' });
 });

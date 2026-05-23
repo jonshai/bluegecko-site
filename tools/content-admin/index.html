@@ -1278,7 +1278,7 @@ function renderOptimizerGrid() {
         <span class="img-card-name">${escapeHtml(img.filename)}</span>
         <span class="img-size-badge ${sizeCls}" id="img-size-${idx}">${img.sizeKb} KB</span>
       </div>
-      <img class="img-thumb" src="${escapeHtml(img.rawUrl)}" alt="${escapeHtml(img.filename)}" loading="lazy" />
+      <img class="img-thumb" src="/api/proxy-image?path=${encodeURIComponent(img.path)}" alt="${escapeHtml(img.filename)}" loading="lazy" />
       <div class="img-card-body">
         <div class="img-card-path">${escapeHtml(img.path)}</div>
         ${isWebP
@@ -1330,8 +1330,8 @@ async function optimizeImage(idx, btn, silent = false) {
   }
 
   try {
-    // 1. Fetch image binary from GitHub raw URL
-    const fetchRes = await fetch(img.rawUrl);
+    // 1. Fetch image binary via local proxy (avoids CORS on raw.githubusercontent.com)
+    const fetchRes = await fetch(`/api/proxy-image?path=${encodeURIComponent(img.path)}`);
     if (!fetchRes.ok) throw new Error(`Failed to fetch image: ${fetchRes.status}`);
     const blob = await fetchRes.blob();
 
