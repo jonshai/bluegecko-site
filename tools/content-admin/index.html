@@ -459,7 +459,9 @@
     .control-row { display: flex; align-items: center; gap: 8px; }
     .control-label { font-size: 11px; color: var(--text-dim); width: 90px; flex-shrink: 0; }
     .control-row input[type="range"] { flex: 1; accent-color: var(--gecko-lt); }
-    .control-row input[type="number"] { width: 80px; }
+    .control-row input[type="number"] { width: 90px; }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     .quality-val { font-size: 11px; color: var(--gecko-lt); width: 28px; text-align: right; }
 
     .optimize-btn-row { display: flex; align-items: center; gap: 10px; }

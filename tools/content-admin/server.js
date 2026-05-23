@@ -643,13 +643,27 @@ const server = http.createServer(async (req, res) => {
     if (!filePath.startsWith('public/')) return jsonResponse(res, 403, { error: 'Only public/ assets allowed' });
 
     try {
-      const ghRes = await githubRequest('GET', `/repos/${REPO}/contents/${encodeURIComponent(filePath)}?ref=${BRANCH}`);
+      // Encode each path segment individually — encodeURIComponent on the full path
+      // encodes slashes as %2F, which GitHub's API treats as a single opaque segment.
+      const encodedFilePath = filePath.split('/').map(encodeURIComponent).join('/');
+      const ghRes = await githubRequest('GET', `/repos/${REPO}/contents/${encodedFilePath}?ref=${BRANCH}`);
       if (ghRes.status !== 200) {
         return jsonResponse(res, ghRes.status, { error: `GitHub returned ${ghRes.status}` });
       }
-      if (!ghRes.data.content) return jsonResponse(res, 404, { error: 'No content returned' });
 
-      const binary = Buffer.from(ghRes.data.content.replace(/\n/g, ''), 'base64');
+      // GitHub Contents API returns content:null for files over ~1MB.
+      // Fall back to the Git Blobs API (no size limit) using the sha from the response.
+      let rawContent = ghRes.data.content;
+      if (!rawContent && ghRes.data.sha) {
+        const blobRes = await githubRequest('GET', `/repos/${REPO}/git/blobs/${ghRes.data.sha}`);
+        if (blobRes.status !== 200) {
+          return jsonResponse(res, 502, { error: `Blob API returned ${blobRes.status}` });
+        }
+        rawContent = blobRes.data.content;
+      }
+      if (!rawContent) return jsonResponse(res, 404, { error: 'No content returned from GitHub' });
+
+      const binary = Buffer.from(rawContent.replace(/\n/g, ''), 'base64');
       const ext = path.extname(filePath).toLowerCase();
       const contentType = ext === '.png'  ? 'image/png'
         : ext === '.gif'  ? 'image/gif'
