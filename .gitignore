@@ -18,6 +18,7 @@ pnpm-debug.log*
 .env
 .env.production
 tools/open-house-admin/.env
+tools/content-admin/.env
 
 # macOS-specific files
 .DS_Store

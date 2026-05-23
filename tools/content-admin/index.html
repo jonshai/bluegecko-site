@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blue Gecko Content Admin</title>
+  <style>
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gecko:    #1f5c4d;
+      --gecko-lt: #2a7a67;
+      --gecko-dk: #163f35;
+      --amber:    #d4890a;
+      --danger:   #c0392b;
+      --danger-lt: #e74c3c;
+      --success:  #27ae60;
+      --bg:       #111518;
+      --bg2:      #1a1f24;
+      --bg3:      #222830;
+      --bg4:      #2c3440;
+      --border:   #333d48;
+      --text:     #d8dde3;
+      --text-dim: #7e8d9a;
+      --text-bright: #f0f4f8;
+      --radius:   8px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    a { color: var(--gecko-lt); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: var(--radius);
+      padding: 6px 14px;
+      font-size: 13px;
+      font-family: inherit;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--gecko);
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--gecko-lt); }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+    .btn-danger:hover:not(:disabled) { background: var(--danger-lt); }
+
+    .btn-ghost {
+      background: var(--bg4);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover:not(:disabled) { background: var(--bg3); }
+
+    input, select, textarea {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius);
+      padding: 6px 10px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid var(--gecko);
+      border-color: var(--gecko);
+    }
+
+    /* ── Layout ── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    /* ── Top nav ── */
+    #topnav {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      height: 52px;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .nav-brand {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--gecko-lt);
+      margin-right: 20px;
+      letter-spacing: -0.3px;
+      flex-shrink: 0;
+    }
+    .nav-brand span { color: var(--text-dim); font-weight: 400; }
+
+    .nav-tab {
+      padding: 8px 14px;
+      border-radius: var(--radius);
+      color: var(--text-dim);
+      font-size: 13px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-family: inherit;
+      transition: background 0.12s, color 0.12s;
+      white-space: nowrap;
+    }
+    .nav-tab:hover { background: var(--bg3); color: var(--text); }
+    .nav-tab.active { background: var(--gecko-dk); color: #fff; }
+
+    /* ── Main content ── */
+    #main {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel {
+      display: none;
+      flex: 1;
+      overflow: hidden;
+      flex-direction: column;
+    }
+    .panel.active { display: flex; }
+
+    /* ── Panel header ── */
+    .panel-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      background: var(--bg2);
+    }
+    .panel-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-bright);
+    }
+    .panel-header .spacer { flex: 1; }
+
+    /* ── Collection tabs (Panel 1) ── */
+    .col-tabs {
+      display: flex;
+      gap: 2px;
+      padding: 12px 24px 0;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .col-tab {
+      padding: 8px 16px;
+      border: none;
+      background: none;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--text-dim);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.12s, border-color 0.12s;
+    }
+    .col-tab:hover { color: var(--text); }
+    .col-tab.active { color: var(--gecko-lt); border-bottom-color: var(--gecko-lt); }
+
+    /* ── Table ── */
+    .table-wrap {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th {
+      text-align: left;
+      color: var(--text-dim);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg2); }
+
+    .slug-cell { font-family: monospace; font-size: 12px; color: var(--text-dim); }
+    .title-cell { color: var(--text-bright); font-weight: 500; }
+
+    /* ── Badge / pill ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-success { background: rgba(39,174,96,0.2); color: #6fcf97; }
+    .badge-danger  { background: rgba(192,57,43,0.2); color: #e07070; }
+    .badge-amber   { background: rgba(212,137,10,0.2); color: #f0b940; }
+    .badge-blue    { background: rgba(52,152,219,0.2); color: #7ec8e3; }
+    .badge-neutral { background: var(--bg4); color: var(--text-dim); }
+
+    /* ── Loading / empty / error states ── */
+    .state-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
+      padding: 60px 24px;
+      color: var(--text-dim);
+    }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--gecko-lt);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg {
+      background: rgba(192,57,43,0.12);
+      border: 1px solid rgba(192,57,43,0.3);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      color: #e07070;
+      margin: 16px 24px;
+    }
+
+    /* ── Modal ── */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      max-width: 480px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .modal h3 {
+      font-size: 17px;
+      color: var(--text-bright);
+      margin-bottom: 12px;
+    }
+    .modal p { color: var(--text-dim); margin-bottom: 20px; line-height: 1.6; }
+    .modal .highlight {
+      font-family: monospace;
+      background: var(--bg3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--text);
+    }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+    /* ── Panel 2: Site Map ── */
+    .sitemap-wrap {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    .sitemap-tree {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+    }
+    .sitemap-detail {
+      width: 340px;
+      flex-shrink: 0;
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 20px;
+      background: var(--bg2);
+    }
+    .sitemap-detail h3 {
+      font-size: 14px;
+      color: var(--text-bright);
+      margin-bottom: 12px;
+    }
+    .sitemap-detail pre {
+      font-size: 11px;
+      color: var(--text-dim);
+      white-space: pre-wrap;
+      background: var(--bg3);
+      border-radius: var(--radius);
+      padding: 12px;
+      line-height: 1.7;
+      font-family: monospace;
+    }
+
+    .tree-section { margin-bottom: 24px; }
+    .tree-section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 8px 0;
+      user-select: none;
+    }
+    .tree-section-header .chevron {
+      color: var(--text-dim);
+      transition: transform 0.2s;
+      font-size: 12px;
+    }
+    .tree-section-header.collapsed .chevron { transform: rotate(-90deg); }
+    .tree-section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-dim);
+    }
+    .tree-children { padding-left: 16px; }
+    .tree-children.hidden { display: none; }
+
+    .tree-node {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 2px 0;
+    }
+    .tree-node:hover { background: var(--bg3); }
+    .tree-node.selected { background: var(--gecko-dk); }
+    .tree-node.orphan { border-left: 3px solid var(--amber); padding-left: 5px; }
+
+    .tree-node-route { font-family: monospace; font-size: 12px; color: var(--gecko-lt); }
+    .tree-node-title { color: var(--text); font-size: 13px; }
+    .tree-node-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+
+    /* ── Panel 3: Asset Audit ── */
+    .audit-toolbar {
+      display: flex;
+      gap: 8px;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filter-btn {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text-dim);
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .filter-btn.active { background: var(--gecko-dk); color: #fff; border-color: var(--gecko); }
+    .audit-stats {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    /* ── Panel 4: Image Optimizer ── */
+    .optimizer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+      padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .img-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .img-card.unsupported { opacity: 0.6; }
+
+    .img-thumb {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      background: var(--bg3);
+      display: block;
+    }
+    .img-card-body { padding: 14px; }
+    .img-card-name {
+      font-weight: 600;
+      color: var(--text-bright);
+      font-size: 13px;
+      word-break: break-all;
+      margin-bottom: 4px;
+    }
+    .img-card-path { font-size: 11px; color: var(--text-dim); font-family: monospace; margin-bottom: 10px; word-break: break-all; }
+
+    .img-card-controls { display: flex; flex-direction: column; gap: 8px; }
+    .control-row { display: flex; align-items: center; gap: 8px; }
+    .control-label { font-size: 11px; color: var(--text-dim); width: 80px; flex-shrink: 0; }
+    .control-row input[type="range"] { flex: 1; accent-color: var(--gecko-lt); }
+    .control-row input[type="number"] { width: 80px; }
+    .quality-val { font-size: 11px; color: var(--gecko-lt); width: 28px; text-align: right; }
+
+    .img-card-footer {
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .img-size-info { font-size: 12px; color: var(--text-dim); flex: 1; }
+    .img-size-info .oversized { color: #e07070; }
+    .img-size-info .warning { color: #f0b940; }
+
+    .optimize-result {
+      font-size: 12px;
+      margin-top: 8px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      text-align: center;
+    }
+    .optimize-result.success { background: rgba(39,174,96,0.15); color: #6fcf97; }
+    .optimize-result.error { background: rgba(192,57,43,0.15); color: #e07070; }
+
+    /* ── Panel 4: Batch controls ── */
+    .batch-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .batch-bar span { font-size: 13px; color: var(--text-dim); }
+    .progress-bar-wrap {
+      flex: 1;
+      min-width: 200px;
+      height: 8px;
+      background: var(--bg3);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--gecko-lt);
+      border-radius: 4px;
+      transition: width 0.3s;
+      width: 0%;
+    }
+
+    /* ── Panel 5: Deploy Log ── */
+    .deploy-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .deploy-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      display: grid;
+      grid-template-columns: 12px 1fr auto;
+      gap: 12px;
+      align-items: start;
+    }
+    .deploy-status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+    .dot-success { background: var(--success); box-shadow: 0 0 6px rgba(39,174,96,0.5); }
+    .dot-failure { background: var(--danger-lt); box-shadow: 0 0 6px rgba(231,76,60,0.5); }
+    .dot-progress { background: var(--amber); box-shadow: 0 0 6px rgba(212,137,10,0.5); animation: pulse 1.2s ease-in-out infinite; }
+    .dot-neutral { background: var(--text-dim); }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .deploy-info { min-width: 0; }
+    .deploy-name { font-weight: 600; color: var(--text-bright); margin-bottom: 4px; }
+    .deploy-commit { font-family: monospace; font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+    .deploy-meta { display: flex; gap: 10px; flex-wrap: wrap; }
+    .deploy-meta-item { font-size: 12px; color: var(--text-dim); display: flex; align-items: center; gap: 4px; }
+    .deploy-link { font-size: 12px; }
+
+    .refresh-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      flex-shrink: 0;
+    }
+    .refresh-bar span { font-size: 12px; color: var(--text-dim); }
+    .countdown { font-size: 12px; color: var(--gecko-lt); font-weight: 600; }
+
+    /* ── Utility ── */
+    .flex-gap { display: flex; gap: 8px; align-items: center; }
+    .ml-auto { margin-left: auto; }
+    .hidden { display: none !important; }
+
+    /* ── Scrollbars ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Top nav -->
+  <nav id="topnav">
+    <div class="nav-brand">Blue Gecko <span>Content Admin</span></div>
+    <button class="nav-tab active" data-panel="p-browser">Content Browser</button>
+    <button class="nav-tab" data-panel="p-sitemap">Site Map</button>
+    <button class="nav-tab" data-panel="p-audit">Asset Audit</button>
+    <button class="nav-tab" data-panel="p-optimizer">Image Optimizer</button>
+    <button class="nav-tab" data-panel="p-deploy">Deploy Log</button>
+  </nav>
+
+  <div id="main">
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Panel 1: Content Browser
+    ════════════════════════════════════════════════════════════════ -->
+    <div class="panel active" id="p-browser">
+      <div class="panel-header">
+        <h2>Content Browser</h2>
+        <div class="spacer"></div>
+        <button class="btn-ghost" id="browser-refresh">↻ Refresh</button>
+      </div>
+
+      <div class="col-tabs">
+        <button class="col-tab active" data-col="blog">Blog</button>
+        <button class="col-tab" data-col="builders">Builders</button>
+        <button class="col-tab" data-col="communities">Communities</button>
+        <button class="col-tab" data-col="faq">FAQ</button>
+        <button class="col-tab" data-col="open-houses">Open Houses</button>
+      </div>
+
+      <div class="table-wrap" id="browser-content">
+        <div class="state-box"><div class="spinner"></div><div>Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Panel 2: Site Map
+    ════════════════════════════════════════════════════════════════ -->
+    <div class="panel" id="p-sitemap">
+      <div class="panel-header">
+        <h2>Site Map</h2>
+        <div class="spacer"></div>
+        <button class="btn-ghost" id="sitemap-refresh">↻ Refresh</button>
+      </div>
+
+      <div class="sitemap-wrap">
+        <div class="sitemap-tree" id="sitemap-tree">
+          <div class="state-box"><div class="spinner"></div><div>Loading…</div></div>
+        </div>
+        <div class="sitemap-detail" id="sitemap-detail">
+          <h3>Frontmatter</h3>
+          <p style="color:var(--text-dim);font-size:12px;">Click a node to inspect its frontmatter.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Panel 3: Asset Audit
+    ════════════════════════════════════════════════════════════════ -->
+    <div class="panel" id="p-audit">
+      <div class="panel-header">
+        <h2>Asset Audit</h2>
+        <div class="spacer"></div>
+        <button class="btn-ghost" id="audit-refresh">↻ Refresh</button>
+      </div>
+
+      <div class="audit-toolbar">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="oversized">Oversized (&gt;400KB)</button>
+        <button class="filter-btn" data-filter="amber">Large (150–400KB)</button>
+        <button class="filter-btn" data-filter="orphaned">Orphaned</button>
+        <button class="filter-btn" data-filter="oversized-orphaned">Oversized + Orphaned</button>
+        <span class="audit-stats" id="audit-stats"></span>
+      </div>
+
+      <div class="table-wrap" id="audit-content">
+        <div class="state-box"><div class="spinner"></div><div>Loading… (this may take a moment)</div></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Panel 4: Image Optimizer
+    ════════════════════════════════════════════════════════════════ -->
+    <div class="panel" id="p-optimizer">
+      <div class="panel-header">
+        <h2>Image Optimizer</h2>
+        <div class="spacer"></div>
+        <span style="font-size:12px;color:var(--text-dim)" id="opt-count"></span>
+      </div>
+
+      <div class="batch-bar">
+        <span>Batch: images over 400KB</span>
+        <button class="btn-primary" id="batch-optimize-btn">Optimize All Flagged</button>
+        <div class="progress-bar-wrap hidden" id="batch-progress-wrap">
+          <div class="progress-bar-fill" id="batch-progress-fill"></div>
+        </div>
+        <span id="batch-status"></span>
+      </div>
+
+      <div class="optimizer-grid" id="optimizer-content">
+        <div class="state-box" style="grid-column:1/-1"><div class="spinner"></div><div>Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Panel 5: Deploy Log
+    ════════════════════════════════════════════════════════════════ -->
+    <div class="panel" id="p-deploy">
+      <div class="panel-header">
+        <h2>Deploy Log</h2>
+        <div class="spacer"></div>
+      </div>
+      <div class="refresh-bar">
+        <button class="btn-ghost" id="deploy-refresh-btn">↻ Refresh Now</button>
+        <span>Auto-refreshes every 60s</span>
+        <span class="countdown" id="deploy-countdown"></span>
+      </div>
+      <div class="deploy-list" id="deploy-list">
+        <div class="state-box"><div class="spinner"></div><div>Loading…</div></div>
+      </div>
+    </div>
+
+  </div><!-- #main -->
+</div><!-- #app -->
+
+<!-- Delete confirmation modal -->
+<div class="modal-backdrop" id="delete-modal">
+  <div class="modal">
+    <h3>Confirm Delete</h3>
+    <p id="delete-modal-body">Are you sure?</p>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="delete-cancel">Cancel</button>
+      <button class="btn-danger" id="delete-confirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── Panel navigation ──────────────────────────────────────────────────────────
+
+const navTabs = document.querySelectorAll('.nav-tab');
+const panels  = document.querySelectorAll('.panel');
+
+navTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    navTabs.forEach(t => t.classList.remove('active'));
+    panels.forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    const target = document.getElementById(tab.dataset.panel);
+    if (target) target.classList.add('active');
+    onPanelActivate(tab.dataset.panel);
+  });
+});
+
+function onPanelActivate(panelId) {
+  switch (panelId) {
+    case 'p-browser':   if (!browserLoaded) loadBrowser(); break;
+    case 'p-sitemap':   if (!sitemapLoaded) loadSitemap(); break;
+    case 'p-audit':     if (!auditLoaded)   loadAudit();   break;
+    case 'p-optimizer': if (!optimizerLoaded) loadOptimizer(); break;
+    case 'p-deploy':    loadDeployLog(); break;
+  }
+}
+
+// ── API helpers ───────────────────────────────────────────────────────────────
+
+async function apiGet(path) {
+  const res = await fetch(path);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+async function apiDelete(path) {
+  const res = await fetch(path, { method: 'DELETE' });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+async function apiPut(path, body) {
+  const res = await fetch(path, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+function showError(containerId, msg) {
+  document.getElementById(containerId).innerHTML =
+    `<div class="error-msg">Error: ${escapeHtml(msg)}</div>`;
+}
+
+function showLoading(containerId, label) {
+  document.getElementById(containerId).innerHTML =
+    `<div class="state-box"><div class="spinner"></div><div>${label || 'Loading…'}</div></div>`;
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  try {
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch { return iso; }
+}
+
+function fmtDuration(ms) {
+  if (ms == null || ms < 0) return '—';
+  const secs = Math.round(ms / 1000);
+  if (secs < 60) return `${secs}s`;
+  return `${Math.floor(secs / 60)}m ${secs % 60}s`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Panel 1: Content Browser
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let browserLoaded = false;
+let browserCurrentCol = 'blog';
+let browserData = {};
+
+document.querySelectorAll('.col-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.col-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    browserCurrentCol = tab.dataset.col;
+    renderBrowserTab(browserCurrentCol);
+  });
+});
+
+document.getElementById('browser-refresh').addEventListener('click', () => {
+  browserData = {};
+  browserLoaded = false;
+  loadBrowser();
+});
+
+async function loadBrowser() {
+  browserLoaded = true;
+  renderBrowserTab(browserCurrentCol);
+}
+
+async function fetchBrowserCollection(col) {
+  if (browserData[col]) return browserData[col];
+
+  if (col === 'open-houses') {
+    const [props, events] = await Promise.all([
+      apiGet('/api/content/properties'),
+      apiGet('/api/content/events'),
+    ]);
+    browserData[col] = { props, events };
+    return browserData[col];
+  } else {
+    const data = await apiGet(`/api/content/${col}`);
+    browserData[col] = data;
+    return data;
+  }
+}
+
+async function renderBrowserTab(col) {
+  const container = document.getElementById('browser-content');
+  showLoading('browser-content');
+
+  try {
+    const data = await fetchBrowserCollection(col);
+    if (col === 'open-houses') {
+      renderOpenHousesTable(container, data.props, data.events);
+    } else {
+      renderCollectionTable(container, col, data);
+    }
+  } catch (err) {
+    showError('browser-content', err.message);
+  }
+}
+
+function renderCollectionTable(container, col, entries) {
+  if (!entries || entries.length === 0) {
+    container.innerHTML = `<div class="state-box">No entries in collection <strong>${col}</strong>.</div>`;
+    return;
+  }
+
+  const colHeaders = getColHeaders(col);
+  let html = `<table><thead><tr>`;
+  for (const h of colHeaders) html += `<th>${h}</th>`;
+  html += `<th></th></tr></thead><tbody>`;
+
+  for (const entry of entries) {
+    html += `<tr>`;
+    html += `<td class="title-cell">${escapeHtml(entry.title || '—')}</td>`;
+    html += `<td class="slug-cell">${escapeHtml(entry.slug)}</td>`;
+
+    if (col === 'blog') {
+      html += `<td>${fmtDate(entry.frontmatter.date)}</td>`;
+      const tags = entry.frontmatter.tags;
+      const tagHtml = Array.isArray(tags) ? tags.map(t => `<span class="badge badge-neutral">${escapeHtml(t)}</span>`).join(' ') : '—';
+      html += `<td>${tagHtml}</td>`;
+    } else if (col === 'builders') {
+      const comms = entry.frontmatter.communities;
+      const commHtml = Array.isArray(comms) && comms.length ? comms.map(c => `<span class="badge badge-blue">${escapeHtml(c)}</span>`).join(' ') : '—';
+      html += `<td>${commHtml}</td>`;
+    } else if (col === 'communities') {
+      html += `<td>${escapeHtml(entry.frontmatter.tagline || '—')}</td>`;
+      html += `<td>${entry.frontmatter.order ?? '—'}</td>`;
+    } else if (col === 'faq') {
+      html += `<td>${escapeHtml(entry.frontmatter.category || '—')}</td>`;
+      html += `<td>${entry.frontmatter.order ?? '—'}</td>`;
+    }
+
+    html += `<td><button class="btn-danger" style="font-size:12px;padding:4px 10px"
+      data-col="${escapeHtml(col)}" data-slug="${escapeHtml(entry.slug)}"
+      data-title="${escapeHtml(entry.title || entry.slug)}"
+      onclick="openDeleteModal(this)">Delete</button></td>`;
+    html += `</tr>`;
+  }
+
+  html += `</tbody></table>`;
+  container.innerHTML = html;
+}
+
+function renderOpenHousesTable(container, props, events) {
+  // Build property map
+  const propMap = {};
+  for (const p of (props || [])) propMap[p.slug] = p;
+
+  let html = `<h3 style="color:var(--text-bright);margin-bottom:12px;font-size:14px;">Properties (${(props||[]).length})</h3>`;
+  html += `<table><thead><tr><th>Address</th><th>Slug</th><th>Price</th><th>Bed/Bath</th><th></th></tr></thead><tbody>`;
+
+  for (const p of (props || [])) {
+    const fm = p.frontmatter || {};
+    html += `<tr>
+      <td class="title-cell">${escapeHtml(p.title || p.slug)}</td>
+      <td class="slug-cell">${escapeHtml(p.slug)}</td>
+      <td>${fm.price ? '$' + Number(fm.price).toLocaleString() : '—'}</td>
+      <td>${fm.beds ?? '—'}bd / ${fm.baths ?? '—'}ba</td>
+      <td><button class="btn-danger" style="font-size:12px;padding:4px 10px"
+        data-col="properties" data-slug="${escapeHtml(p.slug)}"
+        data-title="${escapeHtml(p.title || p.slug)}"
+        onclick="openDeleteModal(this)">Delete</button></td>
+    </tr>`;
+  }
+  html += `</tbody></table>`;
+
+  html += `<h3 style="color:var(--text-bright);margin:24px 0 12px;font-size:14px;">Events (${(events||[]).length})</h3>`;
+  html += `<table><thead><tr><th>Property</th><th>Date</th><th>Time</th><th>Slug</th><th></th></tr></thead><tbody>`;
+
+  for (const e of (events || [])) {
+    const fm = e.frontmatter || {};
+    const propAddr = propMap[fm.property]?.title || fm.property || '—';
+    html += `<tr>
+      <td class="title-cell">${escapeHtml(propAddr)}</td>
+      <td>${fmtDate(fm.date)}</td>
+      <td>${fm.start || '?'} – ${fm.end || '?'}</td>
+      <td class="slug-cell">${escapeHtml(e.slug)}</td>
+      <td><button class="btn-danger" style="font-size:12px;padding:4px 10px"
+        data-col="events" data-slug="${escapeHtml(e.slug)}"
+        data-title="${escapeHtml(e.title || e.slug)}"
+        onclick="openDeleteModal(this)">Delete</button></td>
+    </tr>`;
+  }
+  html += `</tbody></table>`;
+
+  container.innerHTML = html;
+}
+
+function getColHeaders(col) {
+  switch (col) {
+    case 'blog':        return ['Title', 'Slug', 'Date', 'Tags', ''];
+    case 'builders':    return ['Name', 'Slug', 'Communities', ''];
+    case 'communities': return ['Name', 'Slug', 'Tagline', 'Order', ''];
+    case 'faq':         return ['Question', 'Slug', 'Category', 'Order', ''];
+    default:            return ['Title', 'Slug', ''];
+  }
+}
+
+// ── Delete modal ──────────────────────────────────────────────────────────────
+
+let _deleteCol = null;
+let _deleteSlug = null;
+
+function openDeleteModal(btn) {
+  _deleteCol  = btn.dataset.col;
+  _deleteSlug = btn.dataset.slug;
+  const title = btn.dataset.title;
+  document.getElementById('delete-modal-body').innerHTML =
+    `Delete <span class="highlight">${escapeHtml(title)}</span> (<span class="highlight">${escapeHtml(_deleteSlug)}.md</span>) from <strong>${escapeHtml(_deleteCol)}</strong>? This cannot be undone.`;
+  document.getElementById('delete-modal').classList.add('open');
+}
+
+document.getElementById('delete-cancel').addEventListener('click', () => {
+  document.getElementById('delete-modal').classList.remove('open');
+});
+
+document.getElementById('delete-confirm').addEventListener('click', async () => {
+  const btn = document.getElementById('delete-confirm');
+  btn.disabled = true;
+  btn.textContent = 'Deleting…';
+  try {
+    await apiDelete(`/api/content/${_deleteCol}/${_deleteSlug}`);
+    document.getElementById('delete-modal').classList.remove('open');
+    // Invalidate cache and re-render
+    delete browserData[_deleteCol];
+    if (_deleteCol === 'properties' || _deleteCol === 'events') delete browserData['open-houses'];
+    renderBrowserTab(browserCurrentCol);
+  } catch (err) {
+    alert('Delete failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Delete';
+  }
+});
+
+// Close modal on backdrop click
+document.getElementById('delete-modal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+});
+
+// ── Auto-load browser on page start ──────────────────────────────────────────
+loadBrowser();
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Panel 2: Site Map
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let sitemapLoaded = false;
+let sitemapData   = null;
+
+document.getElementById('sitemap-refresh').addEventListener('click', () => {
+  sitemapLoaded = false;
+  sitemapData = null;
+  loadSitemap();
+});
+
+async function loadSitemap() {
+  sitemapLoaded = true;
+  const tree = document.getElementById('sitemap-tree');
+  tree.innerHTML = `<div class="state-box"><div class="spinner"></div><div>Fetching all collections…</div></div>`;
+  document.getElementById('sitemap-detail').innerHTML = '<h3>Frontmatter</h3><p style="color:var(--text-dim);font-size:12px;">Click a node to inspect.</p>';
+
+  try {
+    sitemapData = await apiGet('/api/sitemap');
+    renderSitemap(sitemapData);
+  } catch (err) {
+    tree.innerHTML = `<div class="error-msg">Error: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderSitemap(data) {
+  const { collections, staticPages, inboundLinks, orphans } = data;
+  const orphanSet = new Set(orphans || []);
+  let html = '';
+
+  // Static pages section
+  html += buildTreeSection('Static Pages', staticPages.map(p => ({
+    route: p.route,
+    title: p.route,
+    isOrphan: false,
+    tags: p.isDynamic ? [{ label: 'dynamic', cls: 'badge-neutral' }] : [],
+    fm: { path: p.path },
+  })));
+
+  // Collection sections
+  const collectionRoutes = {
+    blog: '/blog/',
+    builders: '/builders/',
+    communities: '/communities/',
+    faq: '/faq/',
+    properties: '/open-house/',
+    events: '/open-house/',
+  };
+
+  for (const [col, entries] of Object.entries(collections)) {
+    const nodes = entries.map(e => {
+      const key = `${col}/${e.slug}`;
+      const isOrphan = orphanSet.has(key);
+      const inbound = inboundLinks[key] || [];
+      const tags = [];
+      if (isOrphan) tags.push({ label: 'orphan', cls: 'badge-amber' });
+      if (inbound.length > 0) tags.push({ label: `${inbound.length} inbound`, cls: 'badge-success' });
+      const fm = e.frontmatter || {};
+      if (Array.isArray(fm.communities) && fm.communities.length) {
+        fm.communities.forEach(c => tags.push({ label: `→ communities/${c}`, cls: 'badge-blue' }));
+      }
+      return {
+        route: collectionRoutes[col] + e.slug,
+        title: e.title || e.slug,
+        isOrphan,
+        tags,
+        fm: e.frontmatter,
+      };
+    });
+    html += buildTreeSection(`${col} (${entries.length})`, nodes);
+  }
+
+  document.getElementById('sitemap-tree').innerHTML = html || '<div class="state-box">No data.</div>';
+
+  // Wire up section toggles
+  document.querySelectorAll('.tree-section-header').forEach(hdr => {
+    hdr.addEventListener('click', () => {
+      hdr.classList.toggle('collapsed');
+      const children = hdr.nextElementSibling;
+      if (children) children.classList.toggle('hidden');
+    });
+  });
+
+  // Wire up node clicks
+  document.querySelectorAll('.tree-node').forEach(node => {
+    node.addEventListener('click', () => {
+      document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+      node.classList.add('selected');
+      const fm = JSON.parse(node.dataset.fm || '{}');
+      const route = node.dataset.route;
+      showSitemapDetail(route, fm);
+    });
+  });
+}
+
+function buildTreeSection(title, nodes) {
+  let inner = nodes.map(n => {
+    const orphanCls = n.isOrphan ? ' orphan' : '';
+    const tagHtml = n.tags.map(t => `<span class="badge ${t.cls}" style="font-size:10px">${escapeHtml(t.label)}</span>`).join(' ');
+    const fmSafe = escapeHtml(JSON.stringify(n.fm || {}));
+    return `<div class="tree-node${orphanCls}" data-route="${escapeHtml(n.route)}" data-fm="${fmSafe}">
+      <span class="tree-node-route">${escapeHtml(n.route)}</span>
+      <span class="tree-node-title">${escapeHtml(n.title)}</span>
+      <span class="tree-node-tags">${tagHtml}</span>
+    </div>`;
+  }).join('');
+
+  return `<div class="tree-section">
+    <div class="tree-section-header">
+      <span class="chevron">▾</span>
+      <span class="tree-section-title">${escapeHtml(title)}</span>
+    </div>
+    <div class="tree-children">${inner || '<div style="color:var(--text-dim);font-size:12px;padding:4px 0">Empty</div>'}</div>
+  </div>`;
+}
+
+function showSitemapDetail(route, fm) {
+  const detail = document.getElementById('sitemap-detail');
+  const fmText = Object.entries(fm).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join('\n');
+  detail.innerHTML = `
+    <h3>${escapeHtml(route)}</h3>
+    <pre>${escapeHtml(fmText || '(no frontmatter)')}</pre>
+  `;
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Panel 3: Asset Audit
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let auditLoaded = false;
+let auditAssets = null;
+let auditFilter = 'all';
+
+document.getElementById('audit-refresh').addEventListener('click', () => {
+  auditLoaded = false;
+  auditAssets = null;
+  loadAudit(true);
+});
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    auditFilter = btn.dataset.filter;
+    renderAuditTable();
+  });
+});
+
+async function loadAudit(forceRefresh = false) {
+  auditLoaded = true;
+  showLoading('audit-content', 'Fetching assets from GitHub… (may take a moment)');
+  document.getElementById('audit-stats').textContent = '';
+
+  try {
+    const qs = forceRefresh ? '?refresh=1' : '';
+    auditAssets = await apiGet('/api/assets' + qs);
+    renderAuditTable();
+  } catch (err) {
+    showError('audit-content', err.message);
+  }
+}
+
+function renderAuditTable() {
+  if (!auditAssets) return;
+
+  const filtered = auditAssets.filter(a => {
+    switch (auditFilter) {
+      case 'oversized':          return a.sizeKb > 400;
+      case 'amber':              return a.sizeKb > 150 && a.sizeKb <= 400;
+      case 'orphaned':           return !a.referenced;
+      case 'oversized-orphaned': return a.sizeKb > 400 && !a.referenced;
+      default:                   return true;
+    }
+  });
+
+  const total = auditAssets.length;
+  const over400 = auditAssets.filter(a => a.sizeKb > 400).length;
+  const over150 = auditAssets.filter(a => a.sizeKb > 150 && a.sizeKb <= 400).length;
+  const orphaned = auditAssets.filter(a => !a.referenced).length;
+  document.getElementById('audit-stats').textContent =
+    `${total} files · ${over400} oversized · ${over150} large · ${orphaned} orphaned`;
+
+  if (filtered.length === 0) {
+    document.getElementById('audit-content').innerHTML =
+      `<div class="state-box">No files match this filter.</div>`;
+    return;
+  }
+
+  // Sort: oversized first, then by path
+  filtered.sort((a, b) => b.sizeKb - a.sizeKb);
+
+  let html = `<table><thead><tr>
+    <th>File</th><th>Path</th><th>Size</th><th>Referenced</th>
+  </tr></thead><tbody>`;
+
+  for (const a of filtered) {
+    const sizeCell = a.sizeKb > 400
+      ? `<span class="oversized">${a.sizeKb} KB</span>`
+      : a.sizeKb > 150
+      ? `<span class="warning">${a.sizeKb} KB</span>`
+      : `${a.sizeKb} KB`;
+
+    const refCell = a.referenced
+      ? `<span class="badge badge-success">Referenced</span>`
+      : `<span class="badge badge-amber">Orphaned</span>`;
+
+    html += `<tr>
+      <td class="title-cell">${escapeHtml(a.filename)}</td>
+      <td class="slug-cell">${escapeHtml(a.path)}</td>
+      <td>${sizeCell}</td>
+      <td>${refCell}</td>
+    </tr>`;
+  }
+
+  html += `</tbody></table>`;
+  document.getElementById('audit-content').innerHTML = html;
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Panel 4: Image Optimizer
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let optimizerLoaded = false;
+let optimizerImages = [];
+
+async function loadOptimizer() {
+  optimizerLoaded = true;
+  showLoading('optimizer-content', 'Loading image data…');
+  document.getElementById('opt-count').textContent = '';
+
+  try {
+    // Share asset data if already fetched; otherwise fetch
+    if (!auditAssets) {
+      auditAssets = await apiGet('/api/assets');
+      auditLoaded = true;
+    }
+
+    // Filter to images over 150KB, excluding WebP (for special handling)
+    optimizerImages = auditAssets.filter(a => a.isImage && a.sizeKb > 150);
+    optimizerImages.sort((a, b) => b.sizeKb - a.sizeKb);
+
+    document.getElementById('opt-count').textContent =
+      `${optimizerImages.length} images over 150KB`;
+
+    renderOptimizerGrid();
+  } catch (err) {
+    showError('optimizer-content', err.message);
+  }
+}
+
+function renderOptimizerGrid() {
+  const grid = document.getElementById('optimizer-content');
+  if (optimizerImages.length === 0) {
+    grid.innerHTML = `<div class="state-box" style="grid-column:1/-1">No images over 150KB. All good!</div>`;
+    return;
+  }
+
+  grid.innerHTML = optimizerImages.map((img, idx) => {
+    const isWebP = img.ext === '.webp';
+    const sizeClass = img.sizeKb > 400 ? 'oversized' : 'warning';
+
+    return `<div class="img-card${isWebP ? ' unsupported' : ''}" id="img-card-${idx}">
+      <img class="img-thumb" src="${escapeHtml(img.rawUrl)}" alt="${escapeHtml(img.filename)}" loading="lazy" />
+      <div class="img-card-body">
+        <div class="img-card-name">${escapeHtml(img.filename)}</div>
+        <div class="img-card-path">${escapeHtml(img.path)}</div>
+        ${isWebP ? `<div class="optimize-result error">WebP source — optimize manually (not supported via canvas)</div>` : `
+        <div class="img-card-controls">
+          <div class="control-row">
+            <span class="control-label">Quality</span>
+            <input type="range" min="50" max="95" value="82" class="quality-slider"
+              data-idx="${idx}" oninput="this.nextElementSibling.textContent=this.value">
+            <span class="quality-val">82</span>
+          </div>
+          <div class="control-row">
+            <span class="control-label">Max width</span>
+            <input type="number" class="maxwidth-input" data-idx="${idx}" value="1920" min="200" max="4000">
+            <span style="font-size:11px;color:var(--text-dim)">px</span>
+          </div>
+        </div>`}
+      </div>
+      <div class="img-card-footer">
+        <div class="img-size-info">
+          <span class="${sizeClass}">${img.sizeKb} KB</span>
+        </div>
+        ${isWebP ? '' : `<button class="btn-primary" style="font-size:12px;padding:5px 12px"
+          onclick="optimizeImage(${idx}, this)">Optimize</button>`}
+      </div>
+      <div id="opt-result-${idx}"></div>
+    </div>`;
+  }).join('');
+}
+
+async function optimizeImage(idx, btn, silent = false) {
+  const img = optimizerImages[idx];
+  if (!img) return;
+
+  const card = document.getElementById(`img-card-${idx}`);
+  const resultDiv = document.getElementById(`opt-result-${idx}`);
+  const qualityInput = card ? card.querySelector('.quality-slider') : null;
+  const maxWidthInput = card ? card.querySelector('.maxwidth-input') : null;
+
+  const quality = qualityInput ? parseInt(qualityInput.value) / 100 : 0.82;
+  const maxWidth = maxWidthInput ? parseInt(maxWidthInput.value) || 1920 : 1920;
+
+  if (!silent) {
+    if (btn) { btn.disabled = true; btn.textContent = 'Optimizing…'; }
+  }
+
+  try {
+    // 1. Fetch image binary from GitHub raw URL
+    const fetchRes = await fetch(img.rawUrl);
+    if (!fetchRes.ok) throw new Error(`Failed to fetch image: ${fetchRes.status}`);
+    const blob = await fetchRes.blob();
+
+    // 2. Draw to canvas
+    const bmp = await createImageBitmap(blob);
+    const srcW = bmp.width;
+    const srcH = bmp.height;
+
+    let dstW = srcW;
+    let dstH = srcH;
+    if (dstW > maxWidth) {
+      dstH = Math.round(dstH * (maxWidth / dstW));
+      dstW = maxWidth;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = dstW;
+    canvas.height = dstH;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(bmp, 0, 0, dstW, dstH);
+
+    // 3. Export as JPEG (or PNG for .png source files)
+    const mimeOut = img.ext === '.png' ? 'image/png' : 'image/jpeg';
+    const outBlob = await new Promise(resolve => canvas.toBlob(resolve, mimeOut, quality));
+    if (!outBlob) throw new Error('canvas.toBlob returned null');
+
+    const newSizeKb = Math.round(outBlob.size / 1024 * 10) / 10;
+    const oldSizeKb = img.sizeKb;
+
+    // 4. Convert to base64
+    const arrayBuf = await outBlob.arrayBuffer();
+    const uint8 = new Uint8Array(arrayBuf);
+    let binary = '';
+    for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
+    const base64 = btoa(binary);
+
+    // 5. Upload via PUT
+    const encodedPath = img.path.split('/').map(encodeURIComponent).join('/');
+    await apiPut(`/api/assets/${encodedPath}`, {
+      content: base64,
+      oldSizeKb,
+      newSizeKb,
+    });
+
+    // Update local size
+    img.sizeKb = newSizeKb;
+    optimizerImages[idx].sizeKb = newSizeKb;
+
+    if (!silent && resultDiv) {
+      resultDiv.innerHTML = `<div class="optimize-result success">
+        ✓ ${oldSizeKb} KB → ${newSizeKb} KB (saved ${Math.round((oldSizeKb - newSizeKb) / oldSizeKb * 100)}%)
+      </div>`;
+    }
+
+    return { ok: true, oldSizeKb, newSizeKb };
+  } catch (err) {
+    if (!silent && resultDiv) {
+      resultDiv.innerHTML = `<div class="optimize-result error">Error: ${escapeHtml(err.message)}</div>`;
+    }
+    throw err;
+  } finally {
+    if (!silent && btn) {
+      btn.disabled = false;
+      btn.textContent = 'Optimize';
+    }
+  }
+}
+
+// ── Batch optimize ─────────────────────────────────────────────────────────────
+
+document.getElementById('batch-optimize-btn').addEventListener('click', async () => {
+  const flagged = optimizerImages
+    .map((img, idx) => ({ img, idx }))
+    .filter(({ img }) => img.sizeKb > 400 && img.ext !== '.webp');
+
+  if (flagged.length === 0) {
+    alert('No images over 400KB (excluding WebP) to optimize.');
+    return;
+  }
+
+  const btn = document.getElementById('batch-optimize-btn');
+  const progressWrap = document.getElementById('batch-progress-wrap');
+  const progressFill = document.getElementById('batch-progress-fill');
+  const status = document.getElementById('batch-status');
+
+  btn.disabled = true;
+  progressWrap.classList.remove('hidden');
+  progressFill.style.width = '0%';
+
+  let done = 0;
+  let saved = 0;
+  let failed = 0;
+
+  for (const { img, idx } of flagged) {
+    status.textContent = `Processing ${done + 1}/${flagged.length}: ${img.filename}`;
+    try {
+      const result = await optimizeImage(idx, null, true /* silent */);
+      if (result) saved += result.oldSizeKb - result.newSizeKb;
+    } catch (err) {
+      console.error('Batch optimize error for', img.filename, err);
+      failed++;
+    }
+    done++;
+    progressFill.style.width = `${Math.round(done / flagged.length * 100)}%`;
+  }
+
+  btn.disabled = false;
+  progressWrap.classList.add('hidden');
+  status.textContent = `Done: ${done - failed} optimized, ${failed} failed, ~${Math.round(saved)} KB saved total.`;
+
+  // Re-render grid to show updated sizes
+  renderOptimizerGrid();
+});
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Panel 5: Deploy Log
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let deployTimer = null;
+let deployCountdown = 60;
+let deployCountdownTimer = null;
+
+async function loadDeployLog() {
+  const list = document.getElementById('deploy-list');
+  if (list.innerHTML.includes('state-box')) {
+    // Still showing spinner — first load
+  }
+  // Don't show spinner on refresh if already has content
+
+  try {
+    const runs = await apiGet('/api/deploy/runs');
+    renderDeployRuns(runs);
+  } catch (err) {
+    list.innerHTML = `<div class="error-msg">Error: ${escapeHtml(err.message)}</div>`;
+  }
+
+  // Reset countdown
+  deployCountdown = 60;
+  clearTimeout(deployTimer);
+  clearInterval(deployCountdownTimer);
+
+  const countdownEl = document.getElementById('deploy-countdown');
+  deployCountdownTimer = setInterval(() => {
+    deployCountdown--;
+    countdownEl.textContent = `Next refresh in ${deployCountdown}s`;
+    if (deployCountdown <= 0) clearInterval(deployCountdownTimer);
+  }, 1000);
+
+  deployTimer = setTimeout(() => {
+    // Only auto-refresh if panel is still active
+    if (document.getElementById('p-deploy').classList.contains('active')) {
+      loadDeployLog();
+    }
+  }, 60000);
+}
+
+function renderDeployRuns(runs) {
+  const list = document.getElementById('deploy-list');
+  if (!runs || runs.length === 0) {
+    list.innerHTML = `<div class="state-box">No workflow runs found.</div>`;
+    return;
+  }
+
+  list.innerHTML = runs.map(run => {
+    const dotCls = run.conclusion === 'success' ? 'dot-success'
+      : run.conclusion === 'failure' ? 'dot-failure'
+      : (run.status === 'in_progress' || run.status === 'queued') ? 'dot-progress'
+      : 'dot-neutral';
+
+    const statusLabel = run.conclusion
+      ? run.conclusion
+      : run.status;
+
+    const statusBadgeCls = run.conclusion === 'success' ? 'badge-success'
+      : run.conclusion === 'failure' ? 'badge-danger'
+      : 'badge-amber';
+
+    const startedAt = run.startedAt ? new Date(run.startedAt).toLocaleString('en-US', {
+      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+    }) : '—';
+
+    return `<div class="deploy-card">
+      <div class="deploy-status-dot ${dotCls}"></div>
+      <div class="deploy-info">
+        <div class="deploy-name">
+          ${escapeHtml(run.name)}
+          <span class="badge ${statusBadgeCls}" style="margin-left:8px;font-size:11px">
+            ${escapeHtml(statusLabel)}
+          </span>
+        </div>
+        <div class="deploy-commit">${escapeHtml(run.commitSha)} — ${escapeHtml(run.commitMessage)}</div>
+        <div class="deploy-meta">
+          <span class="deploy-meta-item">
+            <span style="color:var(--gecko-lt)">⎇</span> ${escapeHtml(run.branch || '—')}
+          </span>
+          <span class="deploy-meta-item">
+            ⚡ ${escapeHtml(run.event || '—')}
+          </span>
+          <span class="deploy-meta-item">
+            🕐 ${escapeHtml(startedAt)}
+          </span>
+          <span class="deploy-meta-item">
+            ⏱ ${fmtDuration(run.durationMs)}
+          </span>
+        </div>
+      </div>
+      <div>
+        <a class="deploy-link btn-ghost" href="${escapeHtml(run.htmlUrl)}" target="_blank"
+          style="display:inline-block;text-decoration:none">View →</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('deploy-refresh-btn').addEventListener('click', () => {
+  clearTimeout(deployTimer);
+  clearInterval(deployCountdownTimer);
+  document.getElementById('deploy-countdown').textContent = '';
+  loadDeployLog();
+});
+</script>
+</body>
+</html>
