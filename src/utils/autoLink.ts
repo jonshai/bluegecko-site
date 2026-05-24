@@ -1,39 +1,23 @@
-// Build-time auto-linking utility
-// Injects internal links based on entities.json
+// Build-time auto-linking utility.
+// Entities are passed in (from buildEntityIndex) rather than imported statically.
+// Call autoLink(html, entities, excludeSlug) on assembled HTML strings.
 
-import entitiesData from '../data/entities.json';
-
-type Entity = {
+export type Entity = {
   name: string;
   type?: string;
   slug: string;
   aliases?: string[];
 };
 
-const entities: Entity[] = [...entitiesData.entities].sort((a, b) => {
-  const typeWeight = (entity: Entity) => {
-    if (entity.type === 'builder') return 3;
-    if (entity.type === 'community') return 2;
-    if (entity.type === 'municipality') return 1;
-    return 0;
-  };
-
-  const aLongest = Math.max(a.name.length, ...(a.aliases || []).map((alias) => alias.length));
-  const bLongest = Math.max(b.name.length, ...(b.aliases || []).map((alias) => alias.length));
-
-  if (typeWeight(a) !== typeWeight(b)) {
-    return typeWeight(b) - typeWeight(a);
-  }
-
-  return bLongest - aLongest;
-});
-
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// Returns segments with protected blocks flagged so they are never modified.
+// Protected: existing <a>, headings <h1-6>, list blocks <ul>, <code>, <pre>.
 function splitProtectedSegments(content: string): { text: string; protected: boolean }[] {
-  const protectedRegex = /(<a\b[^>]*>[\s\S]*?<\/a>|<h[1-6]\b[^>]*>[\s\S]*?<\/h[1-6]>|<code\b[^>]*>[\s\S]*?<\/code>|<pre\b[^>]*>[\s\S]*?<\/pre>)/gi;
+  const protectedRegex =
+    /(<a\b[^>]*>[\s\S]*?<\/a>|<h[1-6]\b[^>]*>[\s\S]*?<\/h[1-6]>|<ul\b[^>]*>[\s\S]*?<\/ul>|<code\b[^>]*>[\s\S]*?<\/code>|<pre\b[^>]*>[\s\S]*?<\/pre>)/gi;
   const segments: { text: string; protected: boolean }[] = [];
 
   let lastIndex = 0;
@@ -43,7 +27,6 @@ function splitProtectedSegments(content: string): { text: string; protected: boo
     if (match.index > lastIndex) {
       segments.push({ text: content.slice(lastIndex, match.index), protected: false });
     }
-
     segments.push({ text: match[0], protected: true });
     lastIndex = protectedRegex.lastIndex;
   }
@@ -55,8 +38,17 @@ function splitProtectedSegments(content: string): { text: string; protected: boo
   return segments;
 }
 
-export function autoLink(content: string): string {
+/**
+ * Inject internal links into an HTML string.
+ *
+ * @param content    The HTML to process (paragraph text; headings/lists/code are skipped).
+ * @param entities   Sorted entity list from buildEntityIndex().
+ * @param excludeSlug If provided, any entity whose slug matches is skipped (prevents self-links).
+ */
+export function autoLink(content: string, entities: Entity[], excludeSlug?: string): string {
   if (!content) return content;
+
+  const filtered = excludeSlug ? entities.filter((e) => e.slug !== excludeSlug) : entities;
 
   const usedEntities = new Set<string>();
   let totalLinks = 0;
@@ -71,7 +63,7 @@ export function autoLink(content: string): string {
 
     let text = segment.text;
 
-    for (const entity of entities) {
+    for (const entity of filtered) {
       if (totalLinks >= MAX_LINKS) break;
       if (usedEntities.has(entity.name)) continue;
 
