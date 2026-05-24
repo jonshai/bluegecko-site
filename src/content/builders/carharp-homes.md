@@ -1,11 +1,11 @@
 ---
 name: Carharp Homes
 tagline: Carharp is a boutique builder on the rise. This is one of the hidden gems you miss if you only consider the national or regional builders. They know how to build a Florida home that feels at home in Florida.
-hero: /uploads/builders/carharp-homes/carharp-front.png
+hero: /uploads/builders/carharp-homes/carharp-front.jpg
 gallery:
-  - /uploads/builders/carharp-homes/carharp-living-room.png
-  - /uploads/builders/carharp-homes/carharp-primary-bath.png
-  - /uploads/builders/carharp-homes/carharp-bedroom-2-closets.png
+  - /uploads/builders/carharp-homes/carharp-living-room.jpg
+  - /uploads/builders/carharp-homes/carharp-primary-bath.jpg
+  - /uploads/builders/carharp-homes/carharp-bedroom-2-closets.jpg
 ---
 
 # Carharp Homes: Attention to Detail That Changes How You Live

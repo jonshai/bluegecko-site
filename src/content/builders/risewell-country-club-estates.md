@@ -2,12 +2,12 @@
 name: Risewell at Country Club Estates
 tagline: Four-bedroom excellence where quality of life trumps compromise.
 author_name: Lucky Whipple
-hero: /uploads/builders/risewell-country-club-estates/risewell-exterior.png
+hero: /uploads/builders/risewell-country-club-estates/risewell-exterior.jpg
 gallery:
-  - /uploads/builders/risewell-country-club-estates/risewell-kitchen.png
-  - /uploads/builders/risewell-country-club-estates/risewell-laundry.png
-  - /uploads/builders/risewell-country-club-estates/risewell-dining.png
-  - /uploads/builders/risewell-country-club-estates/risewell-primary-bed.png
+  - /uploads/builders/risewell-country-club-estates/risewell-kitchen.jpg
+  - /uploads/builders/risewell-country-club-estates/risewell-laundry.jpg
+  - /uploads/builders/risewell-country-club-estates/risewell-dining.jpg
+  - /uploads/builders/risewell-country-club-estates/risewell-primary-bed.jpg
 ---
 
 # Risewell at Country Club Estates

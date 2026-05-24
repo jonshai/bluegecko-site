@@ -1,11 +1,11 @@
 ---
 name: K. Hovnanian
 tagline: Twelve-state builder with scatter lots, no HOA, and multi-generational designs that actually work.
-hero: /uploads/builders/k-hovnanian/aegean-exterior.png
+hero: /uploads/builders/k-hovnanian/aegean-exterior.jpg
 gallery:
-  - /uploads/builders/k-hovnanian/aegean-ensuite-plus.png
-  - /uploads/builders/k-hovnanian/azalea-model-kitchen-living.png
-  - /uploads/builders/k-hovnanian/azalea-model-primary-bath.png
+  - /uploads/builders/k-hovnanian/aegean-ensuite-plus.jpg
+  - /uploads/builders/k-hovnanian/azalea-model-kitchen-living.jpg
+  - /uploads/builders/k-hovnanian/azalea-model-primary-bath.jpg
 ---
 
 # K. Hovnanian: The Biggest Builder You've Never Heard Of

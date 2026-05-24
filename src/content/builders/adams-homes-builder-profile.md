@@ -1,12 +1,12 @@
 ---
 name: Adams Homes
 tagline: 35 years building choice—community or scattered lot, honest pricing, floor plans that fit your life.
-hero: /uploads/builders/adams-homes-builder-profile/2200-exterior.png
+hero: /uploads/builders/adams-homes-builder-profile/2200-exterior.jpg
 gallery:
-  - /uploads/builders/adams-homes-builder-profile/2200-kitchen.png
-  - /uploads/builders/adams-homes-builder-profile/2200-living.png
-  - /uploads/builders/adams-homes-builder-profile/2200-bath.png
-  - /uploads/builders/adams-homes-builder-profile/2200-primary-bath.png
+  - /uploads/builders/adams-homes-builder-profile/2200-kitchen.jpg
+  - /uploads/builders/adams-homes-builder-profile/2200-living.jpg
+  - /uploads/builders/adams-homes-builder-profile/2200-bath.jpg
+  - /uploads/builders/adams-homes-builder-profile/2200-primary-bath.jpg
 ---
 
 # Adams Homes

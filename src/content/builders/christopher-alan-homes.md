@@ -1,12 +1,12 @@
 ---
 name: Christopher Alan Homes
 tagline: Southwest Florida's largest private builder. Scatter lots positioned for convenience, Florida-first design choices, and a signature 3-door slider that steals the show.
-hero: /uploads/builders/christopher-alan-homes/ca-exterior.png
+hero: /uploads/builders/christopher-alan-homes/ca-exterior.jpg
 gallery:
-  - /uploads/builders/christopher-alan-homes/ca-living.png
-  - /uploads/builders/christopher-alan-homes/ca-primary-bed.png
-  - /uploads/builders/christopher-alan-homes/ca-flex.png
-  - /uploads/builders/christopher-alan-homes/ca-living-vacant.png
+  - /uploads/builders/christopher-alan-homes/ca-living.jpg
+  - /uploads/builders/christopher-alan-homes/ca-primary-bed.jpg
+  - /uploads/builders/christopher-alan-homes/ca-flex.jpg
+  - /uploads/builders/christopher-alan-homes/ca-living-vacant.jpg
 ---
 
 # Christopher Alan Homes: Built for Florida, Not Generic

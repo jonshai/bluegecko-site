@@ -2,9 +2,9 @@
 title: "Sell Your Own Home: The Complete FSBO Checklist"
 date: 2026-05-09
 excerpt: "Selling your own home is legal, entirely possible, and for the right seller can save serious money. Here's everything you need to know to do it right."
-hero: /uploads/blog/fsbo-checklist/DIY-disinterested-buyers.png
+hero: /uploads/blog/fsbo-checklist/DIY-disinterested-buyers.jpg
 gallery:
-  - /uploads/blog/fsbo-checklist/DIY-home-photos.png
+  - /uploads/blog/fsbo-checklist/DIY-home-photos.jpg
 ---
 
 # Sell Your Own Home: The Complete FSBO Checklist

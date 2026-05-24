@@ -5,7 +5,7 @@ price: 510000
 beds: 3
 baths: 2.5
 sqft: 2353
-hero: "/uploads/3212-constellation-drive/Chat_Exterior.png"
+hero: "/uploads/3212-constellation-drive/Chat_Exterior.jpg"
 gallery:
   - "/uploads/3212-constellation-drive/Kitchen.jpg"
   - "/uploads/3212-constellation-drive/Living.jpg"

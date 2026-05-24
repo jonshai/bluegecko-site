@@ -2,7 +2,7 @@
 title: Do I Need an Agent to Sell My House?
 date: 2026-05-08
 excerpt: Surprisingly, no. There's no law requiring it. Let's review what that looks like.
-hero: /uploads/blog/do-i-need-agent-sell-house/DIY-home-photos.png
+hero: /uploads/blog/do-i-need-agent-sell-house/DIY-home-photos.jpg
 ---
 
 # Do I Need an Agent to Sell My House?
