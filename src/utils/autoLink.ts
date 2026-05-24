@@ -1,13 +1,7 @@
-// Build-time auto-linking utility.
-// Entities are passed in (from buildEntityIndex) rather than imported statically.
-// Call autoLink(html, entities, excludeSlug) on assembled HTML strings.
+// Build-time auto-linking utility for builder pages.
+// Accepts the link map from getLinkTargets() — the same map remark-autolink uses.
 
-export type Entity = {
-  name: string;
-  type?: string;
-  slug: string;
-  aliases?: string[];
-};
+import type { LinkTarget } from './getLinkTargets';
 
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -39,18 +33,23 @@ function splitProtectedSegments(content: string): { text: string; protected: boo
 }
 
 /**
- * Inject internal links into an HTML string.
+ * Inject internal links into an assembled HTML string.
  *
- * @param content    The HTML to process (paragraph text; headings/lists/code are skipped).
- * @param entities   Sorted entity list from buildEntityIndex().
- * @param excludeSlug If provided, any entity whose slug matches is skipped (prevents self-links).
+ * @param content    HTML to process. Headings, lists, code blocks, and existing
+ *                   links are never modified.
+ * @param linkMap    Phrase → target map from getLinkTargets(). Already sorted
+ *                   longest-phrase-first.
+ * @param excludeUrl If provided, any entry whose url matches is skipped (prevents self-links).
  */
-export function autoLink(content: string, entities: Entity[], excludeSlug?: string): string {
+export function autoLink(
+  content: string,
+  linkMap: Map<string, LinkTarget>,
+  excludeUrl?: string,
+): string {
   if (!content) return content;
 
-  const filtered = excludeSlug ? entities.filter((e) => e.slug !== excludeSlug) : entities;
-
-  const usedEntities = new Set<string>();
+  const phrases = [...linkMap.keys()]; // longest-first
+  const linkedUrls = new Set<string>();
   let totalLinks = 0;
   const MAX_LINKS = 8;
 
@@ -63,24 +62,22 @@ export function autoLink(content: string, entities: Entity[], excludeSlug?: stri
 
     let text = segment.text;
 
-    for (const entity of filtered) {
+    for (const phrase of phrases) {
       if (totalLinks >= MAX_LINKS) break;
-      if (usedEntities.has(entity.name)) continue;
 
-      const variants = [entity.name, ...(entity.aliases || [])].sort((a, b) => b.length - a.length);
+      const target = linkMap.get(phrase)!;
+      if (target.url === excludeUrl) continue;
+      if (linkedUrls.has(target.url)) continue;
 
-      for (const variant of variants) {
-        const escaped = escapeRegex(variant);
-        const regex = new RegExp(`\\b${escaped}\\b`, 'i');
+      const escaped = escapeRegex(phrase);
+      const regex = new RegExp(`\\b${escaped}\\b`, 'i');
 
-        if (regex.test(text)) {
-          text = text.replace(regex, (match) => {
-            usedEntities.add(entity.name);
-            totalLinks++;
-            return `<a href="${entity.slug}">${match}</a>`;
-          });
-          break;
-        }
+      if (regex.test(text)) {
+        text = text.replace(regex, (match) => {
+          linkedUrls.add(target.url);
+          totalLinks++;
+          return `<a href="${target.url}">${match}</a>`;
+        });
       }
     }
 

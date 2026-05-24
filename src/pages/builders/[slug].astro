@@ -4,7 +4,7 @@ import HeroCard from '../../components/HeroCard.astro';
 import { getCollection } from 'astro:content';
 import { getAuthor } from '../../data/authors';
 import type { AuthorName } from '../../data/authors';
-import { buildEntityIndex } from '../../utils/buildEntityIndex';
+import { getLinkTargets } from '../../utils/getLinkTargets';
 import { autoLink } from '../../utils/autoLink';
 
 export async function getStaticPaths() {
@@ -16,7 +16,7 @@ export async function getStaticPaths() {
 }
 
 const { builder } = Astro.props;
-const entities = await buildEntityIndex();
+const linkMap = getLinkTargets();
 
 const author = builder.data.author_name
   ? getAuthor(builder.data.author_name as AuthorName)
@@ -104,8 +104,8 @@ while (galleryIndex < gallery.length) {
 
 const interleavedHtml = autoLink(
   htmlParts.join('\n'),
-  entities,
-  `/builders/${builder.id}/`,
+  linkMap,
+  `/builders/${builder.id}`,
 );
 ---
 

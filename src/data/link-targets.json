@@ -28,8 +28,52 @@
       "url": "/builders/carharp-homes",
       "title": "Carharp Homes",
       "link_target": true,
-      "aliases": []
+      "aliases": ["Carharp"]
+    },
+    {
+      "slug": "dr-horton",
+      "url": "/builders/dr-horton",
+      "title": "DR Horton",
+      "link_target": true,
+      "aliases": ["D.R. Horton", "DRH"]
+    },
+    {
+      "slug": "maronda-homes",
+      "url": "/builders/maronda-homes",
+      "title": "Maronda Homes",
+      "link_target": true,
+      "aliases": ["Maronda"]
+    },
+    {
+      "slug": "holiday-builders",
+      "url": "/builders/holiday-builders",
+      "title": "Holiday Builders",
+      "link_target": true,
+      "aliases": ["Holiday"]
     }
   ],
-  "communities": []
+  "communities": [],
+  "municipalities": [
+    {
+      "slug": "palm-bay",
+      "url": "/communities/palm-bay",
+      "title": "Palm Bay",
+      "link_target": true,
+      "aliases": ["Palm Bay, FL", "Palm Bay Florida"]
+    },
+    {
+      "slug": "bayside-lakes",
+      "url": "/communities/palm-bay/bayside-lakes",
+      "title": "Bayside Lakes",
+      "link_target": true,
+      "aliases": ["Bayside Lakes at Palm Bay"]
+    },
+    {
+      "slug": "lockmar",
+      "url": "/communities/palm-bay/lockmar",
+      "title": "Lockmar",
+      "link_target": true,
+      "aliases": ["Lockmar Estates"]
+    }
+  ]
 }

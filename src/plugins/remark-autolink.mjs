@@ -24,7 +24,7 @@ const projectRoot = resolve(__dirname, '../..');
 // Load link-targets.json
 // ---------------------------------------------------------------------------
 const jsonPath = resolve(__dirname, '../data/link-targets.json');
-let jsonTargets = { blog: [], builders: [], communities: [] };
+let jsonTargets = { blog: [], builders: [], communities: [], municipalities: [] };
 try {
   jsonTargets = JSON.parse(readFileSync(jsonPath, 'utf-8'));
 } catch (e) {
@@ -107,7 +107,7 @@ const allCommunities = mergeEntries(jsonTargets.communities || [], communitiesFr
 // Build the global phrase map: lowercase phrase → { url, label }
 // Sorted longest-first to prevent partial matches.
 // ---------------------------------------------------------------------------
-function buildGlobalLinkMap(blogEntries, builders, communities) {
+function buildGlobalLinkMap(blogEntries, builders, communities, municipalities) {
   const map = new Map();
 
   function addEntry(entry) {
@@ -124,6 +124,7 @@ function buildGlobalLinkMap(blogEntries, builders, communities) {
   for (const e of blogEntries) addEntry(e);
   for (const e of builders) addEntry(e);
   for (const e of communities) addEntry(e);
+  for (const e of municipalities) addEntry(e);
 
   return new Map(
     [...map.entries()].sort((a, b) => b[0].length - a[0].length)
@@ -133,7 +134,8 @@ function buildGlobalLinkMap(blogEntries, builders, communities) {
 const globalLinkMap = buildGlobalLinkMap(
   jsonTargets.blog || [],
   allBuilders,
-  allCommunities
+  allCommunities,
+  jsonTargets.municipalities || [],
 );
 
 // ---------------------------------------------------------------------------
