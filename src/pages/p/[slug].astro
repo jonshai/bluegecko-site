@@ -56,6 +56,13 @@ fetch(new URL('/api/outreach-event', Astro.url), {
 function fmt(n: number): string {
   return '$' + n.toLocaleString('en-US');
 }
+
+// Escape a value for safe embedding as a JS string literal inside an inline <script>.
+// JSON.stringify produces a quoted, escaped string; the </script> replacement prevents
+// early tag termination.
+function escJs(val: string): string {
+  return JSON.stringify(val).replace(/<\/script>/gi, '<\\/script>');
+}
 ---
 
 <!doctype html>
@@ -75,6 +82,28 @@ function fmt(n: number): string {
       };
     </script>
     <script src="/outreach-events.js" defer></script>
+    <script is:inline set:html={`(function () {
+  "use strict";
+  var sellerName      = ${escJs(d.owner_name)};
+  var propertyAddress = ${escJs(d.property_address)};
+  var contextType     = "expired_listing_outreach";
+  var captureGoalsRaw = '["email","phone","consent","appointment"]';
+  var captureGoals = [];
+  try {
+    var parsed = JSON.parse(captureGoalsRaw);
+    if (Array.isArray(parsed)) { captureGoals = parsed; }
+  } catch (e) {}
+  var ctx = {
+    seller_name:      sellerName,
+    property_address: propertyAddress,
+    context:          contextType,
+    capture_goals:    captureGoals
+  };
+  window.STELLA_CONTEXT = ctx;
+  try {
+    sessionStorage.setItem("stella_context", JSON.stringify(ctx));
+  } catch (e) {}
+})();`} />
   </head>
   <body class="outreach-page">
     <!-- Minimal brand header (no nav, no CB strip) -->
@@ -99,7 +128,9 @@ function fmt(n: number): string {
               no longer available. If you'd like an updated market analysis, reach out to the
               Blue Gecko team — we're happy to help.
             </p>
-            <a href="/contact" class="button button-primary">Contact Blue Gecko</a>
+            <button data-stella-trigger="open" class="button button-primary">
+              Get an Updated Assessment
+            </button>
           </div>
         ) : (
           <!-- Active state -->

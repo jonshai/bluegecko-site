@@ -442,6 +442,16 @@ CTA types: appointment | call | reply
 - Active/expired state: if today > expiry_date, shows generic expired card
 - Page visit fires via /api/outreach-event on every load (server-side fetch)
 - Client events tracked via public/outreach-events.js (loaded by page, NOT injected)
+- Stella context: WIRED — context_init.js logic rendered inline in /p/[slug].astro
+  head (via set:html), before outreach-events.js. owner_name and property_address
+  interpolated server-side via escJs() (JSON.stringify + </script> escape).
+  sessionStorage also populated for cross-page persistence.
+- Expired-state CTA: WIRED — routes to Stella via data-stella-trigger="open".
+  Contact form placeholder replaced.
+- Active-state Stella: confirmed as secondary channel (no layout changes needed).
+- Webhook: PANTHEON confirmed HTTP 200. Endpoint handles absent optional fields
+  (outbound_label, fub_contact_id) gracefully. logLeadToSheet is now fire-and-forget
+  (.catch) so sheet failure never blocks the 200 response.
 
 ### Components
 src/components/AVMSidebar.astro   — AVM bar visualization + source table + rec price

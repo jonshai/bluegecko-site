@@ -25,16 +25,16 @@ export const POST: APIRoute = async ({ request }) => {
     }).catch(() => {});
   }
 
-  // Log to Sheets
-  await logLeadToSheet({
-    event: String(body.event || 'outreach_event'),
-    property_address: String(body.property_address || ''),
+  // Log to Sheets (fire-and-forget — sheet failure must not block 200 response)
+  logLeadToSheet({
+    event: String(body.event ?? 'outreach_event'),
+    property_address: String(body.property_address ?? ''),
     slug: body.slug ? String(body.slug) : undefined,
     utm_source: body.utm_source ? String(body.utm_source) : undefined,
     outbound_label: body.outbound_label ? String(body.outbound_label) : undefined,
     fub_contact_id: body.fub_contact_id ? String(body.fub_contact_id) : undefined,
     timestamp: new Date().toISOString(),
-  });
+  }).catch((err: unknown) => { console.error('[outreach-event] sheet log failed:', err); });
 
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
