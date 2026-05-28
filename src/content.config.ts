@@ -81,6 +81,47 @@ const builders = defineCollection({
   }),
 });
 
+const outreach = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/outreach' }),
+  schema: z.object({
+    slug: z.string(),
+    property_address: z.string(),
+    owner_name: z.string(),
+    bucket: z.enum(['pricing', 'marketing', 'condition', 'timing']),
+    created_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    expiry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    hero: z.string().optional(),
+    gallery: z.array(z.string()).optional(),
+    before_after: z.array(z.object({
+      before: z.string(),
+      after: z.string(),
+      label: z.string().optional(),
+    })).optional(),
+    ai_rendering: z.string().nullable().optional(),
+    avm_sources: z.array(z.object({
+      name: z.string(),
+      value: z.number(),
+      date_pulled: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    })),
+    avm_midpoint: z.number(),
+    recommended_price: z.number(),
+    headline: z.string(),
+    opening_narrative: z.string(),
+    strategy_block: z.string(),
+    action_plan: z.array(z.string()),
+    outbound_links: z.array(z.object({
+      label: z.string(),
+      url: z.string(),
+    })).optional(),
+    pdf_link: z.string().optional(),
+    cta_type: z.enum(['appointment', 'call', 'reply']),
+    cta_url: z.string(),
+    qr_slug: z.string(),
+    fub_contact_id: z.string().nullable().optional(),
+    utm_source: z.string().optional(),
+  }),
+});
+
 export const collections = {
   properties,
   events,
@@ -88,4 +129,5 @@ export const collections = {
   blog,
   communities,
   builders,
+  outreach,
 };

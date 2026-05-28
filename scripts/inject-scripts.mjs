@@ -23,6 +23,8 @@ async function injectScripts(dir) {
   for (const entry of entries) {
     const fullPath = join(dir, entry.name);
     if (entry.isDirectory()) {
+      // Skip the /p/ directory — outreach pages must not get stella/lead-form scripts
+      if (entry.name === 'p' && dir === clientDir) continue;
       await injectScripts(fullPath);
     } else if (entry.name.endsWith('.html')) {
       let html = await readFile(fullPath, 'utf8');

@@ -112,6 +112,8 @@ function buildGlobalLinkMap(blogEntries, builders, communities, municipalities) 
 
   function addEntry(entry) {
     if (!entry.link_target) return;
+    // Never inject links that point to outreach (/p/) pages
+    if (entry.url && entry.url.startsWith('/p/')) return;
     const phrases = [entry.title, ...(entry.aliases || [])].filter(Boolean);
     for (const phrase of phrases) {
       const key = phrase.toLowerCase();

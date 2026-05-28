@@ -341,7 +341,7 @@ Delete these in a future cleanup commit.
 - Never use Vite transformIndexHtml for script injection
 - Never use Buffer.from() — Cloudflare Workers doesn't have Buffer
 - Never return 302 redirects from API routes — Cloudflare swallows them
-- Never commit .env — FUB_API_KEY goes in Cloudflare Pages Secrets
+- Never commit .env — secrets (Google OAuth, notification emails) go in Cloudflare Secrets dashboard
 - Never set min-width: 920px on the search iframe mobile breakpoint
 - Never touch the CB strip styling — Coldwell Banker requirement
 - Never re-add the legalText toggle script to BaseLayout.astro
@@ -388,6 +388,82 @@ Runs during `astro build` — no source files are modified.
 - src/utils/autoLink.ts and src/data/entities.json are legacy files
   from a prior HTML-based approach — no longer used, can be deleted in cleanup
 
+## Lead Capture — Gmail + Google Sheets (replaces FUB)
+
+src/pages/api/lead.ts now routes submissions to Gmail (notifications)
+and Google Sheets (lead log) instead of Follow Up Boss.
+
+Required Cloudflare Secrets:
+  GOOGLE_CLIENT_ID
+  GOOGLE_CLIENT_SECRET
+  GOOGLE_GMAIL_REFRESH_TOKEN       — Gmail send scope
+  GOOGLE_SHEETS_REFRESH_TOKEN      — Sheets write scope
+  GOOGLE_SHEETS_LEAD_LOG_ID        — spreadsheet ID for lead log
+  NOTIFICATION_EMAIL_WILLIAM       — recipient email for William
+  NOTIFICATION_EMAIL_LUCKY         — recipient email for Lucky
+
+Helper modules:
+  src/lib/google-auth.ts       — OAuth2 token refresh (Gmail + Sheets)
+  src/lib/send-lead-email.ts   — builds RFC 2822 message, POSTs to Gmail API
+  src/lib/log-lead-sheet.ts    — appends row to Google Sheets (auto-creates header)
+
+All three API routes use Promise.allSettled — email/sheet failure does NOT
+block form submission response. All errors are console.error'd only.
+
+Privacy page updated: FUB replaced with Google Gmail & Sheets in the
+third-party services section.
+
+## Outreach Pages (/p/[slug])
+
+Private, non-indexed landing pages for seller outreach campaigns.
+Each page is a personalized property analysis created for a specific owner.
+
+### Content collection
+src/content/outreach/[slug].md  — one file per outreach target
+Collection key: outreach (glob loader, same pattern as other collections)
+Schema fields: slug, property_address, owner_name, bucket, created_date,
+  expiry_date, hero?, gallery?, before_after?, ai_rendering?, avm_sources,
+  avm_midpoint, recommended_price, headline, opening_narrative,
+  strategy_block, action_plan, outbound_links?, pdf_link?, cta_type,
+  cta_url, qr_slug, fub_contact_id?, utm_source?
+
+Bucket values: pricing | marketing | condition | timing
+CTA types: appointment | call | reply
+
+### Pages
+/p/[slug]     — SSR outreach detail page (prerender: false)
+/p/index      — returns 404 (no index page)
+
+### Architecture decisions
+- /p/* pages do NOT use BaseLayout.astro — standalone minimal HTML
+- No Stella widget, no lead-form.js injected (inject-scripts.mjs skips /p/ dir)
+- X-Robots-Tag: noindex set by middleware for all /p/* responses
+- <meta name="robots" content="noindex, nofollow"> also in page <head>
+- Active/expired state: if today > expiry_date, shows generic expired card
+- Page visit fires via /api/outreach-event on every load (server-side fetch)
+- Client events tracked via public/outreach-events.js (loaded by page, NOT injected)
+
+### Components
+src/components/AVMSidebar.astro   — AVM bar visualization + source table + rec price
+src/components/BeforeAfter.astro  — before/after photo pairs, responsive
+
+### API routes
+/api/outreach-event   — logs page_visit / outbound_click / cta_click to Sheets
+                        and forwards to ORPHAN_WEBHOOK_URL (fire-and-forget)
+/api/outreach-contact — handles seller capture form, sends email + logs to Sheets
+
+New Cloudflare Secret needed:
+  ORPHAN_WEBHOOK_URL   — optional webhook for outreach event forwarding
+
+### Middleware update
+src/middleware.ts now handles two cases:
+1. /p/* — adds X-Robots-Tag: noindex, returns without Stella injection
+2. all other HTML — injects stella-loader.js (existing behavior preserved)
+
+### Autolink guard
+remark-autolink.mjs addEntry() skips any entry whose url starts with /p/
+(outreach collection is not in the prefixMap so it never auto-registers anyway)
+
 ## Planned Features (not yet built)
 
 ### Builder Incentives Dashboard
@@ -398,9 +474,9 @@ Runs during `astro build` — no source files are modified.
 ## Current State
 - Stella trigger buttons working (data-stella-trigger="open")
 - Contact form → thank-you redirect working
-- FUB lead capture working
+- Lead capture: Gmail + Google Sheets (FUB removed)
 - IDX search with 64px universal crop working
-- Privacy page live at /privacy — registered with FUB and Meta
+- Privacy page live at /privacy — updated to reflect Gmail/Sheets (FUB removed)
 - Footer legal bar: FAQ (conditional) + Contact + Privacy links + plain-English paragraph
 - GitHub Actions auto-deploy working via cloudflare/wrangler-action@v3
 - Open house system live: listing, detail, archive pages
