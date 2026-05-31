@@ -66,7 +66,7 @@ export const POST: APIRoute = async ({ request }) => {
       : formType === 'seller' ? 'seller_inquiry'
       : formType === 'buyer' ? 'buyer_inquiry'
       : 'site_contact',
-    property_address: '',
+    property_address: data.get('property_address')?.toString() || '',
     slug: slug || undefined,
     utm_source: utm_source || undefined,
     name: name || undefined,
