@@ -76,10 +76,21 @@ export const POST: APIRoute = async ({ request }) => {
     timestamp: new Date().toISOString(),
   };
 
-  await Promise.allSettled([
+  const results = await Promise.allSettled([
     sendLeadEmail(payload),
     logLeadToSheet(payload),
   ]);
+
+  const errors = results
+    .filter(r => r.status === 'rejected')
+    .map(r => (r as PromiseRejectedResult).reason?.message || String((r as PromiseRejectedResult).reason));
+
+  if (errors.length > 0) {
+    return new Response(JSON.stringify({ success: false, errors }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   return new Response(JSON.stringify({ success: true, redirect: redirectTo }), {
     status: 200,
