@@ -56,7 +56,16 @@ export async function sendLeadEmail(payload: LeadPayload): Promise<void> {
     return;
   }
 
-  const subject = `BG Lead: ${payload.event} — ${payload.property_address || 'Site Contact'}`;
+  const eventLabels: Record<string, string> = {
+    open_house_rsvp: 'Open House RSVP',
+    seller_inquiry: 'Seller Inquiry',
+    buyer_inquiry: 'Buyer Inquiry',
+    site_contact: 'Site Contact',
+  };
+  const eventLabel = eventLabels[payload.event] ?? payload.event;
+  const who = payload.name || payload.email || 'Unknown';
+  const source = payload.utm_source || 'Web';
+  const subject = `New Lead: ${eventLabel} - ${who} (${source})`;
   const body = buildEmailBody(payload);
   const toHeader = recipients.join(', ');
 
