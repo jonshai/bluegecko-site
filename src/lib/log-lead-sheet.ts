@@ -1,7 +1,7 @@
 import { getSheetsToken } from './google-auth';
 import type { LeadPayload } from './send-lead-email';
 
-const HEADER_ROW = ['Timestamp', 'Event', 'Property Address', 'Slug', 'UTM Source', 'Outbound Label', 'FUB Contact ID'];
+const HEADER_ROW = ['Timestamp', 'Event', 'Name', 'Email', 'Phone', 'Notes', 'Property Address', 'Slug', 'UTM Source'];
 
 export async function logLeadToSheet(payload: LeadPayload): Promise<void> {
   const sheetId = import.meta.env.GOOGLE_SHEETS_LEAD_LOG_ID as string | undefined;
@@ -30,7 +30,7 @@ export async function logLeadToSheet(payload: LeadPayload): Promise<void> {
     if (isEmpty) {
       // Write header row first
       await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A1:G1:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A1:I1:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
         {
           method: 'POST',
           headers: {
@@ -46,15 +46,17 @@ export async function logLeadToSheet(payload: LeadPayload): Promise<void> {
     const row = [
       payload.timestamp,
       payload.event,
+      payload.name ?? '',
+      payload.email ?? '',
+      payload.phone ?? '',
+      payload.notes ?? '',
       payload.property_address,
       payload.slug ?? '',
       payload.utm_source ?? '',
-      payload.outbound_label ?? '',
-      payload.fub_contact_id ?? '',
     ];
 
     const appendRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A1:G1:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A1:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
       {
         method: 'POST',
         headers: {

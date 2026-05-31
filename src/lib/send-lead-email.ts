@@ -61,7 +61,7 @@ export async function sendLeadEmail(payload: LeadPayload): Promise<void> {
   const toHeader = recipients.join(', ');
 
   const message = [
-    `From: Blue Gecko Notifications <notifications@bluegecko.homes>`,
+    `From: Blue Gecko <wmswhipple@gmail.com>`,
     `To: ${toHeader}`,
     `Subject: ${subject}`,
     `Content-Type: text/plain; charset=utf-8`,
