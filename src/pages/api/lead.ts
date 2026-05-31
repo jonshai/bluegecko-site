@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { sendLeadEmail } from '../../lib/send-lead-email';
 import { logLeadToSheet } from '../../lib/log-lead-sheet';
+import { sendLeadSms } from '../../lib/send-lead-sms';
 
 export const prerender = false;
 
@@ -79,6 +80,7 @@ export const POST: APIRoute = async ({ request }) => {
   const results = await Promise.allSettled([
     sendLeadEmail(payload),
     logLeadToSheet(payload),
+    sendLeadSms(payload),
   ]);
 
   const errors = results
