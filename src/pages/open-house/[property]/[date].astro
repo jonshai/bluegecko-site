@@ -168,11 +168,12 @@ const pageDesc = `${isPast ? 'Past open house' : 'Upcoming open house'} at ${pro
             <>
               <h2>RSVP for this open house</h2>
               <p class="form-intro">Drop your info and we'll make sure you're set — directions, what to look for, anything else worth knowing before you walk in.</p>
-              <form class="contact-form js-lead-form" method="POST" action="/api/lead">
+              <form id="contact-form" class="contact-form js-lead-form" method="POST" action="/api/lead">
                 <input type="hidden" name="slug" value={`${ev.property}-${ev.date}`} />
                 <input type="hidden" name="sourceOverride" value="Open House" />
                 <input type="hidden" name="formType" value="open-house" />
                 <input type="hidden" name="redirectTo" value="/thank-you" />
+                <input type="hidden" name="property_address" value={prop.address} />
 
                 <label>
                   <span>Name</span>
@@ -210,11 +211,12 @@ const pageDesc = `${isPast ? 'Past open house' : 'Upcoming open house'} at ${pro
             <>
               <h2>Interested in this property?</h2>
               <p class="form-intro">This open house has passed, but the home may still be available. Reach out and we'll give you the full picture.</p>
-              <form class="contact-form js-lead-form" method="POST" action="/api/lead">
+              <form id="contact-form" class="contact-form js-lead-form" method="POST" action="/api/lead">
                 <input type="hidden" name="slug" value={`${ev.property}-${ev.date}`} />
                 <input type="hidden" name="sourceOverride" value="Open House" />
                 <input type="hidden" name="formType" value="general-inquiry" />
                 <input type="hidden" name="redirectTo" value="/thank-you" />
+                <input type="hidden" name="property_address" value={prop.address} />
 
                 <label>
                   <span>Name</span>
