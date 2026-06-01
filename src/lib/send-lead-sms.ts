@@ -1,3 +1,5 @@
+import { sendLeadEmail } from './send-lead-email';
+
 export interface SmsPayload {
   event: string;
   name?: string;
@@ -14,6 +16,20 @@ const eventLabels: Record<string, string> = {
   site_contact: 'Site Contact',
 };
 
+async function sendSmsFailureAlert(reason: string): Promise<void> {
+  try {
+    await sendLeadEmail({
+      event: 'sms_failure',
+      property_address: '',
+      name: 'System Alert',
+      notes: `Twilio SMS delivery failed. Reason: ${reason}`,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.error('[send-lead-sms] Failed to send SMS failure alert email:', e);
+  }
+}
+
 export async function sendLeadSms(payload: SmsPayload): Promise<void> {
   const accountSid = import.meta.env.TWILIO_ACCOUNT_SID as string | undefined;
   const authToken = import.meta.env.TWILIO_AUTH_TOKEN as string | undefined;
@@ -22,13 +38,14 @@ export async function sendLeadSms(payload: SmsPayload): Promise<void> {
   const toLucky = import.meta.env.TWILIO_TO_LUCKY as string | undefined;
 
   if (!accountSid || !authToken || !fromNumber) {
-    throw new Error('[send-lead-sms] Missing Twilio credentials: ' +
-      JSON.stringify({ accountSid: !!accountSid, authToken: !!authToken, fromNumber: !!fromNumber }));
+    console.warn('[send-lead-sms] Twilio credentials not configured — skipping');
+    return;
   }
 
   const recipients = [toWilliam, toLucky].filter(Boolean) as string[];
   if (recipients.length === 0) {
-    throw new Error('[send-lead-sms] No recipient numbers configured');
+    console.warn('[send-lead-sms] No recipient numbers configured — skipping');
+    return;
   }
 
   const label = eventLabels[payload.event] ?? payload.event;
@@ -56,11 +73,13 @@ export async function sendLeadSms(payload: SmsPayload): Promise<void> {
       );
       if (!res.ok) {
         const errText = await res.text();
-        throw new Error(`[send-lead-sms] Twilio API error ${res.status}: ${errText}`);
+        console.error('[send-lead-sms] Twilio API error:', res.status, errText);
+        await sendSmsFailureAlert(errText);
+        return;
       }
     } catch (e) {
       console.error('[send-lead-sms] SMS send failed:', e);
+      await sendSmsFailureAlert(String(e));
     }
   }
 }
-
