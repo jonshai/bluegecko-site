@@ -22,14 +22,13 @@ export async function sendLeadSms(payload: SmsPayload): Promise<void> {
   const toLucky = import.meta.env.TWILIO_TO_LUCKY as string | undefined;
 
   if (!accountSid || !authToken || !fromNumber) {
-    console.warn('[send-lead-sms] Twilio credentials not configured — skipping');
-    return;
+    throw new Error('[send-lead-sms] Missing Twilio credentials: ' +
+      JSON.stringify({ accountSid: !!accountSid, authToken: !!authToken, fromNumber: !!fromNumber }));
   }
 
   const recipients = [toWilliam, toLucky].filter(Boolean) as string[];
   if (recipients.length === 0) {
-    console.warn('[send-lead-sms] No recipient numbers configured — skipping');
-    return;
+    throw new Error('[send-lead-sms] No recipient numbers configured');
   }
 
   const label = eventLabels[payload.event] ?? payload.event;
@@ -56,7 +55,8 @@ export async function sendLeadSms(payload: SmsPayload): Promise<void> {
         }
       );
       if (!res.ok) {
-        console.error('[send-lead-sms] Twilio error:', res.status, await res.text());
+        const errText = await res.text();
+        throw new Error(`[send-lead-sms] Twilio API error ${res.status}: ${errText}`);
       }
     } catch (e) {
       console.error('[send-lead-sms] SMS send failed:', e);
