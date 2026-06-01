@@ -1,7 +1,7 @@
 ---
-title: Emerald Lakes in Southeast Palm Bay: Real Infrastructure, Big Plans, and Why It Matters to You
+title: "Emerald Lakes in Southeast Palm Bay: Real Infrastructure, Big Plans, and Why It Matters to You"
 date: 2026-06-01
-excerpt: Emerald Lakes is one of the largest projects to watch in southern Brevard County — and unlike many "coming soon" concepts, the infrastructure is already in place.
+excerpt: "Emerald Lakes is one of the largest projects to watch in southern Brevard County — and unlike many 'coming soon' concepts, the infrastructure is already in place."
 author_name: William Whipple
 hero: /uploads/blog/emerald-lakes-southeast-palm-bay/emerald-lakes-rendition.jpg
 gallery:
