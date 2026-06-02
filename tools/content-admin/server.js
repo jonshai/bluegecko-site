@@ -684,6 +684,11 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // ── GET /health ───────────────────────────────────────────────────────────────
+  if (method === 'GET' && pathname === '/health') {
+    return jsonResponse(res, 200, { status: 'ok' });
+  }
+
   // 404 for unmatched routes
   return jsonResponse(res, 404, { error: 'Not found' });
 });

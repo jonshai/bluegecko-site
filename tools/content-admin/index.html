@@ -126,6 +126,8 @@
     }
     .nav-tab:hover { background: var(--bg3); color: var(--text); }
     .nav-tab.active { background: var(--gecko-dk); color: #fff; }
+    .nav-tool-link { margin-left: auto; opacity: 0.7; text-decoration: none; }
+    .nav-tool-link:hover { opacity: 1; text-decoration: none; }
 
     /* ── Main content ── */
     #main {
@@ -588,6 +590,7 @@
     <button class="nav-tab" data-panel="p-audit">Asset Audit</button>
     <button class="nav-tab" data-panel="p-optimizer">Image Optimizer</button>
     <button class="nav-tab" data-panel="p-deploy">Deploy Log</button>
+    <a class="nav-tab nav-tool-link" href="http://localhost:3335" target="_blank" rel="noopener" title="Prospecting Engine Admin (port 3335)">Prospecting ↗</a>
   </nav>
 
   <div id="main">
