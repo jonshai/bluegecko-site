@@ -494,6 +494,48 @@ Admin tool: tools/prospecting-engine-admin/ on port 3335
 
 noindex: true is hardcoded — cannot publish an indexable prospecting page
 
+## Local Services & Dashboard
+
+All local tools run as launchd agents (KeepAlive: true) and are monitored
+by the Blue Gecko Recovery dashboard at http://localhost:8400.
+
+### Service registry — port map
+
+| Service | Port | Pillar | Tool path |
+|---|---|---|---|
+| bg-recovery (dashboard) | 8400 | pillar-integration | AI Projects/pillar-integration |
+| open-house-admin | 3333 | bluegecko-site | tools/open-house-admin/ |
+| bg-site-dashboard | 3334 | bluegecko-site | tools/content-admin/ |
+| prospecting-engine-admin | 3335 | bluegecko-site | tools/prospecting-engine-admin/ |
+
+### launchd setup (pillar-integration repo)
+
+Config lives at: ~/AI Projects/pillar-integration/
+
+  plists/homes.bluegecko.[name].plist   — launchd agent definition
+  launchers/[name].sh                   — shell script that execs the process
+  logs/[name].log                       — stdout + stderr (combined)
+
+Each plist: KeepAlive true, RunAtLoad true, ThrottleInterval 10s.
+The launcher cd's to the repo root and execs node with the server entry point.
+
+To add a new service:
+  1. Create launchers/[name].sh (copy open-house-admin.sh pattern, change path/port)
+  2. Create plists/homes.bluegecko.[name].plist (copy any existing plist, update Label,
+     ProgramArguments, and log paths)
+  3. Add entry to SERVICES list in bg_recovery/service.py — match pillar and label
+     convention; add "health_path": "/" only if the server has no /health route
+  4. Add name to the appropriate tier in _RESTART_TIERS (independent for site tools)
+  5. launchctl load plists/homes.bluegecko.[name].plist
+  6. launchctl kickstart -k "gui/$(id -u)/homes.bluegecko.bg-recovery" to reload dashboard
+
+To reload dashboard after service.py changes (no --reload flag):
+  launchctl kickstart -k "gui/$(id -u)/homes.bluegecko.bg-recovery"
+
+GITHUB_TOKEN for site tools (.env in each tool dir) expires periodically.
+Regenerate at github.com → Settings → Developer settings → Tokens (classic), repo scope.
+The token only needs to be updated in one place — tools share the same token value.
+
 ## Planned Features (not yet built)
 
 ### Builder Incentives Dashboard
