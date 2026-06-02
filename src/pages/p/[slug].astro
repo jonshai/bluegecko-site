@@ -3,7 +3,6 @@ export const prerender = false;
 
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import LeadForm from '../../components/LeadForm.astro';
 import { getAuthor } from '../../data/authors';
 import type { AuthorName } from '../../data/authors';
 import { unified } from 'unified';
@@ -136,24 +135,39 @@ function escJs(val: string): string {
 
             {/* Lead capture CTA */}
             <div class="card cta-card" id="contact">
-              <h2>Get Your Free Home Valuation</h2>
+              <h2>The next move is yours.</h2>
               <p class="cta-intro">
-                This analysis was prepared specifically for {d.address}. Reach
-                out to discuss what your home could sell for — no obligation, no
-                pressure, just useful information.
+                If you're ready to get your house sold, let us know and we'll reach out shortly.
               </p>
-              <LeadForm
-                buttonText="Request Your Valuation"
-                slug={entry.id}
-                formType="seller"
-                redirectTo="/thank-you"
-                messageLabel="Tell us about your home (optional)"
-                showName={true}
-                showEmail={true}
-                showPhone={true}
-                showMessage={true}
-                requireAnyContact={true}
-              />
+              <form id="prospect-cta-form" novalidate>
+                <input type="hidden" name="formType" value="seller" />
+                <input type="hidden" name="redirectTo" value="/thank-you" />
+                <div class="cta-row">
+                  <label class="cta-field">
+                    <span class="cta-label-text">Name</span>
+                    <input type="text" name="name" value={d.prospect_name} class="cta-input" autocomplete="name" />
+                  </label>
+                  <label class="cta-field">
+                    <span class="cta-label-text">Email</span>
+                    <input type="email" name="email" class="cta-input" autocomplete="email" />
+                  </label>
+                </div>
+                <label class="cta-field">
+                  <span class="cta-label-text">Phone</span>
+                  <input type="tel" name="phone" class="cta-input" autocomplete="tel" />
+                </label>
+                <label class="cta-field">
+                  <span class="cta-label-text">Notes <span class="cta-optional">(optional)</span></span>
+                  <textarea name="message" rows="2" class="cta-input"></textarea>
+                </label>
+                <div id="cta-error" class="cta-error-msg" hidden></div>
+                <button type="submit" class="button button-primary cta-submit-btn">Let's talk</button>
+                <p class="cta-disclaimer">
+                  By submitting, I agree to be contacted by Jennifer Lee Whipple, LLC via call,
+                  email, and text for real estate services. Message and data rates may apply.
+                  Reply STOP to opt out. View our <a href="/privacy">Privacy Policy</a>.
+                </p>
+              </form>
             </div>
           </>
         )}
@@ -181,6 +195,59 @@ function escJs(val: string): string {
     fetch('/api/lead', { method: 'POST', body: fd }).catch(function () {});
   });
 })();`} />
+
+<script is:inline>
+(function () {
+  var form = document.getElementById('prospect-cta-form');
+  if (!form) return;
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var btn = form.querySelector('.cta-submit-btn');
+    var errEl = document.getElementById('cta-error');
+    var fd = new FormData(form);
+    var name  = (fd.get('name')  || '').trim();
+    var email = (fd.get('email') || '').trim();
+    var phone = (fd.get('phone') || '').trim();
+
+    errEl.hidden = true;
+    errEl.textContent = '';
+
+    if (!name) {
+      errEl.textContent = 'Please enter your name.';
+      errEl.hidden = false;
+      return;
+    }
+    if (!email && !phone) {
+      errEl.textContent = 'Please enter an email address or phone number.';
+      errEl.hidden = false;
+      return;
+    }
+
+    btn.disabled = true;
+    var origText = btn.textContent;
+    btn.textContent = 'Sending\u2026';
+
+    fetch('/api/lead', { method: 'POST', body: fd })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.redirect) {
+          window.location.href = data.redirect;
+        } else {
+          btn.disabled = false;
+          btn.textContent = origText;
+          errEl.textContent = 'Something went wrong. Please try again.';
+          errEl.hidden = false;
+        }
+      })
+      .catch(function () {
+        btn.disabled = false;
+        btn.textContent = origText;
+        errEl.textContent = 'Network error. Please try again.';
+        errEl.hidden = false;
+      });
+  });
+})();
+</script>
 
 <style>
   .prospect-page {
@@ -388,6 +455,83 @@ function escJs(val: string): string {
     line-height: 1.7;
     color: var(--text-soft);
     margin: 0 0 1.25rem;
+  }
+
+  /* ── CTA form ── */
+  .cta-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .cta-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .cta-label-text {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .cta-optional {
+    font-weight: 400;
+    color: var(--text-soft);
+  }
+
+  .cta-input {
+    font-family: inherit;
+    font-size: 0.88rem;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 0.5rem 0.65rem;
+    background: #fafaf8;
+    color: var(--text);
+    width: 100%;
+  }
+
+  .cta-input:focus {
+    outline: none;
+    border-color: var(--brand);
+  }
+
+  textarea.cta-input {
+    resize: vertical;
+  }
+
+  .cta-error-msg {
+    font-size: 0.85rem;
+    color: #8b3a1a;
+    background: #fff0eb;
+    border: 1px solid #f4c0a8;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .cta-submit-btn {
+    margin-bottom: 1rem;
+  }
+
+  .cta-disclaimer {
+    font-size: 0.76rem;
+    color: var(--text-soft);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .cta-disclaimer a {
+    color: var(--text-soft);
+    text-decoration: underline;
+  }
+
+  @media (max-width: 540px) {
+    .cta-row {
+      grid-template-columns: 1fr;
+    }
   }
 
   /* ── Expired state ── */
