@@ -44,10 +44,26 @@ async function compileMd(md: string): Promise<string> {
   return String(file);
 }
 
-// Replace {{gallery:N}} markers with <img> HTML before compilation.
-// Images are resolved from gallery_images by 1-based index.
+// Replace {{gallery:N}} markers with HTML before compilation.
+// Runs of 2–3 consecutive markers (any whitespace between them, including blank lines)
+// are wrapped in a .gallery-pair grid div. Single markers remain standalone <figure> blocks.
 const galleryImages = d.gallery_images ?? [];
 function resolveGalleryMarkers(md: string): string {
+  // Step 1: detect runs of 2+ consecutive markers separated by any whitespace
+  md = md.replace(
+    /\{\{gallery:\d+\}\}(?:\s*\n\s*\{\{gallery:\d+\}\})+/g,
+    (runMatch: string) => {
+      const hits = [...runMatch.matchAll(/\{\{gallery:(\d+)\}\}/g)];
+      const count = Math.min(hits.length, 3);
+      const figures = hits.slice(0, count).map(([, n]) => {
+        const img = galleryImages[parseInt(n, 10) - 1];
+        if (!img) return '';
+        return `<figure class="section-figure"><img src="${img}" alt="" class="section-gallery-img" loading="lazy" /></figure>`;
+      }).join('');
+      return `\n\n<div class="gallery-pair gallery-pair-${count}">${figures}</div>\n\n`;
+    }
+  );
+  // Step 2: resolve remaining single markers
   return md.replace(/\{\{gallery:(\d+)\}\}/g, (_match: string, n: string) => {
     const img = galleryImages[parseInt(n, 10) - 1];
     if (!img) return '';
@@ -56,8 +72,10 @@ function resolveGalleryMarkers(md: string): string {
 }
 
 // Split body on the ::: section delimiter and render each chunk.
+// Normalize surrounding blank lines first so the split is robust regardless of YAML formatting.
 const rawBody = entry.body ?? '';
-const sectionTexts = rawBody.split(/\n:::\n/).map((s: string) => s.trim()).filter(Boolean);
+const normalized = rawBody.replace(/\n*:::\n*/g, '\n:::\n');
+const sectionTexts = normalized.split('\n:::\n').map((s: string) => s.trim()).filter(Boolean);
 const sectionHtml = await Promise.all(
   sectionTexts.map((s: string) => compileMd(resolveGalleryMarkers(s)))
 );
@@ -405,6 +423,29 @@ function escJs(val: string): string {
     display: block;
     object-fit: cover;
     max-height: 480px;
+  }
+
+  /* Side-by-side gallery pairs */
+  .prose-section :global(.gallery-pair) {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+
+  .prose-section :global(.gallery-pair-3) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .prose-section :global(.gallery-pair .section-gallery-img) {
+    max-height: 320px;
+  }
+
+  @media (max-width: 640px) {
+    .prose-section :global(.gallery-pair),
+    .prose-section :global(.gallery-pair-3) {
+      grid-template-columns: 1fr;
+    }
   }
 
   /* ── Agent byline ── */
