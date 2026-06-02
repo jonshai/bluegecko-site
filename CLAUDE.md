@@ -435,7 +435,7 @@ CTA types: appointment | call | reply
 /p/index      — returns 404 (no index page)
 
 ### Architecture decisions
-- /p/* pages do NOT use BaseLayout.astro — standalone minimal HTML
+- /p/* pages now use BaseLayout.astro (prospecting collection). The old outreach standalone template is replaced.
 - No Stella widget, no lead-form.js injected (inject-scripts.mjs skips /p/ dir)
 - X-Robots-Tag: noindex set by middleware for all /p/* responses
 - <meta name="robots" content="noindex, nofollow"> also in page <head>
@@ -473,6 +473,26 @@ src/middleware.ts now handles two cases:
 ### Autolink guard
 remark-autolink.mjs addEntry() skips any entry whose url starts with /p/
 (outreach collection is not in the prefixMap so it never auto-registers anyway)
+
+## Prospecting Pages (/p/[slug])
+
+Private, noindex seller outreach pages published via the Prospecting Engine Admin (PEA).
+Replaces the outreach collection for new campaigns.
+
+Collection: src/content/prospecting/[slug].md
+Schema: slug, prospect_name, address, agent, headline, cma_range,
+        pub_date, expiry_date, hero_image, gallery_images?, noindex (always true)
+
+Body uses ::: as section break — each section rendered as a .card
+Gallery markers {{gallery:1}} etc. resolved against gallery_images frontmatter
+View tracking: fires POST to /api/lead on DOMContentLoaded (formType=seller)
+
+Admin tool: tools/prospecting-engine-admin/ on port 3335
+  - Accepts YAML paste block + image uploads
+  - Commits to main branch, triggers GitHub Actions deploy
+  - P6 variant: same slug with -6 suffix (optional per-campaign)
+
+noindex: true is hardcoded — cannot publish an indexable prospecting page
 
 ## Planned Features (not yet built)
 
