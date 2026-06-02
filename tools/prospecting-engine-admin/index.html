@@ -204,6 +204,30 @@
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    .gallery-slots { margin-bottom: 0.5rem; }
+
+    .gallery-slot { margin-bottom: 0.6rem; }
+
+    .gallery-slot label { margin-bottom: 0; }
+
+    .add-slot-btn {
+      background: transparent;
+      border: 1.5px dashed var(--line);
+      border-radius: 8px;
+      padding: 0.4rem 0.85rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-soft);
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 150ms, color 150ms;
+    }
+
+    .add-slot-btn:hover {
+      border-color: var(--brand);
+      color: var(--brand);
+    }
   </style>
 </head>
 <body>
@@ -245,11 +269,12 @@ body_copy: |
       <input type="file" id="p1-hero" accept="image/*" />
     </label>
 
-    <label>
-      <span>P1 Gallery Images</span>
-      <small>Select multiple files. Reference them in copy as {{gallery:1}}, {{gallery:2}}, etc. Upload in order.</small>
-      <input type="file" id="p1-gallery" accept="image/*" multiple />
-    </label>
+    <div style="margin-bottom:0.85rem">
+      <span style="font-size:0.82rem;font-weight:700;color:var(--text);display:block;margin-bottom:0.3rem">P1 Gallery Images</span>
+      <small>Reference in copy as {{gallery:1}}, {{gallery:2}}, etc. Slots map to numbers in order.</small>
+    </div>
+    <div id="p1-gallery-slots" class="gallery-slots"></div>
+    <button type="button" class="add-slot-btn" onclick="addGallerySlot('p1-gallery-slots')">&#xFF0B; Add image</button>
   </div>
 
   <div class="card">
@@ -268,11 +293,12 @@ body_copy: |
         <input type="file" id="p6-hero" accept="image/*" />
       </label>
 
-      <label>
-        <span>P6 Gallery Images</span>
-        <small>Reference in P6 copy as {{gallery:1}}, {{gallery:2}}, etc. Upload in order.</small>
-        <input type="file" id="p6-gallery" accept="image/*" multiple />
-      </label>
+      <div style="margin-bottom:0.85rem">
+        <span style="font-size:0.82rem;font-weight:700;color:var(--text);display:block;margin-bottom:0.3rem">P6 Gallery Images</span>
+        <small>Reference in P6 copy as {{gallery:1}}, {{gallery:2}}, etc. Slots map to numbers in order.</small>
+      </div>
+      <div id="p6-gallery-slots" class="gallery-slots"></div>
+      <button type="button" class="add-slot-btn" onclick="addGallerySlot('p6-gallery-slots')">&#xFF0B; Add image</button>
     </div>
   </div>
 
@@ -285,6 +311,26 @@ body_copy: |
 </div>
 
 <script>
+  // ── Gallery slots ─────────────────────────────────────────────────────────
+  function addGallerySlot(containerId) {
+    const container = document.getElementById(containerId);
+    const index = container.querySelectorAll('.gallery-slot').length + 1;
+    const div = document.createElement('div');
+    div.className = 'gallery-slot';
+    div.innerHTML = `<label><span>Gallery Image ${index}</span><input type="file" accept="image/*" class="gallery-slot-input" /></label>`;
+    container.appendChild(div);
+  }
+
+  function resetGallerySlots(containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    addGallerySlot(containerId);
+  }
+
+  // Initialize with one slot each
+  addGallerySlot('p1-gallery-slots');
+  addGallerySlot('p6-gallery-slots');
+
   // ── P6 toggle ─────────────────────────────────────────────────────────────
   const p6Toggle = document.getElementById('p6-toggle');
   const p6Section = document.getElementById('p6-section');
@@ -339,10 +385,8 @@ body_copy: |
   submitBtn.addEventListener('click', async () => {
     const yamlPaste  = document.getElementById('yaml-paste').value.trim();
     const p1HeroEl   = document.getElementById('p1-hero');
-    const p1GallEl   = document.getElementById('p1-gallery');
     const p6Enabled  = document.getElementById('p6-toggle').checked;
     const p6HeroEl   = document.getElementById('p6-hero');
-    const p6GallEl   = document.getElementById('p6-gallery');
 
     // ── Client-side pre-flight ──────────────────────────────────────────────
     const clientErrors = [];
@@ -363,13 +407,21 @@ body_copy: |
 
     try {
       const p1Hero = await fileToBase64(p1HeroEl.files[0]);
-      const p1Gallery = await Promise.all(Array.from(p1GallEl.files || []).map(fileToBase64));
+      const p1Gallery = await Promise.all(
+        Array.from(document.querySelectorAll('#p1-gallery-slots .gallery-slot-input'))
+          .filter(inp => inp.files && inp.files[0])
+          .map(inp => fileToBase64(inp.files[0]))
+      );
 
       let p6Hero = null;
       let p6Gallery = [];
       if (p6Enabled) {
         p6Hero = await fileToBase64(p6HeroEl.files[0]);
-        p6Gallery = await Promise.all(Array.from(p6GallEl.files || []).map(fileToBase64));
+        p6Gallery = await Promise.all(
+          Array.from(document.querySelectorAll('#p6-gallery-slots .gallery-slot-input'))
+            .filter(inp => inp.files && inp.files[0])
+            .map(inp => fileToBase64(inp.files[0]))
+        );
       }
 
       // ── POST to server ─────────────────────────────────────────────────────
@@ -399,9 +451,9 @@ body_copy: |
         // Reset form
         document.getElementById('yaml-paste').value = '';
         p1HeroEl.value = '';
-        p1GallEl.value = '';
+        resetGallerySlots('p1-gallery-slots');
         p6HeroEl.value = '';
-        p6GallEl.value = '';
+        resetGallerySlots('p6-gallery-slots');
       } else {
         showStatus('error', `<strong>Publish failed:</strong><br><pre style="white-space:pre-wrap;margin:0.5rem 0 0">${json.error}</pre>`);
       }
