@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prospecting Engine Admin</title>
+  <style>
+    :root {
+      --brand: #1f5c4d;
+      --accent: #c96f4a;
+      --bg: #f7f6f2;
+      --surface: #ffffff;
+      --text: #1e2a26;
+      --text-soft: #51615b;
+      --line: #d7d1c5;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .topbar {
+      background: var(--brand);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .topbar h1 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .topbar .badge {
+      font-size: 0.7rem;
+      background: rgba(255,255,255,0.18);
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .layout {
+      max-width: 760px;
+      margin: 2rem auto;
+      padding: 0 1.25rem 4rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-soft);
+      margin: 0 0 1rem;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      margin-bottom: 0.85rem;
+    }
+
+    label span {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    label small {
+      font-size: 0.75rem;
+      color: var(--text-soft);
+      font-weight: 400;
+    }
+
+    textarea, input[type="file"] {
+      font-family: inherit;
+      font-size: 0.88rem;
+      border: 1.5px solid var(--line);
+      border-radius: 8px;
+      padding: 0.6rem 0.75rem;
+      background: #fafaf8;
+      color: var(--text);
+      width: 100%;
+    }
+
+    textarea { resize: vertical; }
+    textarea:focus, input:focus { outline: none; border-color: var(--brand); }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 1rem;
+      cursor: pointer;
+    }
+
+    .toggle-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--brand);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .toggle-label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+      user-select: none;
+    }
+
+    #p6-section { display: block; }
+    #p6-section.hidden { display: none; }
+
+    .divider {
+      border: none;
+      border-top: 2px solid var(--line);
+      margin: 1.5rem 0 1rem;
+    }
+
+    .sub-heading {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--brand);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 0 0 0.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--brand);
+      color: white;
+      border: none;
+      border-radius: 999px;
+      padding: 0.7rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 150ms;
+    }
+
+    .btn:hover:not(:disabled) { opacity: 0.88; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .status {
+      margin-top: 1.25rem;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      display: none;
+    }
+
+    .status.visible { display: block; }
+    .status.processing { background: #edf7f4; border: 1px solid #b3ddd4; color: var(--brand); }
+    .status.success { background: #edf7f4; border: 1px solid #b3ddd4; color: var(--brand); }
+    .status.error { background: #fff0eb; border: 1px solid #f4c0a8; color: #8b3a1a; }
+
+    .status a { color: inherit; font-weight: 700; }
+
+    .url-list {
+      margin: 0.5rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .url-list li { margin-bottom: 0.25rem; }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Prospecting Engine Admin</h1>
+  <span class="badge">port 3335</span>
+</div>
+
+<div class="layout">
+
+  <div class="card">
+    <p class="card-title">Campaign Content</p>
+
+    <label>
+      <span>Paste Block</span>
+      <small>Paste the full YAML campaign block from your Claude project.</small>
+      <textarea id="yaml-paste" rows="18" placeholder="slug: cl-648m
+prospect_name: Claudia Lozano
+address: 648 Munich Lane, Palm Bay, FL 32905
+agent: William Whipple
+headline: Your neighbor just sold for $342,000.
+cma_range: &quot;$310,000–$335,000&quot;
+expiry_date: 2027-06-02
+body_copy: |
+  Introductory paragraph here.
+
+  :::
+
+  Second section here. Use {{gallery:1}} to place images inline."></textarea>
+    </label>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Page 1 Images</p>
+
+    <label>
+      <span>P1 Hero Image</span>
+      <input type="file" id="p1-hero" accept="image/*" />
+    </label>
+
+    <label>
+      <span>P1 Gallery Images</span>
+      <small>Select multiple files. Reference them in copy as {{gallery:1}}, {{gallery:2}}, etc. Upload in order.</small>
+      <input type="file" id="p1-gallery" accept="image/*" multiple />
+    </label>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Page 6</p>
+
+    <div class="toggle-row" id="p6-toggle-row">
+      <input type="checkbox" id="p6-toggle" checked />
+      <span class="toggle-label">Includes P6 page</span>
+    </div>
+
+    <div id="p6-section">
+      <p class="sub-heading">P6 Images</p>
+
+      <label>
+        <span>P6 Hero Image</span>
+        <input type="file" id="p6-hero" accept="image/*" />
+      </label>
+
+      <label>
+        <span>P6 Gallery Images</span>
+        <small>Reference in P6 copy as {{gallery:1}}, {{gallery:2}}, etc. Upload in order.</small>
+        <input type="file" id="p6-gallery" accept="image/*" multiple />
+      </label>
+    </div>
+  </div>
+
+  <button class="btn" id="submit-btn">
+    <span id="btn-label">Publish Pages</span>
+  </button>
+
+  <div class="status" id="status-box"></div>
+
+</div>
+
+<script>
+  // ── P6 toggle ─────────────────────────────────────────────────────────────
+  const p6Toggle = document.getElementById('p6-toggle');
+  const p6Section = document.getElementById('p6-section');
+  const p6ToggleRow = document.getElementById('p6-toggle-row');
+
+  function syncP6() {
+    if (p6Toggle.checked) {
+      p6Section.classList.remove('hidden');
+    } else {
+      p6Section.classList.add('hidden');
+    }
+  }
+
+  p6Toggle.addEventListener('change', syncP6);
+  p6ToggleRow.addEventListener('click', (e) => {
+    if (e.target !== p6Toggle) p6Toggle.click();
+  });
+  syncP6();
+
+  // ── File → base64 ─────────────────────────────────────────────────────────
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        // Strip the data:...;base64, prefix
+        const result = reader.result;
+        const b64 = result.split(',')[1];
+        resolve({ name: file.name, data: b64 });
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ── Status display ─────────────────────────────────────────────────────────
+  const statusBox = document.getElementById('status-box');
+
+  function showStatus(type, html) {
+    statusBox.className = `status visible ${type}`;
+    statusBox.innerHTML = html;
+  }
+
+  function hideStatus() {
+    statusBox.className = 'status';
+    statusBox.innerHTML = '';
+  }
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
+  const submitBtn = document.getElementById('submit-btn');
+  const btnLabel  = document.getElementById('btn-label');
+
+  submitBtn.addEventListener('click', async () => {
+    const yamlPaste  = document.getElementById('yaml-paste').value.trim();
+    const p1HeroEl   = document.getElementById('p1-hero');
+    const p1GallEl   = document.getElementById('p1-gallery');
+    const p6Enabled  = document.getElementById('p6-toggle').checked;
+    const p6HeroEl   = document.getElementById('p6-hero');
+    const p6GallEl   = document.getElementById('p6-gallery');
+
+    // ── Client-side pre-flight ──────────────────────────────────────────────
+    const clientErrors = [];
+    if (!yamlPaste) clientErrors.push('Campaign Content paste is empty.');
+    if (!p1HeroEl.files || p1HeroEl.files.length === 0) clientErrors.push('P1 hero image is required.');
+    if (p6Enabled) {
+      if (!p6HeroEl.files || p6HeroEl.files.length === 0) clientErrors.push('P6 is enabled but no P6 hero image was selected.');
+    }
+    if (clientErrors.length > 0) {
+      showStatus('error', clientErrors.map(e => `<div>${e}</div>`).join(''));
+      return;
+    }
+
+    // ── Encode files ────────────────────────────────────────────────────────
+    submitBtn.disabled = true;
+    btnLabel.innerHTML = '<span class="spinner"></span> Publishing…';
+    showStatus('processing', 'Encoding images and uploading to GitHub. This may take 30–60 seconds…');
+
+    try {
+      const p1Hero = await fileToBase64(p1HeroEl.files[0]);
+      const p1Gallery = await Promise.all(Array.from(p1GallEl.files || []).map(fileToBase64));
+
+      let p6Hero = null;
+      let p6Gallery = [];
+      if (p6Enabled) {
+        p6Hero = await fileToBase64(p6HeroEl.files[0]);
+        p6Gallery = await Promise.all(Array.from(p6GallEl.files || []).map(fileToBase64));
+      }
+
+      // ── POST to server ─────────────────────────────────────────────────────
+      const res = await fetch('/api/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          yaml_paste: yamlPaste,
+          p1_hero: p1Hero,
+          p1_gallery: p1Gallery,
+          p6_enabled: p6Enabled,
+          p6_hero: p6Hero,
+          p6_gallery: p6Gallery,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (json.ok) {
+        const urlItems = json.urls.map(u =>
+          `<li><a href="${u}" target="_blank" rel="noopener">${u}</a> (live after deploy)</li>`
+        ).join('');
+        showStatus('success',
+          `<strong>Published successfully.</strong> GitHub Actions will deploy within ~2 minutes.<br>` +
+          `<ul class="url-list">${urlItems}</ul>`
+        );
+        // Reset form
+        document.getElementById('yaml-paste').value = '';
+        p1HeroEl.value = '';
+        p1GallEl.value = '';
+        p6HeroEl.value = '';
+        p6GallEl.value = '';
+      } else {
+        showStatus('error', `<strong>Publish failed:</strong><br><pre style="white-space:pre-wrap;margin:0.5rem 0 0">${json.error}</pre>`);
+      }
+
+    } catch (err) {
+      showStatus('error', `<strong>Network error:</strong> ${err.message}`);
+    } finally {
+      submitBtn.disabled = false;
+      btnLabel.textContent = 'Publish Pages';
+    }
+  });
+</script>
+
+</body>
+</html>

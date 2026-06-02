@@ -2,12 +2,19 @@
 export const prerender = false;
 
 import { getCollection } from 'astro:content';
-import AVMSidebar from '../../components/AVMSidebar.astro';
-import BeforeAfter from '../../components/BeforeAfter.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LeadForm from '../../components/LeadForm.astro';
+import { getAuthor } from '../../data/authors';
+import type { AuthorName } from '../../data/authors';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkGfm from 'remark-gfm';
+import remarkRehype from 'remark-rehype';
+import rehypeStringify from 'rehype-stringify';
 
 const { slug } = Astro.params;
 
-const entries = await getCollection('outreach');
+const entries = await getCollection('prospecting');
 const entry = entries.find(e => e.id === slug);
 
 if (!entry) {
@@ -19,737 +26,407 @@ const d = entry.data;
 // Expiry check
 const today = new Date();
 today.setHours(0, 0, 0, 0);
-const expiry = new Date(d.expiry_date + 'T00:00:00');
+const expiry = new Date(d.expiry_date);
+expiry.setHours(0, 0, 0, 0);
 const isExpired = today > expiry;
 
-// Bucket-specific heading for action plan
-const actionPlanHeading: Record<string, string> = {
-  pricing: 'Our Pricing Strategy',
-  marketing: 'Our Marketing Plan',
-  condition: 'Our Improvement Plan',
-  timing: 'Why Now?',
-};
-const planHeading = actionPlanHeading[d.bucket] || 'Our Plan';
+// Author
+const author = getAuthor(d.agent as AuthorName);
 
-// CTA copy
-const ctaCopy: Record<string, string> = {
-  appointment: 'Schedule a Free Consultation',
-  call: 'Call Us Today',
-  reply: 'Send Us a Message',
-};
-const ctaText = ctaCopy[d.cta_type] || 'Get in Touch';
-
-// Fire page_visit event (server-side fire-and-forget)
-fetch(new URL('/api/outreach-event', Astro.url), {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    event: 'page_visit',
-    slug: d.slug,
-    property_address: d.property_address,
-    utm_source: d.utm_source,
-    fub_contact_id: d.fub_contact_id,
-    timestamp: new Date().toISOString(),
-  }),
-}).catch(() => {});
-
-function fmt(n: number): string {
-  return '$' + n.toLocaleString('en-US');
+// Compile a markdown string to an HTML string using the remark/rehype pipeline.
+// allowDangerousHtml passes raw HTML blocks (gallery <img> tags) through unchanged.
+async function compileMd(md: string): Promise<string> {
+  const file = await unified()
+    .use(remarkParse)
+    .use(remarkGfm)
+    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeStringify, { allowDangerousHtml: true })
+    .process(md);
+  return String(file);
 }
 
-// Escape a value for safe embedding as a JS string literal inside an inline <script>.
-// JSON.stringify produces a quoted, escaped string; the </script> replacement prevents
-// early tag termination.
+// Replace {{gallery:N}} markers with <img> HTML before compilation.
+// Images are resolved from gallery_images by 1-based index.
+const galleryImages = d.gallery_images ?? [];
+function resolveGalleryMarkers(md: string): string {
+  return md.replace(/\{\{gallery:(\d+)\}\}/g, (_match: string, n: string) => {
+    const img = galleryImages[parseInt(n, 10) - 1];
+    if (!img) return '';
+    return `\n\n<figure class="section-figure"><img src="${img}" alt="" class="section-gallery-img" loading="lazy" /></figure>\n\n`;
+  });
+}
+
+// Split body on the ::: section delimiter and render each chunk.
+const rawBody = entry.body ?? '';
+const sectionTexts = rawBody.split(/\n:::\n/).map((s: string) => s.trim()).filter(Boolean);
+const sectionHtml = await Promise.all(
+  sectionTexts.map((s: string) => compileMd(resolveGalleryMarkers(s)))
+);
+
+// Escape a value for safe embedding inside an inline <script>.
 function escJs(val: string): string {
   return JSON.stringify(val).replace(/<\/script>/gi, '<\\/script>');
 }
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="robots" content="noindex, nofollow" />
-    <title>Blue Gecko — {isExpired ? 'Analysis Expired' : d.headline}</title>
-    <meta name="description" content={isExpired ? 'This property analysis has expired.' : d.opening_narrative.slice(0, 160)} />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="stylesheet" href="/global.css" />
-    <script>
-      window.__OUTREACH_CONFIG__ = {
-        slug: document.location.pathname.split('/p/')[1] || '',
-        property_address: document.title,
-      };
-    </script>
-    <script src="/outreach-events.js" defer></script>
-    <script is:inline set:html={`(function () {
-  "use strict";
-  var sellerName      = ${escJs(d.owner_name)};
-  var propertyAddress = ${escJs(d.property_address)};
-  var contextType     = "expired_listing_outreach";
-  var captureGoalsRaw = '["email","phone","consent","appointment"]';
-  var captureGoals = [];
-  try {
-    var parsed = JSON.parse(captureGoalsRaw);
-    if (Array.isArray(parsed)) { captureGoals = parsed; }
-  } catch (e) {}
-  var ctx = {
-    seller_name:      sellerName,
-    property_address: propertyAddress,
-    context:          contextType,
-    capture_goals:    captureGoals
-  };
-  window.STELLA_CONTEXT = ctx;
-  try {
-    sessionStorage.setItem("stella_context", JSON.stringify(ctx));
-  } catch (e) {}
-})();`} />
-  </head>
-  <body class="outreach-page">
-    <!-- Minimal brand header (no nav, no CB strip) -->
-    <header class="p-header">
-      <div class="p-container p-header-inner">
-        <a href="/" class="p-brand">
-          <img src="/bg_logo_stroke.png" alt="Blue Gecko Homes" class="p-logo" />
-        </a>
-        <span class="p-private-badge">Private Analysis</span>
-      </div>
-    </header>
+<BaseLayout
+  title={isExpired ? 'Blue Gecko — Analysis Expired' : `${d.headline} | Blue Gecko`}
+  description={isExpired ? 'This property analysis has expired.' : `${d.address} · ${d.cma_range}`}
+>
+  <meta slot="head" name="robots" content="noindex, nofollow" />
 
-    <main class="p-main">
-      <div class="p-container">
+  <main>
+    <section class="section prospect-page">
+      <div class="container prospect-container">
 
         {isExpired ? (
-          <!-- Expired state -->
-          <div class="expired-card card">
-            <h1 class="expired-heading">This analysis has expired.</h1>
-            <p class="expired-body">
-              This personalized property analysis was prepared for {d.property_address} and is
-              no longer available. If you'd like an updated market analysis, reach out to the
-              Blue Gecko team — we're happy to help.
-            </p>
-            <button data-stella-trigger="open" class="button button-primary">
-              Get an Updated Assessment
-            </button>
+          <div class="expired-wrap">
+            <div class="card expired-card">
+              <h1>This analysis has expired.</h1>
+              <p>
+                This property analysis was prepared for {d.address} and is no
+                longer available. If you'd like a fresh market assessment, we're
+                happy to help.
+              </p>
+              <button data-stella-trigger="open" class="button button-primary">
+                Get an Updated Assessment
+              </button>
+            </div>
           </div>
         ) : (
-          <!-- Active state -->
-          <div class="p-layout">
-            <!-- Left: main content column -->
-            <div class="p-content">
-
-              <!-- Hero image -->
-              {d.hero && (
-                <div class="p-hero-wrap">
-                  <img src={d.hero} alt={d.property_address} class="p-hero-img" />
-                  <div class="p-hero-overlay">
-                    <h1 class="p-property-address">{d.property_address}</h1>
-                  </div>
+          <>
+            {/* Hero image */}
+            {d.hero_image ? (
+              <div class="prospect-hero">
+                <img src={d.hero_image} alt={d.address} class="prospect-hero-img" />
+                <div class="prospect-hero-overlay">
+                  <p class="prospect-address">{d.address}</p>
                 </div>
-              )}
+              </div>
+            ) : (
+              <p class="prospect-address-plain">{d.address}</p>
+            )}
 
-              {!d.hero && (
-                <h1 class="p-property-address p-property-address--no-hero">{d.property_address}</h1>
-              )}
-
-              <!-- Headline -->
-              <h2 class="p-headline">{d.headline}</h2>
-
-              <!-- Opening narrative -->
-              <p class="p-narrative">{d.opening_narrative}</p>
-
-              <!-- AI rendering (if present) -->
-              {d.ai_rendering && (
-                <div class="p-rendering-wrap">
-                  <p class="p-rendering-caption">Rendering — what this home could look like with improvements</p>
-                  <img src={d.ai_rendering} alt="AI rendering" class="p-rendering-img" loading="lazy" />
-                </div>
-              )}
-
-              <!-- Before/After gallery -->
-              {d.before_after && d.before_after.length > 0 && (
-                <BeforeAfter pairs={d.before_after} />
-              )}
-
-              <!-- Gallery -->
-              {d.gallery && d.gallery.length > 0 && (
-                <div class="p-gallery">
-                  {d.gallery.map((img: string, i: number) => (
-                    <img src={img} alt={`${d.property_address} photo ${i + 1}`} loading="lazy" class="p-gallery-img" />
-                  ))}
-                </div>
-              )}
-
-              <!-- Strategy block -->
-              <section class="p-section">
-                <h3 class="p-section-heading">Market Context</h3>
-                <p class="p-prose">{d.strategy_block}</p>
-              </section>
-
-              <!-- Action plan -->
-              <section class="p-section">
-                <h3 class="p-section-heading">{planHeading}</h3>
-                <ol class="p-action-plan">
-                  {d.action_plan.map((step: string) => (
-                    <li class="p-step">{step}</li>
-                  ))}
-                </ol>
-              </section>
-
-              <!-- Outbound links -->
-              {d.outbound_links && d.outbound_links.length > 0 && (
-                <section class="p-section">
-                  <h3 class="p-section-heading">Useful Links</h3>
-                  <ul class="p-outbound-links">
-                    {d.outbound_links.map((link: { label: string; url: string }) => (
-                      <li>
-                        <a
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="p-outbound-link"
-                          onclick={`window.fireOutreachEvent && window.fireOutreachEvent('outbound_click', { outbound_label: '${link.label.replace(/'/g, "\\'")}' })`}
-                        >
-                          {link.label} →
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
-
-              <!-- Seller contact form -->
-              <section class="p-section p-contact-section" id="contact">
-                <h3 class="p-section-heading">Ready to Talk?</h3>
-                <p class="p-prose p-contact-intro">
-                  This analysis was prepared just for you. There's no obligation — we'd love
-                  to walk through it together and answer any questions.
-                </p>
-
-                <form class="p-form" id="outreach-contact-form" novalidate>
-                  <input type="hidden" name="slug" value={d.slug} />
-                  <input type="hidden" name="property_address" value={d.property_address} />
-                  <input type="hidden" name="utm_source" value={d.utm_source || ''} />
-                  {d.fub_contact_id && (
-                    <input type="hidden" name="fub_contact_id" value={d.fub_contact_id} />
-                  )}
-
-                  <div class="form-row">
-                    <label for="oc-name">Your Name</label>
-                    <input type="text" id="oc-name" name="name" autocomplete="name" placeholder="First Last" />
-                  </div>
-                  <div class="form-row">
-                    <label for="oc-email">Email</label>
-                    <input type="email" id="oc-email" name="email" autocomplete="email" placeholder="you@example.com" />
-                  </div>
-                  <div class="form-row">
-                    <label for="oc-phone">Phone</label>
-                    <input type="tel" id="oc-phone" name="phone" autocomplete="tel" placeholder="321-555-0000" />
-                  </div>
-
-                  <p class="form-consent">
-                    By submitting you agree to be contacted by Jennifer Lee Whipple, LLC via call,
-                    email, and text. Reply STOP to opt out of texts. Reply HELP for help.
-                    Message &amp; data rates may apply.
-                  </p>
-
-                  <button type="submit" class="button button-primary p-submit-btn">
-                    {ctaText}
-                  </button>
-                  <p class="form-status" id="oc-status" aria-live="polite"></p>
-                </form>
-              </section>
-
-              <!-- PDF download -->
-              {d.pdf_link && (
-                <div class="p-pdf-row">
-                  <a
-                    href={d.pdf_link}
-                    class="button button-secondary"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onclick="window.fireOutreachEvent && window.fireOutreachEvent('pdf_download')"
-                  >
-                    Download PDF Version
-                  </a>
-                </div>
-              )}
-
+            {/* Headline + CMA range badge */}
+            <div class="prospect-lede">
+              <h1 class="prospect-headline">{d.headline}</h1>
+              <span class="cma-badge">{d.cma_range}</span>
             </div>
 
-            <!-- Right: AVM sidebar -->
-            <aside class="p-sidebar">
-              <AVMSidebar
-                avm_sources={d.avm_sources}
-                avm_midpoint={d.avm_midpoint}
-                recommended_price={d.recommended_price}
-              />
+            {/* Body — each ::: section wrapped in a card */}
+            {sectionHtml.map((html: string) => (
+              <div class="card prose-section" set:html={html} />
+            ))}
 
-              <!-- Primary CTA button -->
-              <a
-                href={d.cta_url}
-                class="button button-primary p-cta-btn"
-                onclick="window.fireOutreachEvent && window.fireOutreachEvent('cta_click')"
-              >
-                {ctaText}
-              </a>
-
-              <!-- Agent card -->
-              <div class="agent-card card">
-                <p class="agent-name">William &amp; Lucky Whipple</p>
-                <p class="agent-sub">Blue Gecko · Coldwell Banker Realty</p>
-                <p class="agent-sub">FL Lic. #3535381 / #3535380</p>
-                <a href="tel:+13213416650" class="agent-phone">321.341.6650</a>
+            {/* Agent byline */}
+            {author && (
+              <div class="card agent-byline">
+                <img
+                  src={author.photo}
+                  alt={author.name}
+                  class="agent-photo"
+                  loading="lazy"
+                />
+                <div>
+                  <p class="agent-name">{author.name}</p>
+                  <p class="agent-bio">{author.bio}</p>
+                </div>
               </div>
-            </aside>
-          </div>
+            )}
+
+            {/* Lead capture CTA */}
+            <div class="card cta-card" id="contact">
+              <h2>Get Your Free Home Valuation</h2>
+              <p class="cta-intro">
+                This analysis was prepared specifically for {d.address}. Reach
+                out to discuss what your home could sell for — no obligation, no
+                pressure, just useful information.
+              </p>
+              <LeadForm
+                buttonText="Request Your Valuation"
+                slug={entry.id}
+                formType="seller"
+                redirectTo="/thank-you"
+                messageLabel="Tell us about your home (optional)"
+                showName={true}
+                showEmail={true}
+                showPhone={true}
+                showMessage={true}
+                requireAnyContact={true}
+              />
+            </div>
+          </>
         )}
+
       </div>
-    </main>
+    </section>
+  </main>
+</BaseLayout>
 
-    <footer class="p-footer">
-      <div class="p-container">
-        <p class="p-footer-text">
-          © {new Date().getFullYear()} Blue Gecko, a Coldwell Banker Realty Team ·
-          <a href="/privacy">Privacy Policy</a>
-        </p>
-        <p class="p-footer-fine">
-          This analysis is for informational purposes only and does not constitute a legally binding
-          appraisal or offer. All information is deemed reliable but not guaranteed.
-        </p>
-      </div>
-    </footer>
-
-    <script>
-      // Outreach contact form handler
-      const form = document.getElementById('outreach-contact-form') as HTMLFormElement | null;
-      const status = document.getElementById('oc-status');
-
-      if (form) {
-        form.addEventListener('submit', async (e: Event) => {
-          e.preventDefault();
-          if (!status) return;
-          status.textContent = '';
-
-          const data: Record<string, string> = {};
-          const fd = new FormData(form);
-          fd.forEach((val, key) => { data[key] = String(val); });
-
-          if (!data.name && !data.email && !data.phone) {
-            status.textContent = 'Please fill in at least one contact field.';
-            return;
-          }
-
-          const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement | null;
-          if (submitBtn) submitBtn.disabled = true;
-
-          try {
-            const res = await fetch('/api/outreach-contact', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(data),
-            });
-            const json = await res.json() as { ok: boolean; error?: string };
-            if (json.ok) {
-              status.textContent = "Got it — we'll be in touch soon!";
-              form.reset();
-              if (window.fireOutreachEvent) {
-                window.fireOutreachEvent('contact_form_submit');
-              }
-            } else {
-              status.textContent = json.error || 'Something went wrong. Please try again.';
-              if (submitBtn) submitBtn.disabled = false;
-            }
-          } catch {
-            status.textContent = 'Network error. Please try again.';
-            if (submitBtn) submitBtn.disabled = false;
-          }
-        });
-      }
-    </script>
-  </body>
-</html>
+{/* Silent page-view tracking — maps to existing /api/lead endpoint.
+    Reads the ?p= query param (print/postcard source number) and sends
+    a seller event so the notification email logs the visit.
+    No UI change, no redirect. Fires once on DOMContentLoaded. */}
+<script is:inline set:html={`(function () {
+  var prospectName = ${escJs(d.prospect_name)};
+  var pageSlug     = ${escJs(entry.id)};
+  document.addEventListener('DOMContentLoaded', function () {
+    var p = new URLSearchParams(location.search).get('p');
+    var source = p ? ('BG Web - P' + p) : 'BG Web - direct';
+    var fd = new FormData();
+    fd.append('formType', 'seller');
+    fd.append('name', prospectName);
+    fd.append('message', source);
+    fd.append('slug', pageSlug);
+    fetch('/api/lead', { method: 'POST', body: fd }).catch(function () {});
+  });
+})();`} />
 
 <style>
-  /* ── Global reset for outreach page ── */
-  .outreach-page {
-    margin: 0;
-    padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--bg, #f7f6f2);
-    color: var(--text, #1e2a26);
+  .prospect-page {
+    padding-bottom: 4rem;
   }
 
-  .p-container {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 1.25rem;
-  }
-
-  /* ── Header ── */
-  .p-header {
-    background: white;
-    border-bottom: 1px solid #e0ddd5;
-    padding: 0.75rem 0;
-  }
-
-  .p-header-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .p-logo {
-    height: 48px;
-    width: auto;
-    display: block;
-  }
-
-  .p-private-badge {
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--accent, #c96f4a);
-    background: rgba(201, 111, 74, 0.1);
-    padding: 0.25rem 0.75rem;
-    border-radius: 999px;
-  }
-
-  /* ── Main layout ── */
-  .p-main {
-    padding: 2rem 0 3rem;
-  }
-
-  .p-layout {
-    display: grid;
-    grid-template-columns: 1fr 320px;
-    gap: 2.5rem;
-    align-items: start;
+  /* Narrow reading column — these are personal letters, not wide-layout pages */
+  .prospect-container {
+    max-width: 820px;
   }
 
   /* ── Hero ── */
-  .p-hero-wrap {
+  .prospect-hero {
     position: relative;
-    border-radius: var(--radius, 18px);
+    border-radius: var(--radius);
     overflow: hidden;
-    margin-bottom: 2rem;
+    margin-bottom: 1.75rem;
   }
 
-  .p-hero-img {
+  .prospect-hero-img {
     width: 100%;
-    aspect-ratio: 16 / 7;
+    aspect-ratio: 16 / 6;
     object-fit: cover;
     display: block;
   }
 
-  .p-hero-overlay {
+  .prospect-hero-overlay {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 1.5rem;
-    background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 100%);
+    padding: 1.1rem 1.5rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.62) 0%, transparent 100%);
   }
 
-  .p-property-address {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: white;
+  .prospect-address {
     margin: 0;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-  }
-
-  .p-property-address--no-hero {
-    color: var(--text, #1e2a26);
-    margin-bottom: 1rem;
-    font-size: 1.6rem;
-  }
-
-  /* ── Typography ── */
-  .p-headline {
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--brand, #1f5c4d);
-    margin: 0 0 1rem;
-    line-height: 1.3;
-  }
-
-  .p-narrative {
     font-size: 1.05rem;
-    line-height: 1.75;
-    color: var(--text, #1e2a26);
-    margin-bottom: 2rem;
-  }
-
-  .p-section {
-    margin-bottom: 2.5rem;
-  }
-
-  .p-section-heading {
-    font-size: 1.1rem;
     font-weight: 700;
-    color: var(--text, #1e2a26);
-    margin: 0 0 0.75rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--brand, #1f5c4d);
-    display: inline-block;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
   }
 
-  .p-prose {
-    font-size: 0.95rem;
-    line-height: 1.75;
-    color: var(--text, #1e2a26);
-    margin: 0 0 1rem;
+  .prospect-address-plain {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 1.5rem;
   }
 
-  /* ── Action plan ── */
-  .p-action-plan {
-    padding-left: 1.5rem;
-    margin: 0;
-  }
-
-  .p-step {
-    font-size: 0.95rem;
-    line-height: 1.6;
-    margin-bottom: 0.6rem;
-    color: var(--text, #1e2a26);
-  }
-
-  /* ── Outbound links ── */
-  .p-outbound-links {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .p-outbound-links li {
-    margin-bottom: 0.4rem;
-  }
-
-  .p-outbound-link {
-    font-size: 0.92rem;
-    font-weight: 600;
-    color: var(--brand, #1f5c4d);
-    text-decoration: none;
-  }
-
-  .p-outbound-link:hover {
-    text-decoration: underline;
-  }
-
-  /* ── Gallery ── */
-  .p-gallery {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 0.75rem;
-    margin: 2rem 0;
-  }
-
-  .p-gallery-img {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    border-radius: var(--radius, 18px);
-    display: block;
-  }
-
-  /* ── AI rendering ── */
-  .p-rendering-wrap {
-    margin: 1.5rem 0 2rem;
-  }
-
-  .p-rendering-caption {
-    font-size: 0.8rem;
-    font-style: italic;
-    color: var(--text-soft, #5a6b65);
-    margin: 0 0 0.5rem;
-  }
-
-  .p-rendering-img {
-    width: 100%;
-    border-radius: var(--radius, 18px);
-    display: block;
-  }
-
-  /* ── Contact form ── */
-  .p-contact-section {
-    background: white;
-    border-radius: var(--radius, 18px);
-    padding: 1.75rem;
-  }
-
-  .p-contact-intro {
+  /* ── Headline + CMA badge ── */
+  .prospect-lede {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
     margin-bottom: 1.25rem;
   }
 
-  .p-form {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+  .prospect-headline {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--brand);
+    line-height: 1.3;
+    margin: 0;
+    flex: 1;
+    min-width: 0;
   }
 
-  .form-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-  }
-
-  .form-row label {
-    font-size: 0.82rem;
+  .cma-badge {
+    flex-shrink: 0;
+    background: var(--brand);
+    color: white;
+    font-size: 0.88rem;
     font-weight: 700;
-    color: var(--text, #1e2a26);
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    align-self: center;
   }
 
-  .form-row input {
-    padding: 0.6rem 0.85rem;
-    border: 1.5px solid #ccc;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-family: inherit;
-    color: var(--text, #1e2a26);
-    background: #fafaf8;
+  /* ── Body sections — each ::: chunk wrapped in .card ── */
+  .prose-section {
+    margin-bottom: 1.25rem;
+    font-size: 0.97rem;
+    line-height: 1.78;
+    color: var(--text);
   }
 
-  .form-row input:focus {
-    outline: none;
-    border-color: var(--brand, #1f5c4d);
+  .prose-section :global(h1),
+  .prose-section :global(h2) {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--brand);
+    margin: 0 0 0.75rem;
+    line-height: 1.3;
   }
 
-  .form-consent {
-    font-size: 0.72rem;
-    color: var(--text-soft, #5a6b65);
-    line-height: 1.5;
-    margin: 0;
+  .prose-section :global(h3) {
+    font-size: 0.97rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 1.25rem 0 0.45rem;
   }
 
-  .p-submit-btn {
-    align-self: flex-start;
+  .prose-section :global(p) {
+    margin: 0 0 0.85rem;
   }
 
-  .form-status {
-    font-size: 0.85rem;
-    color: var(--brand, #1f5c4d);
-    min-height: 1.2em;
-    margin: 0;
+  .prose-section :global(p:last-child) {
+    margin-bottom: 0;
   }
 
-  /* ── PDF row ── */
-  .p-pdf-row {
-    margin-top: 1.5rem;
+  .prose-section :global(ul),
+  .prose-section :global(ol) {
+    padding-left: 1.35rem;
+    margin: 0 0 0.85rem;
   }
 
-  /* ── Sidebar ── */
-  .p-sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    position: sticky;
-    top: 1.5rem;
+  .prose-section :global(li) {
+    margin-bottom: 0.3rem;
   }
 
-  .p-cta-btn {
+  .prose-section :global(strong) {
+    font-weight: 700;
+  }
+
+  .prose-section :global(em) {
+    font-style: italic;
+  }
+
+  .prose-section :global(hr) {
+    border: none;
+    border-top: 1px solid var(--line);
+    margin: 1.25rem 0;
+  }
+
+  .prose-section :global(a) {
+    color: var(--brand);
+    border-bottom: 1px solid rgba(31, 92, 77, 0.3);
+  }
+
+  .prose-section :global(a:hover) {
+    border-bottom-color: var(--brand);
+  }
+
+  /* Gallery images injected via {{gallery:N}} markers */
+  .prose-section :global(.section-figure) {
+    margin: 1rem 0;
+  }
+
+  .prose-section :global(.section-gallery-img) {
     width: 100%;
-    text-align: center;
+    border-radius: var(--radius);
+    display: block;
+    object-fit: cover;
+    max-height: 480px;
   }
 
-  .agent-card {
-    padding: 1.25rem;
-    background: white;
+  /* ── Agent byline ── */
+  .agent-byline {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.1rem;
+    margin-top: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .agent-photo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
   }
 
   .agent-name {
     font-weight: 700;
-    font-size: 0.95rem;
-    margin: 0 0 0.2rem;
-    color: var(--text, #1e2a26);
+    font-size: 0.92rem;
+    margin: 0 0 0.25rem;
+    color: var(--text);
   }
 
-  .agent-sub {
-    font-size: 0.8rem;
-    color: var(--text-soft, #5a6b65);
-    margin: 0 0 0.15rem;
-  }
-
-  .agent-phone {
-    display: block;
-    margin-top: 0.6rem;
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--brand, #1f5c4d);
-    text-decoration: none;
-  }
-
-  .agent-phone:hover {
-    text-decoration: underline;
-  }
-
-  /* ── Expired card ── */
-  .expired-card {
-    max-width: 580px;
-    margin: 3rem auto;
-    padding: 2.5rem;
-    text-align: center;
-    background: white;
-  }
-
-  .expired-heading {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--text, #1e2a26);
-    margin-bottom: 1rem;
-  }
-
-  .expired-body {
-    font-size: 0.95rem;
-    line-height: 1.7;
-    color: var(--text-soft, #5a6b65);
-    margin-bottom: 1.5rem;
-  }
-
-  /* ── Footer ── */
-  .p-footer {
-    background: #0c2a4a;
-    color: white;
-    padding: 1.25rem 0;
-  }
-
-  .p-footer-text {
-    font-size: 0.82rem;
-    margin: 0 0 0.4rem;
-  }
-
-  .p-footer-text a {
-    color: white;
-    text-decoration: underline;
-  }
-
-  .p-footer-fine {
-    font-size: 0.72rem;
-    opacity: 0.7;
+  .agent-bio {
+    font-size: 0.83rem;
+    line-height: 1.6;
+    color: var(--text-soft);
     margin: 0;
-    max-width: 680px;
-    line-height: 1.5;
+  }
+
+  /* ── CTA card ── */
+  .cta-card {
+    margin-top: 1.25rem;
+  }
+
+  .cta-card h2 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--brand);
+    margin: 0 0 0.45rem;
+  }
+
+  .cta-intro {
+    font-size: 0.93rem;
+    line-height: 1.7;
+    color: var(--text-soft);
+    margin: 0 0 1.25rem;
+  }
+
+  /* ── Expired state ── */
+  .expired-wrap {
+    max-width: 540px;
+    margin: 4rem auto;
+  }
+
+  .expired-card {
+    text-align: center;
+  }
+
+  .expired-card h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 0.75rem;
+  }
+
+  .expired-card p {
+    font-size: 0.93rem;
+    line-height: 1.7;
+    color: var(--text-soft);
+    margin: 0 0 1.5rem;
   }
 
   /* ── Responsive ── */
-  @media (max-width: 860px) {
-    .p-layout {
-      grid-template-columns: 1fr;
+  @media (max-width: 640px) {
+    .prospect-headline {
+      font-size: 1.2rem;
     }
 
-    .p-sidebar {
-      position: static;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .p-property-address {
-      font-size: 1.15rem;
+    .prospect-lede {
+      flex-direction: column;
+      gap: 0.5rem;
     }
 
-    .p-headline {
-      font-size: 1.15rem;
+    .cma-badge {
+      align-self: flex-start;
     }
   }
 </style>

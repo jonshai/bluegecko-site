@@ -36,6 +36,7 @@ const showFaq = faq.length > 0;
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <slot name="head" />
   </head>
   <body>
     <div class="cb-strip">
