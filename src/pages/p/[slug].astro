@@ -76,6 +76,23 @@ function resolveGalleryMarkers(md: string): string {
 const rawBody = entry.body ?? '';
 const normalized = rawBody.replace(/\n*:::\n*/g, '\n:::\n');
 const sectionTexts = normalized.split('\n:::\n').map((s: string) => s.trim()).filter(Boolean);
+
+// ── DIAGNOSTIC LOG (temporary) ────────────────────────────────────────────────
+console.log(`[diag] entry.body type: ${typeof entry.body}, length: ${rawBody.length}`);
+console.log(`[diag] section count after split: ${sectionTexts.length}`);
+console.log(`[diag] rawBody first 120 chars: ${JSON.stringify(rawBody.slice(0, 120))}`);
+const gallerySection = sectionTexts.find((s: string) => s.includes('{{gallery:2}}'));
+if (gallerySection) {
+  const g2pos = gallerySection.indexOf('{{gallery:2}}');
+  const g3pos = gallerySection.indexOf('{{gallery:3}}');
+  const between = g3pos > -1 ? gallerySection.slice(g2pos + 13, g3pos) : '(gallery:3 not in same section)';
+  console.log(`[diag] section containing gallery:2 index: ${sectionTexts.indexOf(gallerySection)}`);
+  console.log(`[diag] chars between {{gallery:2}} and {{gallery:3}}: ${JSON.stringify(between)}`);
+} else {
+  console.log('[diag] {{gallery:2}} not found in any section after split');
+  console.log(`[diag] normalized body (first 500): ${JSON.stringify(normalized.slice(0, 500))}`);
+}
+// ── END DIAGNOSTIC LOG ────────────────────────────────────────────────────────
 const sectionHtml = await Promise.all(
   sectionTexts.map((s: string) => compileMd(resolveGalleryMarkers(s)))
 );
