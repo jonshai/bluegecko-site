@@ -56,16 +56,24 @@ export async function sendLeadEmail(payload: LeadPayload): Promise<void> {
     return;
   }
 
-  const eventLabels: Record<string, string> = {
-    open_house_rsvp: 'Open House RSVP',
-    seller_inquiry: 'Seller Inquiry',
-    buyer_inquiry: 'Buyer Inquiry',
-    site_contact: 'Site Contact',
-  };
-  const eventLabel = eventLabels[payload.event] ?? payload.event;
-  const who = payload.name || payload.email || 'Unknown';
-  const source = payload.utm_source || 'Web';
-  const subject = `New Lead: ${eventLabel} - ${who} (${source})`;
+  let subject: string;
+  if (payload.event === 'prospect_visit') {
+    // Automatic page-load ping from a prospecting page — not a form submission.
+    const who = payload.name || 'Unknown';
+    const part = payload.notes || 'BG Web - P0';
+    subject = `Prospect visit: ${who} — ${part}`;
+  } else {
+    const eventLabels: Record<string, string> = {
+      open_house_rsvp: 'Open House RSVP',
+      seller_inquiry: 'Seller Inquiry',
+      buyer_inquiry: 'Buyer Inquiry',
+      site_contact: 'Site Contact',
+    };
+    const eventLabel = eventLabels[payload.event] ?? payload.event;
+    const who = payload.name || payload.email || 'Unknown';
+    const source = payload.utm_source || 'Web';
+    subject = `New Lead: ${eventLabel} - ${who} (${source})`;
+  }
   const body = buildEmailBody(payload);
   const toHeader = recipients.join(', ');
 

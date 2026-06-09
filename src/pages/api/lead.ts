@@ -57,17 +57,23 @@ export const POST: APIRoute = async ({ request }) => {
   const slug = data.get('slug')?.toString() || '';
   const formType = data.get('formType')?.toString() || 'general-inquiry';
   const redirectTo = data.get('redirectTo')?.toString() || '/thank-you';
+  const address = data.get('address')?.toString() || data.get('property_address')?.toString() || '';
+
+  // Visit event: formType=seller with no email means an automatic page-load ping,
+  // not a user-submitted form. Route to a distinct event type and return without redirect.
+  const isVisitEvent = formType === 'seller' && !email;
 
   const url = new URL(request.url);
   const referrer = request.headers.get('referer');
   const utm_source = detectSource(url, referrer);
 
   const payload = {
-    event: formType === 'open-house' ? 'open_house_rsvp'
+    event: isVisitEvent ? 'prospect_visit'
+      : formType === 'open-house' ? 'open_house_rsvp'
       : formType === 'seller' ? 'seller_inquiry'
       : formType === 'buyer' ? 'buyer_inquiry'
       : 'site_contact',
-    property_address: data.get('property_address')?.toString() || '',
+    property_address: address,
     slug: slug || undefined,
     utm_source: utm_source || undefined,
     name: name || undefined,
@@ -82,6 +88,13 @@ export const POST: APIRoute = async ({ request }) => {
     logLeadToSheet(payload),
     sendLeadSms(payload),
   ]);
+
+  if (isVisitEvent) {
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   return new Response(JSON.stringify({ success: true, redirect: redirectTo }), {
     status: 200,

@@ -202,16 +202,23 @@ function escJs(val: string): string {
     No UI change, no redirect. Fires once on DOMContentLoaded. */}
 <script is:inline set:html={`(function () {
   var prospectName = ${escJs(d.prospect_name)};
+  var pageAddress  = ${escJs(d.address)};
   var pageSlug     = ${escJs(entry.id)};
   document.addEventListener('DOMContentLoaded', function () {
     var p = new URLSearchParams(location.search).get('p');
-    var source = p ? ('BG Web - P' + p) : 'BG Web - direct';
-    var fd = new FormData();
-    fd.append('formType', 'seller');
-    fd.append('name', prospectName);
-    fd.append('message', source);
-    fd.append('slug', pageSlug);
-    fetch('/api/lead', { method: 'POST', body: fd }).catch(function () {});
+    var pNum = (p && /^\d+$/.test(p)) ? p : '0';
+    var source = 'BG Web - P' + pNum;
+    var params = new URLSearchParams();
+    params.append('formType', 'seller');
+    params.append('name', prospectName);
+    params.append('message', source);
+    params.append('address', pageAddress);
+    params.append('slug', pageSlug);
+    fetch('/api/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
+    }).catch(function () {});
   });
 })();`} />
 

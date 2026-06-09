@@ -536,6 +536,38 @@ GITHUB_TOKEN for site tools (.env in each tool dir) expires periodically.
 Regenerate at github.com → Settings → Developer settings → Tokens (classic), repo scope.
 The token only needs to be updated in one place — tools share the same token value.
 
+## Analytics
+
+### Cloudflare Web Analytics
+- Active on bluegecko.homes via automatic edge injection (created ~April 2026)
+- No beacon script in repo, no env var needed
+- Managed in CF dashboard → Analytics & Logs → Web Analytics
+
+### Orphan page visit tracking (/p/[slug] prospecting pages)
+Fires automatically on DOMContentLoaded — no user interaction.
+
+Client-side (inline script in src/pages/p/[slug].astro):
+- Reads ?p= query param (postcard/print source number)
+- If absent or not a digit, defaults to 0 → message = 'BG Web - P0'
+- POSTs to /api/lead with Content-Type: application/x-www-form-urlencoded
+- Fields: formType=seller, name=[prospect_name], address=[property address],
+  message='BG Web - P[n]', slug=[page slug]
+- Silent — no redirect, no UI change, error is swallowed
+
+/api/lead.ts visit event path:
+- Detected by: formType === 'seller' AND email is absent
+- Routes to event type 'prospect_visit' (not 'seller_inquiry')
+- Returns { success: true } with NO redirect field — prevents page navigation
+- Normal seller form submissions include email and get redirect: '/thank-you'
+
+Gmail notification (src/lib/send-lead-email.ts):
+- Subject: "Prospect visit: [name] — [message]"
+  e.g. "Prospect visit: Claudia Lozano — BG Web - P3"
+- Body includes: name, property_address, slug, notes (the BG Web - Pn string)
+- Visually distinct from form submission subjects ("New Lead: ...")
+
+Sheets logging: same logLeadToSheet() as all other events, event column = 'prospect_visit'
+
 ## Planned Features (not yet built)
 
 ### Builder Incentives Dashboard
