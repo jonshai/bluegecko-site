@@ -4,7 +4,7 @@ address: "8566 Lyside Drive, Melbourne, FL 32940"
 price: 639900
 beds: 4
 baths: 4.5
-sqft: 3069
+sqft: 2398
 hero: "/uploads/8566-lyside-drive-melbourne/Lyside-Front.jpg"
 gallery:
   - "/uploads/8566-lyside-drive-melbourne/20260526031056734145000000.jpg"
