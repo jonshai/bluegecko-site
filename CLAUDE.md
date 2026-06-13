@@ -89,6 +89,14 @@ There are 3 workers on the Cloudflare account — do not confuse them:
 - Desktop: card format preserved
 - Moxi URL base: https://space-coast.homes/search/#
 - Required params: company_uuid=4228033&agent_uuid=364e222e-0ca9-400c-a1d1-12724bc51a54
+- iframe src construction: set client-side via inline script, NOT server-side.
+  Stella share links arrive as /search?moxi=<url> where the Moxi URL contains
+  #ls_conversion=... — if that # is unencoded, browsers split it into the page
+  fragment rather than keeping it in the moxi param. The fix: inline JS reads
+  window.location.search (moxi param) + window.location.hash (Moxi criteria)
+  and concatenates them into the iframe src. This works for both encoded and
+  unencoded # in the share link, and requires no Moxi session for the recipient.
+  DO NOT revert to server-side src assignment — that breaks fresh-session sharing.
 
 ## File Structure
 

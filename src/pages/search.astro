@@ -1,7 +1,5 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-
-const moxiUrl = Astro.url.searchParams.get('moxi') || 'https://space-coast.homes/search/';
 ---
 
 <BaseLayout title="Search Homes | Blue Gecko" description="Search homes on the Space Coast with Blue Gecko Homes.">
@@ -11,7 +9,7 @@ const moxiUrl = Astro.url.searchParams.get('moxi') || 'https://space-coast.homes
         <h1>Search Space Coast Homes</h1>
         <p>
           Browse live listings, explore the map, and narrow the field without bouncing all over the internet.
-          When you spot something interesting, reach out and we’ll help you sort the contenders from the chaos.
+          When you spot something interesting, reach out and we'll help you sort the contenders from the chaos.
         </p>
       </div>
     </div>
@@ -23,7 +21,6 @@ const moxiUrl = Astro.url.searchParams.get('moxi') || 'https://space-coast.homes
         <div class="idx-frame-shell cropped" id="idx-frame-shell">
           <iframe
             id="moxi-search-frame"
-            src={moxiUrl}
             title="Blue Gecko Embedded Home Search"
             loading="lazy"
             referrerpolicy="strict-origin-when-cross-origin"
@@ -33,6 +30,32 @@ const moxiUrl = Astro.url.searchParams.get('moxi') || 'https://space-coast.homes
     </div>
   </section>
 </BaseLayout>
+
+<!--
+  WHY THIS SCRIPT EXISTS:
+  Shared search links from Stella arrive as /search?moxi=<url> where the Moxi URL
+  often contains a #ls_conversion=... hash fragment. When the # in the Moxi URL is
+  not percent-encoded (%23), browsers treat it as the parent page's fragment rather
+  than part of the query param value. The server therefore receives only the
+  pre-hash portion of the URL. We fix this client-side by reading both
+  window.location.search (moxi param) and window.location.hash (Moxi criteria
+  fragment) and concatenating them directly into the iframe src. This guarantees
+  the iframe loads with the full search criteria from first paint — no Moxi session
+  or cookie required for the recipient.
+-->
+<script is:inline>
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    var moxiParam = params.get('moxi');
+    var pageHash = window.location.hash; // captured here even if not URL-encoded in moxi param
+
+    var src = moxiParam
+      ? moxiParam + pageHash
+      : 'https://space-coast.homes/search/#?company_uuid=4228033&agent_uuid=364e222e-0ca9-400c-a1d1-12724bc51a54';
+
+    document.getElementById('moxi-search-frame').src = src;
+  })();
+</script>
 
 <style>
   .search-hero {
