@@ -1,4 +1,6 @@
 ---
+export const prerender = false;
+
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import HeroCard from '../../components/HeroCard.astro';
 import { getCollection } from 'astro:content';
@@ -37,11 +39,15 @@ function firstSentence(text: string): string {
   return match ? match[0] : text.slice(0, 160);
 }
 
-const todayStr = new Date().toISOString().split('T')[0];
+// Use ET (America/New_York) for date cutoffs — the Worker runs in UTC but
+// the business is Florida-based. en-CA locale gives YYYY-MM-DD directly.
+const etFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' });
+const now = new Date();
+const todayStr = etFmt.format(now);
 
-const sixtyDaysAgo = new Date();
+const sixtyDaysAgo = new Date(now);
 sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-const sixtyDaysAgoStr = sixtyDaysAgo.toISOString().split('T')[0];
+const sixtyDaysAgoStr = etFmt.format(sixtyDaysAgo);
 
 const upcomingEvents = allEvents
   .filter(e => e.data.date >= todayStr)

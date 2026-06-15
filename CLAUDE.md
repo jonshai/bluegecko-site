@@ -307,6 +307,14 @@ src/content/events/[property-slug]-[YYYY-MM-DD].md
 /open-house/[p]/[d]  — detail: hero, map, gallery, RSVP or inquiry form
 /open-house/archive   — all events older than 60 days
 
+### SSR / date handling
+- src/pages/open-house/index.astro: prerender = false (SSR via Cloudflare Worker)
+  "today" cutoff computed per-request using Intl.DateTimeFormat with
+  timeZone: 'America/New_York' (en-CA locale → YYYY-MM-DD). Do NOT revert to
+  new Date().toISOString() — that's UTC and freezes the date at build time.
+- src/pages/open-house/[property]/[date].astro: still uses getStaticPaths +
+  build-time date logic. Converting to SSR is a known follow-up (separate branch).
+
 ### Admin tool (tools/open-house-admin/)
 - Runs locally on port 3333, accessed via Tailscale
 - Start: node tools/open-house-admin/server.js (reads .env automatically)
