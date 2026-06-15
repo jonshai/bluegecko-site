@@ -312,8 +312,21 @@ src/content/events/[property-slug]-[YYYY-MM-DD].md
   "today" cutoff computed per-request using Intl.DateTimeFormat with
   timeZone: 'America/New_York' (en-CA locale → YYYY-MM-DD). Do NOT revert to
   new Date().toISOString() — that's UTC and freezes the date at build time.
-- src/pages/open-house/[property]/[date].astro: still uses getStaticPaths +
-  build-time date logic. Converting to SSR is a known follow-up (separate branch).
+- src/pages/open-house/[property]/[date].astro: uses getStaticPaths (must remain
+  static — Astro requires it). isPast and related labels (RSVP vs inquiry form,
+  "Was hosted" badge, meta description) are computed at build time and frozen
+  until the next deploy. A daily scheduled rebuild keeps this max ~24h stale.
+
+### Scheduled rebuild (.github/workflows/scheduled-rebuild.yml)
+- Runs at 9:00 UTC daily (5 AM ET / 4 AM EDT) via GitHub Actions cron
+- Also triggerable manually via workflow_dispatch
+- Identical deploy mechanism to deploy.yml: checkout → node 22 → npm ci →
+  npm run build → rm -f .wrangler/deploy/config.json → wrangler-action@v3
+  (same CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID secrets)
+- No content changes — exists purely to "tick the clock" so build-time date
+  logic in getStaticPaths pages (open-house detail, archive) stays fresh
+- DO NOT remove the `rm -f .wrangler/deploy/config.json` step — it is
+  mandatory; without it wrangler targets the wrong deploy path and fails
 
 ### Admin tool (tools/open-house-admin/)
 - Runs locally on port 3333, accessed via Tailscale

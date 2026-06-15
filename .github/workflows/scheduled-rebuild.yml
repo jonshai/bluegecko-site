@@ -1,0 +1,35 @@
+name: Scheduled Rebuild
+
+on:
+  schedule:
+    # 9:00 UTC = 5:00 AM ET (EST) / 4:00 AM ET (EDT) — after midnight ET
+    - cron: '0 9 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Remove wrangler deploy redirect
+        run: rm -f .wrangler/deploy/config.json
+
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
