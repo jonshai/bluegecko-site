@@ -3,9 +3,7 @@ import { getGmailToken, getSheetsToken } from '../../lib/google-auth';
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ locals }) => {
-  const env = (locals as { runtime?: { env?: Record<string, string> } }).runtime?.env ?? {};
-
+export const GET: APIRoute = async () => {
   // 1. Check env vars (present/missing only — no values)
   const envVars: Record<string, 'present' | 'missing'> = {};
   for (const key of [
@@ -17,7 +15,7 @@ export const GET: APIRoute = async ({ locals }) => {
     'NOTIFICATION_EMAIL_WILLIAM',
     'NOTIFICATION_EMAIL_LUCKY',
   ]) {
-    envVars[key] = env[key] ? 'present' : 'missing';
+    envVars[key] = import.meta.env[key] ? 'present' : 'missing';
   }
 
   // 2. Test Gmail token refresh
@@ -45,7 +43,7 @@ export const GET: APIRoute = async ({ locals }) => {
     sheetsTokenPrefix = token.slice(0, 6);
 
     // 4. Test Sheets append (only if token succeeded)
-    const sheetId = env['GOOGLE_SHEETS_LEAD_LOG_ID'];
+    const sheetId = import.meta.env.GOOGLE_SHEETS_LEAD_LOG_ID;
     if (sheetId) {
       const diagRow = [
         'DIAG-TEST',
