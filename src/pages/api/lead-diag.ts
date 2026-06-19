@@ -4,8 +4,8 @@ import { getGmailToken, getSheetsToken } from '../../lib/google-auth';
 export const prerender = false;
 
 export const GET: APIRoute = async () => {
-  // 1. Check env vars (present/missing only — no values)
-  const envVars: Record<string, 'present' | 'missing'> = {};
+  // 1. Check env vars — no full values, last 4 chars only for CLIENT_ID and CLIENT_SECRET
+  const envVars: Record<string, string> = {};
   for (const key of [
     'GOOGLE_CLIENT_ID',
     'GOOGLE_CLIENT_SECRET',
@@ -15,7 +15,14 @@ export const GET: APIRoute = async () => {
     'NOTIFICATION_EMAIL_WILLIAM',
     'NOTIFICATION_EMAIL_LUCKY',
   ]) {
-    envVars[key] = import.meta.env[key] ? 'present' : 'missing';
+    const val: string | undefined = import.meta.env[key];
+    if (!val) {
+      envVars[key] = 'missing';
+    } else if (key === 'GOOGLE_CLIENT_ID' || key === 'GOOGLE_CLIENT_SECRET') {
+      envVars[key] = `present (last 4: ${val.slice(-4)})`;
+    } else {
+      envVars[key] = 'present';
+    }
   }
 
   // 2. Test Gmail token refresh
