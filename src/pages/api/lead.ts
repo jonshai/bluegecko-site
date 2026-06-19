@@ -75,11 +75,13 @@ export const POST: APIRoute = async ({ request }) => {
       : 'site_contact',
     property_address: address,
     slug: slug || undefined,
-    utm_source: utm_source || undefined,
+    // For visit events, message carries the source string (e.g. "BG Web - P1") — use it
+    // directly as utm_source so it lands in the source column, not notes.
+    utm_source: isVisitEvent ? (message || undefined) : (utm_source || undefined),
     name: name || undefined,
     email: email || undefined,
     phone: phone || undefined,
-    notes: message || undefined,
+    notes: isVisitEvent ? undefined : (message || undefined),
     timestamp: new Date().toISOString(),
   };
 
