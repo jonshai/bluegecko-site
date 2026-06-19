@@ -1,0 +1,38 @@
+User-agent: *
+Allow: /
+
+# Prospecting pages — private, never index
+Disallow: /p/
+
+# Utility pages
+Disallow: /thank-you
+Disallow: /api/
+
+# SEO scrapers — no AEO citation value, block to reduce content harvesting
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# Explicitly welcome major AI indexers
+User-agent: GPTBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: GoogleOther
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
