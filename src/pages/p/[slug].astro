@@ -204,7 +204,7 @@ function escJs(val: string): string {
   var prospectName = ${escJs(d.prospect_name)};
   var pageAddress  = ${escJs(d.address)};
   var pageSlug     = ${escJs(entry.id)};
-  document.addEventListener('DOMContentLoaded', function () {
+  function trackVisit() {
     var p = new URLSearchParams(location.search).get('p');
     var pNum = (p && /^\d+$/.test(p)) ? p : '0';
     var source = 'BG Web - P' + pNum;
@@ -219,7 +219,12 @@ function escJs(val: string): string {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString()
     }).catch(function () {});
-  });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', trackVisit);
+  } else {
+    trackVisit();
+  }
 })();`} />
 
 <script is:inline>
