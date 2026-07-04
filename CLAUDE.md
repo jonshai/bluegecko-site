@@ -523,6 +523,55 @@ Admin tool: tools/prospecting-engine-admin/ on port 3335
 
 noindex: true is hardcoded — cannot publish an indexable prospecting page
 
+## Opportunity Manager (OM) QR Scan Capture
+
+Door-hanger QR codes printed by OM send homeowners to
+https://bluegecko.homes/list-my-house?ref={12-char-hex}.
+
+**Route discrepancy:** PI's source missive named the route as `/sell` — that
+page does not exist. The live seller page is `/list-my-house`. If OM's door
+hangers or webhook config encode `/sell`, real scans will 404 until OM's side
+is corrected (outside this repo's scope).
+
+### Architecture
+Lives entirely in `src/middleware.ts` — NOT client-side JS and NOT a standalone
+Worker. This differs from the PEA `/p/[slug]` capture pattern (which uses an
+inline `<script>` that POSTs to `/api/lead` on `DOMContentLoaded`). The OM
+capture is true edge-side: no JS, no DOM, no API route, the page is untouched.
+
+When `pathname === '/list-my-house'` and `?ref=` is present:
+1. Side-effects (`logOmScan` + `sendOmWebhook`) and `next()` are started
+   concurrently (all three kick off at the same time).
+2. `Promise.allSettled([scanPromise, webhookPromise, responsePromise])` settles
+   all three before the response is returned — required because Cloudflare Pages
+   Functions have no `waitUntil` and un-awaited work after response return is
+   not guaranteed to execute.
+3. If `ref` is absent, the OM branch is skipped entirely — existing behavior
+   for `/list-my-house` is untouched. `/p/[slug]` branches are also untouched.
+
+### Lib files
+- `src/lib/log-om-scan.ts` — appends row to OM Scan Log sheet via Sheets API
+  Row shape: [ISO 8601 UTC timestamp, ref, User Agent, 'bluegecko.homes/list-my-house', 'OM']
+  Reads sheet ID from `OM_SHEET_ID` env var. Swallows all errors internally.
+- `src/lib/send-om-webhook.ts` — POSTs `{ref, timestamp, user_agent}` to
+  `OM_WEBHOOK_URL` with `X-Webhook-Secret` header. 3-second AbortController
+  timeout. Swallows all errors/timeouts. Secret never logged.
+
+### Cloudflare Secrets required
+Set on the Pages deployment (not the standalone Worker) — add after a
+commit-triggered deploy to propagate (retry-deployment does not reliably pick
+up new secrets):
+  OM_WEBHOOK_URL     — OM's inbound webhook endpoint
+  OM_WEBHOOK_SECRET  — shared secret sent as X-Webhook-Secret header
+  OM_SHEET_ID        — spreadsheet ID of the "OM Scan Log" Google Sheet
+                       (separate from GOOGLE_SHEETS_LEAD_LOG_ID)
+
+### OM Scan Log sheet
+Created once via a temporary Node script (not committed). Header row:
+Timestamp | ref | User Agent | Page | Source
+Reuses `getSheetsToken()` from `src/lib/google-auth.ts` and the same
+`GOOGLE_SHEETS_REFRESH_TOKEN` credential as the lead log sheet.
+
 ## Local Services & Dashboard
 
 All local tools run as launchd agents (KeepAlive: true) and are monitored
