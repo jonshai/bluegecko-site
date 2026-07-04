@@ -2,12 +2,28 @@ import type { MiddlewareHandler } from 'astro';
 import { logOmScan } from './lib/log-om-scan';
 import { sendOmWebhook } from './lib/send-om-webhook';
 
+async function injectStella(response: Response): Promise<Response> {
+  if (!response.headers.get('content-type')?.includes('text/html')) {
+    return response;
+  }
+  const html = await response.text();
+  const injected = html.replace(
+    '</body>',
+    '<script src="/stella-loader.js" defer></script></body>'
+  );
+  return new Response(injected, {
+    status: response.status,
+    headers: response.headers,
+  });
+}
+
 export const onRequest: MiddlewareHandler = async (context, next) => {
   const { pathname } = context.url;
   const isOutreach = pathname.startsWith('/p/');
 
   // OM scan capture: /list-my-house?ref=<12-char-hex>
   // True edge-side capture — no client JS, no modification to the page.
+  // Side-effects run concurrently with render; stella injection still applied.
   if (pathname === '/list-my-house') {
     const ref = context.url.searchParams.get('ref');
     if (ref) {
@@ -24,7 +40,9 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
       const results = await Promise.allSettled([scanPromise, webhookPromise, responsePromise]);
       const renderResult = results[2];
       if (renderResult.status === 'rejected') throw renderResult.reason;
-      return renderResult.value;
+
+      // Apply stella injection identically to the normal non-ref path
+      return injectStella(renderResult.value);
     }
   }
 
@@ -40,17 +58,5 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
     });
   }
 
-  if (response.headers.get('content-type')?.includes('text/html')) {
-    const html = await response.text();
-    const injected = html.replace(
-      '</body>',
-      '<script src="/stella-loader.js" defer></script></body>'
-    );
-    return new Response(injected, {
-      status: response.status,
-      headers: response.headers,
-    });
-  }
-
-  return response;
+  return injectStella(response);
 };
