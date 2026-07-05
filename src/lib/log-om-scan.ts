@@ -4,6 +4,7 @@ const HEADER_ROW = ['Timestamp', 'ref', 'User Agent', 'Page', 'Source'];
 
 export async function logOmScan(ref: string, userAgent: string, timestamp: string): Promise<void> {
   const sheetId = import.meta.env.OM_SHEET_ID as string | undefined;
+  console.log('[diagnostic] OM_SHEET_ID present:', !!sheetId, 'length:', sheetId?.length ?? 0);
   if (!sheetId) {
     console.warn('[log-om-scan] OM_SHEET_ID not set — skipping');
     return;

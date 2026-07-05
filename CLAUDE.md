@@ -646,6 +646,14 @@ Gmail notification (src/lib/send-lead-email.ts):
 
 Sheets logging: same logLeadToSheet() as all other events, event column = 'prospect_visit'
 
+## Outstanding Items — Pending Cleanup
+
+### TEMPORARY DIAGNOSTIC — remove before next release
+`src/lib/log-om-scan.ts` line after `const sheetId = ...`:
+  `console.log('[diagnostic] OM_SHEET_ID present:', !!sheetId, 'length:', sheetId?.length ?? 0);`
+Added 2026-07-05 to confirm whether OM_SHEET_ID resolves at runtime in the
+Production Function. Revert once log output is confirmed. Do not leave in permanently.
+
 ## Planned Features (not yet built)
 
 ### Builder Incentives Dashboard
